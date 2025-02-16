@@ -3,17 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
-  Typography,
   Card,
   CardContent,
   Grid,
   CircularProgress,
   Alert,
-  Paper,
+  Typography,
   IconButton,
   Fade,
   useTheme,
-  Divider
+  Paper,
+  Divider,
+  Avatar
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -22,7 +23,8 @@ import {
   ArrowForward as ArrowForwardIcon,
   Warning as WarningIcon,
   Email as EmailIcon,
-  Phone as PhoneIcon
+  Phone as PhoneIcon,
+  LocationOn as LocationIcon
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +35,6 @@ function Home() {
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
-  const { admin } = useAuth();
   const theme = useTheme();
 
   useEffect(() => {
@@ -86,11 +87,9 @@ function Home() {
       sx={{ 
         width: '100%',
         minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         bgcolor: 'background.default',
-        py: 6
+        pt: 4,
+        pb: 6
       }}
     >
       <Container maxWidth="lg">
@@ -110,78 +109,101 @@ function Home() {
         {stats && (
           <Fade in timeout={800}>
             <Grid container spacing={3} sx={{ mb: 6 }}>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} sm={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
                     p: 3, 
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
+                    bgcolor: 'primary.light',
                     borderRadius: 3,
-                    transition: 'transform 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)'
-                    }
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <PersonIcon fontSize="large" />
-                    <Box>
-                      <Typography variant="h3" fontWeight="bold">
-                        {stats.totalMainPersons}
-                      </Typography>
-                      <Typography variant="body1">Main Persons</Typography>
-                    </Box>
+                  <Box 
+                    sx={{ 
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      p: 2,
+                      opacity: 0.2
+                    }}
+                  >
+                    <PersonIcon sx={{ fontSize: 80 }} />
+                  </Box>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    <Typography variant="h3" fontWeight="bold" color="primary.dark">
+                      {stats.totalMainPersons}
+                    </Typography>
+                    <Typography variant="subtitle1" color="primary.dark">
+                      Main Persons
+                    </Typography>
                   </Box>
                 </Paper>
               </Grid>
-              <Grid item xs={12} md={4}>
+
+              <Grid item xs={12} sm={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
                     p: 3, 
-                    bgcolor: 'warning.main',
-                    color: 'warning.contrastText',
+                    bgcolor: 'warning.light',
                     borderRadius: 3,
-                    transition: 'transform 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)'
-                    }
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <BadgeIcon fontSize="large" />
-                    <Box>
-                      <Typography variant="h3" fontWeight="bold">
-                        {stats.expiringIds}
-                      </Typography>
-                      <Typography variant="body1">Expiring IDs</Typography>
-                    </Box>
+                  <Box 
+                    sx={{ 
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      p: 2,
+                      opacity: 0.2
+                    }}
+                  >
+                    <BadgeIcon sx={{ fontSize: 80 }} />
+                  </Box>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    <Typography variant="h3" fontWeight="bold" color="warning.dark">
+                      {stats.expiringIds}
+                    </Typography>
+                    <Typography variant="subtitle1" color="warning.dark">
+                      Expiring IDs
+                    </Typography>
                   </Box>
                 </Paper>
               </Grid>
-              <Grid item xs={12} md={4}>
+
+              <Grid item xs={12} sm={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
                     p: 3, 
-                    bgcolor: 'error.main',
-                    color: 'error.contrastText',
+                    bgcolor: 'error.light',
                     borderRadius: 3,
-                    transition: 'transform 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)'
-                    }
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <WarningIcon fontSize="large" />
-                    <Box>
-                      <Typography variant="h3" fontWeight="bold">
-                        {stats.urgentExpiring}
-                      </Typography>
-                      <Typography variant="body1">Urgent Renewals</Typography>
-                    </Box>
+                  <Box 
+                    sx={{ 
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      p: 2,
+                      opacity: 0.2
+                    }}
+                  >
+                    <WarningIcon sx={{ fontSize: 80 }} />
+                  </Box>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    <Typography variant="h3" fontWeight="bold" color="error.dark">
+                      {stats.urgentExpiring}
+                    </Typography>
+                    <Typography variant="subtitle1" color="error.dark">
+                      Urgent Renewals
+                    </Typography>
                   </Box>
                 </Paper>
               </Grid>
@@ -201,6 +223,7 @@ function Home() {
                     borderRadius: 3,
                     overflow: 'hidden',
                     position: 'relative',
+                    height: '100%',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: theme.shadows[8],
@@ -212,33 +235,56 @@ function Home() {
                 >
                   <Box 
                     sx={{ 
-                      height: 8, 
+                      height: 6, 
                       bgcolor: 'primary.main',
                       width: '100%'
                     }} 
                   />
                   <CardContent sx={{ p: 3 }}>
                     <Box display="flex" alignItems="center" gap={2} mb={2}>
-                      <BusinessIcon color="primary" fontSize="large" />
-                      <Typography variant="h6" fontWeight="bold">
-                        {person.name}
-                      </Typography>
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          width: 56,
+                          height: 56
+                        }}
+                      >
+                        <PersonIcon fontSize="large" />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                          {person.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Main Person
+                        </Typography>
+                      </Box>
                     </Box>
+
                     <Divider sx={{ my: 2 }} />
+
                     <Box sx={{ pl: 1 }}>
-                      <Box display="flex" alignItems="center" gap={1} mb={1}>
+                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
                         <EmailIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
                           {person.email}
                         </Typography>
                       </Box>
-                      <Box display="flex" alignItems="center" gap={1}>
+                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
                         <PhoneIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
                           {person.contactNumber}
                         </Typography>
                       </Box>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <LocationIcon fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {person.address}
+                        </Typography>
+                      </Box>
                     </Box>
+
                     <IconButton 
                       className="arrow-icon"
                       size="small"

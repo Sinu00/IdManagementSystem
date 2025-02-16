@@ -40,7 +40,8 @@ import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 
 function IndividualList() {
   const { id: companyId } = useParams();
-  const [individuals, setIndividuals] = useState([]);
+  const [allIndividuals, setAllIndividuals] = useState([]);
+  const [filteredIndividuals, setFilteredIndividuals] = useState([]);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -59,14 +60,12 @@ function IndividualList() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching individuals for company:', companyId);
         const [individualsRes, companyRes] = await Promise.all([
-          individualApi.getByCompany(companyId, search, sort, filter),
+          individualApi.getByCompany(companyId),
           companyApi.get(companyId)
         ]);
-        console.log('Received individuals:', individualsRes.data);
-        console.log('Received company:', companyRes.data);
-        setIndividuals(individualsRes.data);
+        setAllIndividuals(individualsRes.data);
+        setFilteredIndividuals(individualsRes.data);
         setCompany(companyRes.data);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -77,7 +76,45 @@ function IndividualList() {
     };
 
     fetchData();
-  }, [companyId, search, sort, filter]);
+  }, [companyId]);
+
+  useEffect(() => {
+    let result = [...allIndividuals];
+    
+    if (search) {
+      result = result.filter(individual => 
+        individual.name.toLowerCase().includes(search.toLowerCase()) ||
+        individual.idNumber.toLowerCase().includes(search.toLowerCase()) ||
+        individual.position.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    if (filter !== 'all') {
+      result = result.filter(individual => {
+        if (filter === 'active') return individual.status === 'active';
+        if (filter === 'expired') return individual.status === 'expired';
+        if (filter === 'expiring') {
+          const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+          return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+        }
+        return true;
+      });
+    }
+    
+    result.sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name);
+      if (sort === 'expiryDate') return new Date(a.expiryDate) - new Date(b.expiryDate);
+      if (sort === 'issueDate') return new Date(a.issueDate) - new Date(b.issueDate);
+      return 0;
+    });
+    
+    setFilteredIndividuals(result);
+  }, [search, filter, sort, allIndividuals]);
+
+  const handleSearchChange = (e) => {
+    e.preventDefault();
+    setSearch(e.target.value);
+  };
 
   const getExpiryStatus = (expiryDate) => {
     const today = new Date();
@@ -115,8 +152,9 @@ function IndividualList() {
         await individualApi.create({ ...formData, company: companyId });
       }
       // Refresh the list
-      const response = await individualApi.getByCompany(companyId, search, sort, filter);
-      setIndividuals(response.data);
+      const response = await individualApi.getByCompany(companyId);
+      setAllIndividuals(response.data);
+      setFilteredIndividuals(response.data);
       setDialogOpen(false);
     } catch (error) {
       console.error('Error saving individual:', error);
@@ -127,8 +165,9 @@ function IndividualList() {
     try {
       await individualApi.delete(individualToDelete._id);
       // Refresh the list
-      const response = await individualApi.getByCompany(companyId, search, sort, filter);
-      setIndividuals(response.data);
+      const response = await individualApi.getByCompany(companyId);
+      setAllIndividuals(response.data);
+      setFilteredIndividuals(response.data);
       setConfirmDialogOpen(false);
     } catch (error) {
       console.error('Error deleting individual:', error);
@@ -204,7 +243,12 @@ function IndividualList() {
               <TextField
                 placeholder="Search individuals..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearchChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
                 fullWidth
                 sx={{ 
                   flex: { xs: '1', sm: '1 1 50%' },
@@ -280,7 +324,7 @@ function IndividualList() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {individuals.map((individual) => {
+                  {filteredIndividuals.map((individual) => {
                     const status = getExpiryStatus(individual.expiryDate);
                     return (
                       <TableRow 

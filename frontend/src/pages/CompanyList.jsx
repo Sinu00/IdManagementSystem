@@ -13,8 +13,14 @@ import {
   CircularProgress,
   Fade,
   Chip,
+  useTheme,
+  Paper,
   Divider,
-  useTheme
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Avatar
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -22,7 +28,9 @@ import {
   LocationOn as LocationIcon,
   Phone as PhoneIcon,
   ArrowForward as ArrowForwardIcon,
-  Login as LoginIcon
+  Sort as SortIcon,
+  FilterList as FilterListIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -31,16 +39,22 @@ function CompanyList() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('name');
+  const [filter, setFilter] = useState('all');
   const { id: mainPersonId } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
+  const [mainPerson, setMainPerson] = useState(null);
 
   useEffect(() => {
-    const fetchCompanies = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         const response = await companyApi.getByMainPerson(mainPersonId);
         setCompanies(response.data);
+        if (response.data.length > 0) {
+          setMainPerson(response.data[0].mainPerson);
+        }
       } catch (error) {
         console.error('Error fetching companies:', error);
       } finally {
@@ -48,13 +62,26 @@ function CompanyList() {
       }
     };
 
-    fetchCompanies();
+    fetchData();
   }, [mainPersonId]);
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(search.toLowerCase()) ||
-    company.address.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredAndSortedCompanies = companies
+    .filter(company => {
+      if (filter === 'all') return true;
+      if (filter === 'withExpiring') return company.hasExpiringIds;
+      if (filter === 'withExpired') return company.hasExpiredIds;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name);
+      if (sort === 'expiringCount') return (b.expiringCount || 0) - (a.expiringCount || 0);
+      if (sort === 'totalIds') return (b.individuals?.length || 0) - (a.individuals?.length || 0);
+      return 0;
+    })
+    .filter(company =>
+      company.name.toLowerCase().includes(search.toLowerCase()) ||
+      company.address.toLowerCase().includes(search.toLowerCase())
+    );
 
   if (loading) {
     return (
@@ -78,69 +105,116 @@ function CompanyList() {
       sx={{ 
         width: '100%',
         minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         bgcolor: 'background.default',
-        py: 6
+        pt: 4,
+        pb: 6
       }}
     >
       <Container maxWidth="lg">
-        <Fade in timeout={800}>
+        {mainPerson && (
+          <Fade in timeout={800}>
+            <Paper 
+              elevation={0}
+              sx={{ 
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                bgcolor: 'primary.light',
+                color: 'primary.dark'
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={2}>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: 'primary.main',
+                    width: 48,
+                    height: 48
+                  }}
+                >
+                  <PersonIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    {mainPerson.name}
+                  </Typography>
+                  <Typography variant="body2">
+                    Managing {companies.length} Companies
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Fade>
+        )}
+
+        <Box 
+          sx={{ 
+            display: 'flex',
+            gap: 2,
+            mb: 4,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' }
+          }}
+        >
+          <TextField
+            placeholder="Search companies..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            fullWidth
+            sx={{ 
+              flex: { xs: '1', sm: '1 1 50%' },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                bgcolor: 'background.paper',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+
           <Box 
             sx={{ 
               display: 'flex',
-              alignItems: 'center',
               gap: 2,
-              mb: 6,
-              width: '100%',
-              maxWidth: 600,
-              mx: 'auto'
+              width: { xs: '100%', sm: 'auto' }
             }}
           >
-            <TextField
-              placeholder="Search companies..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              fullWidth
-              sx={{ 
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 3,
-                  bgcolor: 'background.paper',
-                  boxShadow: theme.shadows[2],
-                  '&:hover': {
-                    boxShadow: theme.shadows[4]
-                  }
-                }
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <IconButton 
-              onClick={() => navigate('/admin/login')}
-              sx={{ 
-                bgcolor: 'primary.main',
-                color: 'white',
-                boxShadow: theme.shadows[2],
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                  boxShadow: theme.shadows[4]
-                }
-              }}
-            >
-              <LoginIcon />
-            </IconButton>
+            <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
+              <InputLabel>Filter</InputLabel>
+              <Select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                label="Filter"
+              >
+                <MenuItem value="all">All Companies</MenuItem>
+                <MenuItem value="withExpiring">With Expiring IDs</MenuItem>
+                <MenuItem value="withExpired">With Expired IDs</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
+              <InputLabel>Sort By</InputLabel>
+              <Select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                label="Sort By"
+              >
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="expiringCount">Expiring IDs</MenuItem>
+                <MenuItem value="totalIds">Total IDs</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
-        </Fade>
+        </Box>
 
         <Fade in timeout={1000}>
           <Grid container spacing={3}>
-            {filteredCompanies.map((company) => (
+            {filteredAndSortedCompanies.map((company) => (
               <Grid item xs={12} sm={6} md={4} key={company._id}>
                 <Card 
                   onClick={() => navigate(`/company/${company._id}/individuals`)}
@@ -151,7 +225,6 @@ function CompanyList() {
                     overflow: 'hidden',
                     position: 'relative',
                     height: '100%',
-                    bgcolor: 'background.paper',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: theme.shadows[8],
@@ -163,20 +236,29 @@ function CompanyList() {
                 >
                   <Box 
                     sx={{ 
-                      height: 8, 
+                      height: 6, 
                       bgcolor: 'primary.main',
                       width: '100%'
                     }} 
                   />
                   <CardContent sx={{ p: 3 }}>
                     <Box display="flex" alignItems="center" gap={2} mb={2}>
-                      <BusinessIcon color="primary" fontSize="large" />
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          width: 56,
+                          height: 56
+                        }}
+                      >
+                        <BusinessIcon fontSize="large" />
+                      </Avatar>
                       <Box>
                         <Typography variant="h6" fontWeight="bold">
                           {company.name}
                         </Typography>
                         <Chip 
-                          label={`${company.individuals?.length || 0} Individuals`}
+                          label={`${company.individuals?.length || 0} IDs`}
                           size="small"
                           sx={{ 
                             bgcolor: 'primary.light',
@@ -187,11 +269,11 @@ function CompanyList() {
                         />
                       </Box>
                     </Box>
-                    
+
                     <Divider sx={{ my: 2 }} />
-                    
+
                     <Box sx={{ pl: 1 }}>
-                      <Box display="flex" alignItems="center" gap={1} mb={1}>
+                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
                         <LocationIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
                           {company.address}
@@ -204,6 +286,26 @@ function CompanyList() {
                         </Typography>
                       </Box>
                     </Box>
+
+                    {(company.hasExpiringIds || company.hasExpiredIds) && (
+                      <Box 
+                        sx={{ 
+                          position: 'absolute',
+                          top: 16,
+                          right: 16,
+                        }}
+                      >
+                        <Chip
+                          label={company.hasExpiredIds ? 'Expired IDs' : 'Expiring IDs'}
+                          size="small"
+                          sx={{ 
+                            bgcolor: company.hasExpiredIds ? 'error.light' : 'warning.light',
+                            color: company.hasExpiredIds ? 'error.dark' : 'warning.dark',
+                            fontWeight: 'medium'
+                          }}
+                        />
+                      </Box>
+                    )}
 
                     <IconButton 
                       className="arrow-icon"
