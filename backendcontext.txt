@@ -1,0 +1,62 @@
+Overview: • This is an internal web-based system to manage ID cards. The system replaces a manual Excel process and is designed for use by 6–7 employees. • The data is organized into 3 main persons, each having roughly 150 companies. Under each company, 4–7 individuals have been issued an ID card. • The backend is built using Node.js, Express, and MongoDB (MERN stack). It exposes a RESTful API with admin authentication for modifications, while viewing is public.
+
+Models:
+
+User Model (Admin only): • Fields:
+
+_id: ObjectId
+username: String (required)
+password: String (hashed, required)
+role: String (default: 'admin')
+createdAt, updatedAt (timestamps)
+MainPerson Model: • Fields:
+
+_id: ObjectId
+name: String (required)
+contactInfo: {
+  phone: String,
+  email: String
+}
+description: String
+Company Model: • Fields:
+
+_id: ObjectId
+name: String (required)
+mainPerson: ObjectId (ref: MainPerson, required)
+companyCode: String
+address: String
+Individual (ID Card) Model: • Fields:
+
+_id: ObjectId
+name: String (required)
+phoneNumber: String
+idNumber: String (unique, required) – represents the ID card number
+expiryDate: Date (required)
+company: ObjectId (ref: Company, required)
+notes: String
+Routes & Endpoints:
+
+Authentication: • POST /api/auth/admin/login – Authenticate admin user and return a token
+
+Main Persons: • GET /api/main-persons – Retrieve a list of all 3 main persons (Public) • POST /api/main-persons – Create a new main person (Admin only) • PUT /api/main-persons/:id – Update a main person's details (Admin only)
+
+Companies: • GET /api/companies?mainPersonId={id} – Retrieve companies under a specific main person (Public) • GET /api/companies/:id – Retrieve details of a specific company (Public) • POST /api/companies – Create a new company (Admin only) • PUT /api/companies/:id – Update a company (Admin only) • DELETE /api/companies/:id – Delete a company (Admin only)
+
+Individuals (ID Cards): • GET /api/individuals?companyId={id}&search={query}&sort={field}&order={asc|desc} – Retrieve a list of individuals for a given company with optional search, sort, and filter parameters (Public) • GET /api/individuals/:id – Retrieve details of a specific individual (Public) • POST /api/individuals – Create a new individual record (Admin only) • PUT /api/individuals/:id – Update an individual record (Admin only) • DELETE /api/individuals/:id – Delete an individual record (Admin only)
+
+Notifications & Alerts: • GET /api/notifications?days={n} – Retrieve individuals with expiring IDs (Public)
+
+Business Logic: • IDs expiring within 10 days: Mark with an "orange alert" • IDs expiring within 5 days: Mark with a "red alert"
+
+Authentication & Security: • JWT-based authentication for admin routes • adminProtect middleware to secure admin-only routes • Public access for all GET routes • Admin authentication required for all modification operations (POST, PUT, DELETE)
+
+Additional Considerations: • Use Mongoose for schema definitions and data modeling • Implement pagination for endpoints that might return large lists • Environment variables:
+
+- PORT: Server port number
+- MONGODB_URI: Database connection string
+- JWT_SECRET: Secret for JWT signing
+- NODE_ENV: Development/Production environment
+
+Error Handling: • Consistent error response format • Proper HTTP status codes • Validation error handling • Try-catch blocks for async operations
+
+Dependencies: • express: Web framework • mongoose: MongoDB ODM • jsonwebtoken: JWT authentication • bcryptjs: Password hashing • cors: Cross-origin resource sharing • dotenv: Environment variables

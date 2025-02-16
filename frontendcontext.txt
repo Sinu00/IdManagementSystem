@@ -1,0 +1,12 @@
+Overview: This is an internal web-based system designed to manage ID cards, replacing a manual, Excel-based process. It is built for use by a small group of employees (6–7 users).
+
+Data Structure: • There are 3 main persons responsible for issuing or establishing the ID cards. • Under each of these 3 persons, approximately 150 companies are managed. • Each company has between 4 and 7 individuals who are issued an ID card. • For each individual, details such as name, phone number, ID number, expiry date, and other related data are stored.
+
+User Interface Flow:
+
+Home Page: – Displays 3 cards, one for each of the 3 main persons. – The employee selects one of these cards.
+Second Page: – Shows a list of companies associated with the selected main person. – Displays the individuals under each company.
+Detail View: – When a company is clicked, detailed information (e.g., name, phone number, ID expiry date) of the individuals is shown.
+Key Functionalities: • Expiry Alerts: – IDs expiring in 10 days: Highlight with an orange border. – IDs expiring in under 5 days: Highlight with a red border. • Search, Sort, and Filter: – Search by company name and other metrics. – Options to sort and filter the data. • Notification Section: – Displays all individuals whose IDs are nearing expiration.
+
+Admin Functionality: • Regular users are allowed to view all the data. • Admin users have additional capabilities: – Edit or delete companies. – Edit or delete persons (i.e., individual ID records) under each company.
