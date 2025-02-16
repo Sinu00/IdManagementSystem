@@ -1,127 +1,74 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
+  Box,
   Container,
+  TextField,
+  IconButton,
   Grid,
   Card,
   CardContent,
   Typography,
-  Box,
+  InputAdornment,
   CircularProgress,
-  TextField,
-  Button,
-  IconButton,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Pagination,
-  InputAdornment
+  Fade,
+  Chip,
+  Divider,
+  useTheme
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LoginIcon from '@mui/icons-material/Login';
-import SearchIcon from '@mui/icons-material/Search';
-import { companyApi, mainPersonApi } from '../services/api';
+import {
+  Search as SearchIcon,
+  Business as BusinessIcon,
+  LocationOn as LocationIcon,
+  Phone as PhoneIcon,
+  ArrowForward as ArrowForwardIcon,
+  Login as LoginIcon
+} from '@mui/icons-material';
+import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import CompanyDialog from '../components/dialogs/CompanyDialog';
-import ConfirmDialog from '../components/dialogs/ConfirmDialog';
-import ErrorAlert from '../components/ErrorAlert';
 
 function CompanyList() {
-  const { id: mainPersonId } = useParams();
   const [companies, setCompanies] = useState([]);
-  const [mainPerson, setMainPerson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [sort, setSort] = useState('name');
-  const [page, setPage] = useState(1);
-  const { admin } = useAuth();
+  const { id: mainPersonId } = useParams();
   const navigate = useNavigate();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [companyToDelete, setCompanyToDelete] = useState(null);
-  const [error, setError] = useState('');
+  const theme = useTheme();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCompanies = async () => {
       try {
-        const [companiesRes, mainPersonRes] = await Promise.all([
-          companyApi.getByMainPerson(mainPersonId),
-          mainPersonApi.getAll()
-        ]);
-        setCompanies(companiesRes.data);
-        setMainPerson(mainPersonRes.data.find(p => p._id === mainPersonId));
+        setLoading(true);
+        const response = await companyApi.getByMainPerson(mainPersonId);
+        setCompanies(response.data);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching companies:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchCompanies();
   }, [mainPersonId]);
 
   const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(search.toLowerCase())
+    company.name.toLowerCase().includes(search.toLowerCase()) ||
+    company.address.toLowerCase().includes(search.toLowerCase())
   );
-
-  const handleAdd = () => {
-    setSelectedCompany(null);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (company) => {
-    setSelectedCompany(company);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = (company) => {
-    setCompanyToDelete(company);
-    setConfirmDialogOpen(true);
-  };
-
-  const handleSubmit = async (formData) => {
-    try {
-      if (selectedCompany) {
-        await companyApi.update(selectedCompany._id, { ...formData, mainPerson: mainPersonId });
-      } else {
-        await companyApi.create({ ...formData, mainPerson: mainPersonId });
-      }
-      const response = await companyApi.getByMainPerson(mainPersonId);
-      setCompanies(response.data);
-      setDialogOpen(false);
-    } catch (error) {
-      setError(error.response?.data?.message || 'Error saving company');
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      await companyApi.delete(companyToDelete._id);
-      const response = await companyApi.getByMainPerson(mainPersonId);
-      setCompanies(response.data);
-      setConfirmDialogOpen(false);
-    } catch (error) {
-      setError(error.response?.data?.message || 'Error deleting company');
-    }
-  };
 
   if (loading) {
     return (
       <Box 
         sx={{ 
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          minHeight: '100vh',
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#ffffff'
+          alignItems: 'center',
+          bgcolor: 'background.default'
         }}
       >
-        <CircularProgress size={60} />
+        <CircularProgress size={40} />
       </Box>
     );
   }
@@ -129,139 +76,159 @@ function CompanyList() {
   return (
     <Box 
       sx={{ 
-        width: '100vw',
+        width: '100%',
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
-        py: 4
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        bgcolor: 'background.default',
+        py: 6
       }}
     >
-      {/* Search and Login Section */}
-      <Box 
-        sx={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          px: 3
-        }}
-      >
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: '600px',
-          mb: 4
-        }}>
-          <TextField
-            placeholder="Search companies..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            fullWidth
+      <Container maxWidth="lg">
+        <Fade in timeout={800}>
+          <Box 
             sx={{ 
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px'
-              }
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mb: 6,
+              width: '100%',
+              maxWidth: 600,
+              mx: 'auto'
             }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              )
-            }}
-          />
-          <IconButton 
-            onClick={() => navigate('/admin/login')}
-            sx={{ ml: 2 }}
           >
-            <LoginIcon />
-          </IconButton>
-        </Box>
-
-        {/* Filter and Sort Section */}
-        <Box sx={{ 
-          display: 'flex',
-          gap: 2,
-          mb: 4,
-          width: '100%',
-          maxWidth: '600px'
-        }}>
-          <FormControl fullWidth>
-            <InputLabel>Filter</InputLabel>
-            <Select
-              value={filter}
-              label="Filter"
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <MenuItem value="all">All Companies</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel>Sort By</InputLabel>
-            <Select
-              value={sort}
-              label="Sort By"
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <MenuItem value="name">Name</MenuItem>
-              <MenuItem value="recent">Most Recent</MenuItem>
-              <MenuItem value="oldest">Oldest</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-
-        {/* Companies Grid */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {filteredCompanies.map((company) => (
-            <Grid item xs={12} sm={6} md={3} key={company._id}>
-              <Card 
-                onClick={() => navigate(`/company/${company._id}/individuals`)}
-                sx={{ 
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                  height: '100%',
+            <TextField
+              placeholder="Search companies..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              fullWidth
+              sx={{ 
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                  bgcolor: 'background.paper',
+                  boxShadow: theme.shadows[2],
                   '&:hover': {
-                    transform: 'scale(1.02)',
-                    boxShadow: 3
-                  },
-                  borderRadius: '8px'
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {company.name}
-                  </Typography>
-                  <Typography color="text.secondary" variant="body2">
-                    {company.address}
-                  </Typography>
-                  <Typography color="text.secondary" variant="body2">
-                    {company.contactNumber}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                    boxShadow: theme.shadows[4]
+                  }
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                )
+              }}
+            />
+            <IconButton 
+              onClick={() => navigate('/admin/login')}
+              sx={{ 
+                bgcolor: 'primary.main',
+                color: 'white',
+                boxShadow: theme.shadows[2],
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                  boxShadow: theme.shadows[4]
+                }
+              }}
+            >
+              <LoginIcon />
+            </IconButton>
+          </Box>
+        </Fade>
 
-        {/* Pagination */}
-        <Pagination 
-          count={10} 
-          page={page} 
-          onChange={(e, value) => setPage(value)}
-          color="primary"
-          shape="rounded"
-          showFirstButton
-          showLastButton
-          sx={{
-            '& .MuiPagination-ul': { gap: 1 }
-          }}
-        />
-      </Box>
+        <Fade in timeout={1000}>
+          <Grid container spacing={3}>
+            {filteredCompanies.map((company) => (
+              <Grid item xs={12} sm={6} md={4} key={company._id}>
+                <Card 
+                  onClick={() => navigate(`/company/${company._id}/individuals`)}
+                  sx={{ 
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease-in-out',
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    height: '100%',
+                    bgcolor: 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8],
+                      '& .arrow-icon': {
+                        transform: 'translateX(4px)'
+                      }
+                    }
+                  }}
+                >
+                  <Box 
+                    sx={{ 
+                      height: 8, 
+                      bgcolor: 'primary.main',
+                      width: '100%'
+                    }} 
+                  />
+                  <CardContent sx={{ p: 3 }}>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                      <BusinessIcon color="primary" fontSize="large" />
+                      <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                          {company.name}
+                        </Typography>
+                        <Chip 
+                          label={`${company.individuals?.length || 0} Individuals`}
+                          size="small"
+                          sx={{ 
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                            fontWeight: 'medium',
+                            mt: 0.5
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                    
+                    <Divider sx={{ my: 2 }} />
+                    
+                    <Box sx={{ pl: 1 }}>
+                      <Box display="flex" alignItems="center" gap={1} mb={1}>
+                        <LocationIcon fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {company.address}
+                        </Typography>
+                      </Box>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <PhoneIcon fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {company.contactNumber}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <IconButton 
+                      className="arrow-icon"
+                      size="small"
+                      sx={{ 
+                        position: 'absolute',
+                        right: 16,
+                        bottom: 16,
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'primary.dark'
+                        }
+                      }}
+                    >
+                      <ArrowForwardIcon />
+                    </IconButton>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Fade>
+      </Container>
     </Box>
   );
 }
