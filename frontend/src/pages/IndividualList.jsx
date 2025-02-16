@@ -17,13 +17,24 @@ import {
   Paper,
   Pagination,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  Container,
+  Fade,
+  Chip,
+  Typography,
+  useTheme,
+  Fab,
+  Divider
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import LoginIcon from '@mui/icons-material/Login';
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  FilterList as FilterListIcon,
+  Sort as SortIcon,
+} from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { format } from 'date-fns';
+import { format, isBefore, addDays } from 'date-fns';
 import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 
@@ -72,13 +83,13 @@ function IndividualList() {
     const today = new Date();
     const expiry = new Date(expiryDate);
     
-    if (isBefore(expiry, addDays(today, 5))) {
-      return 'error';
+    if (isBefore(expiry, today)) {
+      return 'Expired';
     }
-    if (isBefore(expiry, addDays(today, 10))) {
-      return 'warning';
+    if (isBefore(expiry, addDays(today, 30))) {
+      return 'Expiring Soon';
     }
-    return 'default';
+    return 'Active';
   };
 
   const handleAdd = () => {
@@ -128,176 +139,232 @@ function IndividualList() {
     return (
       <Box 
         sx={{ 
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          minHeight: '100vh',
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#ffffff'
+          alignItems: 'center',
+          bgcolor: 'background.default'
         }}
       >
-        <CircularProgress size={60} />
+        <CircularProgress size={40} />
       </Box>
     );
   }
 
   return (
     <Box 
+      component="main"
       sx={{ 
-        width: '100vw',
+        width: '100%',
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
-        py: 4
+        bgcolor: 'background.default',
+        paddingTop: '24px',
+        paddingBottom: '24px'
       }}
     >
-      <Box 
-        sx={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          px: 3
+      <Container 
+        maxWidth="lg"
+        sx={{
+          height: '100%'
         }}
       >
-        {/* Search and Login Section */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: '600px',
-          mb: 4
-        }}>
-          <TextField
-            placeholder="Search individuals..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            fullWidth
-            sx={{ 
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px'
-              }
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              )
-            }}
-          />
-          <IconButton 
-            onClick={() => navigate('/admin/login')}
-            sx={{ ml: 2 }}
-          >
-            <LoginIcon />
-          </IconButton>
-        </Box>
+        <Fade in timeout={800}>
+          <Box>
+            {/* Company Info Header */}
+            {company && (
+              <Box 
+                sx={{ 
+                  mb: 3,
+                  p: 3,
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                }}
+              >
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                  {company.name}
+                </Typography>
+                <Typography color="text.secondary">
+                  {company.address}
+                </Typography>
+              </Box>
+            )}
 
-        {/* Filter and Sort Section */}
-        <Box sx={{ 
-          display: 'flex',
-          gap: 2,
-          mb: 4,
-          width: '100%',
-          maxWidth: '600px'
-        }}>
-          <FormControl fullWidth>
-            <InputLabel>Filter</InputLabel>
-            <Select
-              value={filter}
-              label="Filter"
-              onChange={(e) => setFilter(e.target.value)}
+            {/* Controls Section */}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                gap: 2, 
+                mb: 3,
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' }
+              }}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="expired">Expired</MenuItem>
-            </Select>
-          </FormControl>
+              <TextField
+                placeholder="Search individuals..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+                sx={{ 
+                  flex: { xs: '1', sm: '1 1 50%' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
 
-          <FormControl fullWidth>
-            <InputLabel>Sort By</InputLabel>
-            <Select
-              value={sort}
-              label="Sort By"
-              onChange={(e) => setSort(e.target.value)}
+              <Box 
+                sx={{ 
+                  display: 'flex',
+                  gap: 2,
+                  width: { xs: '100%', sm: 'auto' }
+                }}
+              >
+                <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
+                  <InputLabel>Filter</InputLabel>
+                  <Select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    label="Filter"
+                  >
+                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="expired">Expired</MenuItem>
+                    <MenuItem value="expiring">Expiring Soon</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                    label="Sort By"
+                  >
+                    <MenuItem value="name">Name</MenuItem>
+                    <MenuItem value="expiryDate">Expiry Date</MenuItem>
+                    <MenuItem value="issueDate">Issue Date</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+
+            {/* Table Section */}
+            <TableContainer 
+              component={Paper}
+              sx={{ 
+                borderRadius: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                overflow: 'hidden'
+              }}
             >
-              <MenuItem value="name">Name</MenuItem>
-              <MenuItem value="recent">Most Recent</MenuItem>
-              <MenuItem value="expiry">Expiry Date</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'primary.main' }}>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Name</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>ID Number</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Position</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Issue Date</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Expiry Date</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {individuals.map((individual) => {
+                    const status = getExpiryStatus(individual.expiryDate);
+                    return (
+                      <TableRow 
+                        key={individual._id}
+                        sx={{ 
+                          '&:hover': { 
+                            bgcolor: 'action.hover',
+                            cursor: 'pointer'
+                          },
+                          transition: 'background-color 0.2s'
+                        }}
+                        onClick={() => handleEdit(individual)}
+                      >
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{individual.name}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{individual.idNumber}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{individual.position}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{format(new Date(individual.issueDate), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{format(new Date(individual.expiryDate), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={status}
+                            size="small"
+                            sx={{ 
+                              bgcolor: 
+                                status === 'Active' ? 'success.light' :
+                                status === 'Expired' ? 'error.light' :
+                                'warning.light',
+                              color: 
+                                status === 'Active' ? 'success.dark' :
+                                status === 'Expired' ? 'error.dark' :
+                                'warning.dark',
+                              fontWeight: 'medium'
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-        {/* Table Section */}
-        <TableContainer 
-          component={Paper} 
-          sx={{ 
-            mb: 4,
-            borderRadius: '8px',
-            boxShadow: 2
-          }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                <TableCell>Name</TableCell>
-                <TableCell>ID Number</TableCell>
-                <TableCell>Position</TableCell>
-                <TableCell>Issue Date</TableCell>
-                <TableCell>Expiry Date</TableCell>
-                <TableCell>Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {individuals.map((individual) => (
-                <TableRow 
-                  key={individual._id}
-                  sx={{ 
-                    '&:hover': { 
-                      backgroundColor: '#f8f8f8',
-                      cursor: 'pointer'
-                    }
-                  }}
-                >
-                  <TableCell>{individual.name}</TableCell>
-                  <TableCell>{individual.idNumber}</TableCell>
-                  <TableCell>{individual.position}</TableCell>
-                  <TableCell>{format(new Date(individual.issueDate), 'dd/MM/yyyy')}</TableCell>
-                  <TableCell>{format(new Date(individual.expiryDate), 'dd/MM/yyyy')}</TableCell>
-                  <TableCell>{individual.status}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            {/* Pagination Section */}
+            <Box 
+              sx={{ 
+                mt: 3, 
+                display: 'flex', 
+                justifyContent: 'center'
+              }}
+            >
+              <Pagination 
+                count={10} 
+                page={page} 
+                onChange={(e, value) => setPage(value)}
+                color="primary"
+                shape="rounded"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          </Box>
+        </Fade>
+      </Container>
 
-        {/* Pagination */}
-        <Pagination 
-          count={10} 
-          page={page} 
-          onChange={(e, value) => setPage(value)}
-          color="primary"
-          shape="rounded"
-          showFirstButton
-          showLastButton
-          sx={{
-            '& .MuiPagination-ul': { gap: 1 }
-          }}
-        />
-      </Box>
-
+      {/* Add Button */}
       {admin && (
         <Fab
           color="primary"
-          sx={{ position: 'fixed', bottom: 16, right: 16 }}
+          sx={{ 
+            position: 'fixed', 
+            bottom: 24, 
+            right: 24,
+            transition: 'transform 0.2s',
+            '&:hover': {
+              transform: 'scale(1.1)'
+            }
+          }}
           onClick={handleAdd}
         >
           <AddIcon />
         </Fab>
       )}
 
+      {/* Dialogs */}
       <IndividualDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
