@@ -51,28 +51,32 @@ function AdminLogin() {
     <Box
       sx={{
         minHeight: '100vh',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         bgcolor: 'background.default',
-        py: 12
+        overflow: 'hidden'
       }}
     >
-      <Container maxWidth="sm">
+      <Container maxWidth="sm" sx={{ py: 2 }}>
         <Fade in timeout={800}>
           <Paper 
             elevation={3} 
             sx={{ 
-              p: 4,
+              p: { xs: 3, sm: 4 },
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              borderRadius: 3
+              borderRadius: 3,
+              maxHeight: '90vh',
+              overflowY: 'auto'
             }}
           >
             <Avatar
               sx={{
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 bgcolor: 'primary.main',
                 mb: 2
               }}
@@ -81,27 +85,27 @@ function AdminLogin() {
             </Avatar>
 
             <Typography 
-              variant="h4" 
+              variant="h5" 
               component="h1" 
               gutterBottom 
               align="center"
               fontWeight="bold"
               color="primary"
             >
-              Welcome Back
+              Hello Admin
             </Typography>
 
             <Typography 
-              variant="body1" 
+              variant="body2" 
               color="text.secondary" 
               align="center" 
-              sx={{ mb: 4 }}
+              sx={{ mb: 3 }}
             >
               Please sign in to continue
             </Typography>
 
             {error && (
-              <Alert severity="error" sx={{ mb: 3, width: '100%' }}>
+              <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
                 {error}
               </Alert>
             )}
@@ -111,6 +115,7 @@ function AdminLogin() {
                 fullWidth
                 label="Username"
                 value={username}
+                placeholder="Enter your username"
                 onChange={(e) => setUsername(e.target.value)}
                 margin="normal"
                 required
@@ -121,7 +126,7 @@ function AdminLogin() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 3 }}
+                sx={{ mb: 2 }}
               />
 
               <TextField
@@ -129,6 +134,7 @@ function AdminLogin() {
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
+                placeholder="Enter your password"
                 onChange={(e) => setPassword(e.target.value)}
                 margin="normal"
                 required
@@ -149,7 +155,7 @@ function AdminLogin() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 4 }}
+                sx={{ mb: 3 }}
               />
 
               <Button
@@ -159,9 +165,9 @@ function AdminLogin() {
                 type="submit"
                 disabled={loading}
                 sx={{
-                  py: 1.5,
+                  py: 1.2,
                   textTransform: 'none',
-                  fontSize: '1.1rem',
+                  fontSize: '1rem',
                   fontWeight: 'bold'
                 }}
               >
