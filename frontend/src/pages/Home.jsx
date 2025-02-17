@@ -14,7 +14,9 @@ import {
   useTheme,
   Paper,
   Divider,
-  Avatar
+  Avatar,
+  Button,
+  Stack
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -24,10 +26,13 @@ import {
   Warning as WarningIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
-  LocationOn as LocationIcon
+  LocationOn as LocationIcon,
+  Login as LoginIcon,
+  PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import ProfileMenu from '../components/ProfileMenu';
 
 function Home() {
   const [mainPersons, setMainPersons] = useState([]);
@@ -36,6 +41,8 @@ function Home() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
+  const { admin, logout } = useAuth();
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,6 +70,19 @@ function Home() {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        setUsername(decoded.username);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        setUsername('');
+      }
+    }
   }, []);
 
   if (loading) {
@@ -308,6 +328,68 @@ function Home() {
             ))}
           </Grid>
         </Fade>
+
+        <Box sx={{ 
+          position: 'fixed', 
+          bottom: 0, 
+          left: 0, 
+          right: 0, 
+          p: 3, 
+          bgcolor: 'background.paper',
+          borderTop: 1,
+          borderColor: 'divider'
+        }}>
+          <Container maxWidth="lg">
+            <Stack 
+              direction="row" 
+              spacing={2} 
+              justifyContent="center"
+              alignItems="center"
+            >
+              {admin ? (
+                <ProfileMenu 
+                  username={username} 
+                  onLogout={() => {
+                    logout();
+                    setUsername('');
+                  }} 
+                />
+              ) : (
+                <Button
+                  variant="contained"
+                  startIcon={<LoginIcon />}
+                  onClick={() => navigate('/admin/login')}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    minWidth: 200
+                  }}
+                >
+                  Admin Login
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                startIcon={<PdfIcon />}
+                onClick={() => {
+                  // Add your PDF generation logic here
+                  console.log('Generate PDF');
+                }}
+                sx={{
+                  bgcolor: 'secondary.main',
+                  '&:hover': {
+                    bgcolor: 'secondary.dark',
+                  },
+                  minWidth: 200
+                }}
+              >
+                Print PDF
+              </Button>
+            </Stack>
+          </Container>
+        </Box>
       </Container>
     </Box>
   );

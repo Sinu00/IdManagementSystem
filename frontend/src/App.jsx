@@ -4,11 +4,13 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './theme';
 import { AuthProvider } from './context/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const Home = lazy(() => import('./pages/Home'));
 const CompanyList = lazy(() => import('./pages/CompanyList'));
 const IndividualList = lazy(() => import('./pages/IndividualList'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 
 function App() {
   return (
@@ -22,6 +24,11 @@ function App() {
               <Route path="/main-person/:id/companies" element={<CompanyList />} />
               <Route path="/company/:id/individuals" element={<IndividualList />} />
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              } />
             </Routes>
           </Suspense>
         </BrowserRouter>

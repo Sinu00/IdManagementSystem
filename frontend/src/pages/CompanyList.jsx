@@ -20,7 +20,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Avatar
+  Avatar,
+  Button
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,10 +31,12 @@ import {
   ArrowForward as ArrowForwardIcon,
   Sort as SortIcon,
   FilterList as FilterListIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Login as LoginIcon
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import ProfileMenu from '../components/ProfileMenu';
 
 function CompanyList() {
   const [companies, setCompanies] = useState([]);
@@ -45,6 +48,8 @@ function CompanyList() {
   const navigate = useNavigate();
   const theme = useTheme();
   const [mainPerson, setMainPerson] = useState(null);
+  const { admin, logout } = useAuth();
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,6 +70,19 @@ function CompanyList() {
     fetchData();
   }, [mainPersonId]);
 
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        setUsername(decoded.username);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        setUsername('');
+      }
+    }
+  }, []);
+
   const filteredAndSortedCompanies = companies
     .filter(company => {
       if (filter === 'all') return true;
@@ -82,6 +100,11 @@ function CompanyList() {
       company.name.toLowerCase().includes(search.toLowerCase()) ||
       company.address.toLowerCase().includes(search.toLowerCase())
     );
+
+  const handleLogout = () => {
+    logout();
+    setUsername('');
+  };
 
   if (loading) {
     return (
@@ -123,24 +146,27 @@ function CompanyList() {
                 color: 'primary.dark'
               }}
             >
-              <Box display="flex" alignItems="center" gap={2}>
-                <Avatar 
-                  sx={{ 
-                    bgcolor: 'primary.main',
-                    width: 48,
-                    height: 48
-                  }}
-                >
-                  <PersonIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold">
-                    {mainPerson.name}
-                  </Typography>
-                  <Typography variant="body2">
-                    Managing {companies.length} Companies
-                  </Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                    <PersonIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      {mainPerson.name}
+                    </Typography>
+                    <Typography variant="body2">
+                      Managing {companies.length} Companies
+                    </Typography>
+                  </Box>
                 </Box>
+                
+                {admin && (
+                  <ProfileMenu 
+                    username={username} 
+                    onLogout={handleLogout}
+                  />
+                )}
               </Box>
             </Paper>
           </Fade>

@@ -25,7 +25,8 @@ import {
   TableHead,
   TableRow,
   Fab,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,7 +34,9 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Business as BusinessIcon,
-  Sort as SortIcon
+  Sort as SortIcon,
+  Login as LoginIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -41,6 +44,7 @@ import { format } from 'date-fns';
 import LoadingScreen from '../components/common/LoadingScreen';
 import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
+import ProfileMenu from '../components/ProfileMenu';
 
 function IndividualList() {
   const { id: companyId } = useParams();
@@ -48,7 +52,7 @@ function IndividualList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [company, setCompany] = useState(null);
-  const { admin } = useAuth();
+  const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -57,6 +61,7 @@ function IndividualList() {
   const [selectedIndividual, setSelectedIndividual] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [individualToDelete, setIndividualToDelete] = useState(null);
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,6 +84,19 @@ function IndividualList() {
 
     fetchData();
   }, [companyId]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        setUsername(decoded.username);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        setUsername('');
+      }
+    }
+  }, []);
 
   const filteredData = useMemo(() => {
     return allIndividuals
@@ -161,6 +179,11 @@ function IndividualList() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    setUsername('');
+  };
+
   if (loading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error}</Alert>;
 
@@ -179,18 +202,27 @@ function IndividualList() {
                 color: 'primary.dark'
               }}
             >
-              <Box display="flex" alignItems="center" gap={2}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                  <BusinessIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold">
-                    {company.name}
-                  </Typography>
-                  <Typography variant="body2">
-                    Managing {filteredData.length} Individuals
-                  </Typography>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                    <BusinessIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      {company.name}
+                    </Typography>
+                    <Typography variant="body2">
+                      Managing {filteredData.length} Individuals
+                    </Typography>
+                  </Box>
                 </Box>
+                
+                {admin && (
+                  <ProfileMenu 
+                    username={username} 
+                    onLogout={handleLogout}
+                  />
+                )}
               </Box>
             </Paper>
           </Fade>
