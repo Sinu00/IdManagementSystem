@@ -26,7 +26,10 @@ import {
   TableRow,
   Fab,
   Alert,
-  Button
+  Button,
+  Card,
+  CardContent,
+  Divider
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -36,7 +39,9 @@ import {
   Business as BusinessIcon,
   Sort as SortIcon,
   Login as LoginIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Badge as BadgeIcon,
+  CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -62,6 +67,7 @@ function IndividualList() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [individualToDelete, setIndividualToDelete] = useState(null);
   const [username, setUsername] = useState('');
+  const theme = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -184,6 +190,20 @@ function IndividualList() {
     setUsername('');
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Active':
+        return 'success.main';
+      case 'Expired':
+        return 'error.main';
+      case 'Critical':
+      case 'Warning':
+        return 'warning.main';
+      default:
+        return 'grey.400';
+    }
+  };
+
   if (loading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error}</Alert>;
 
@@ -228,7 +248,18 @@ function IndividualList() {
           </Fade>
         )}
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            gap: 2, 
+            mb: 4, 
+            flexDirection: { xs: 'column', sm: 'row' },
+            backgroundColor: 'white',
+            p: 2,
+            borderRadius: 2,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
           <TextField
             fullWidth
             placeholder="Search individuals..."
@@ -241,10 +272,15 @@ function IndividualList() {
                 </InputAdornment>
               ),
             }}
-            sx={{ flex: 1 }}
+            sx={{ 
+              flex: 1,
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'background.paper'
+              }
+            }}
           />
           
-          <FormControl sx={{ minWidth: 120 }}>
+          <FormControl sx={{ minWidth: 150 }}>
             <InputLabel>Status</InputLabel>
             <Select
               value={filter}
@@ -259,7 +295,7 @@ function IndividualList() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 120 }}>
+          <FormControl sx={{ minWidth: 150 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sort}
@@ -274,40 +310,45 @@ function IndividualList() {
         </Box>
 
         <Fade in timeout={1000}>
-          <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Iqama Number</TableCell>
-                  <TableCell>Nationality</TableCell>
-                  <TableCell>Expiry Date</TableCell>
-                  <TableCell align="center">Status</TableCell>
-                  {admin && <TableCell align="center">Actions</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((individual) => {
-                    const status = calculateStatus(individual.expiryDate);
-                    return (
-                      <TableRow 
-                        key={individual._id}
-                        sx={{ 
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                          }
-                        }}
-                      >
-                        <TableCell>{individual.name}</TableCell>
-                        <TableCell>{individual.iqamaNumber}</TableCell>
-                        <TableCell>{individual.nationality}</TableCell>
-                        <TableCell>
-                          {individual.expiryDate ? 
-                            format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
-                            'N/A'}
-                        </TableCell>
-                        <TableCell align="center">
+          <Grid container spacing={3}>
+            {filteredData.length > 0 ? (
+              filteredData.map((individual) => {
+                const status = calculateStatus(individual.expiryDate);
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={individual._id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        borderRadius: 3,
+                        transition: 'all 0.3s ease',
+                        position: 'relative',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: theme.shadows[8]
+                        }
+                      }}
+                    >
+                      <Box sx={{ height: 6, bgcolor: getStatusColor(status), width: '100%' }} />
+                      <CardContent sx={{ p: 3 }}>
+                        <Box display="flex" alignItems="center" gap={2} mb={2}>
+                          <Avatar 
+                            sx={{ 
+                              width: 48, 
+                              height: 48,
+                              bgcolor: 'primary.light',
+                              color: 'primary.main'
+                            }}
+                          >
+                            {individual.name?.charAt(0)}
+                          </Avatar>
+                          <Box flex={1}>
+                            <Typography variant="h6" fontWeight="bold">
+                              {individual.name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {individual.nationality}
+                            </Typography>
+                          </Box>
                           <Chip 
                             label={status}
                             color={
@@ -316,14 +357,51 @@ function IndividualList() {
                               'warning'
                             }
                             size="small"
+                            sx={{ 
+                              fontWeight: 'medium',
+                              minWidth: 80
+                            }}
                           />
-                        </TableCell>
+                        </Box>
+
+                        <Divider sx={{ my: 2 }} />
+
+                        <Grid container spacing={2}>
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              Iqama: {individual.iqamaNumber}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary">
+                              <CalendarIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              Expiry: {individual.expiryDate ? 
+                                format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
+                                'N/A'}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+
                         {admin && (
-                          <TableCell align="center">
+                          <Box 
+                            sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'flex-end',
+                              mt: 2,
+                              gap: 1
+                            }}
+                          >
                             <IconButton 
                               size="small" 
                               color="primary"
                               onClick={() => handleEdit(individual)}
+                              sx={{ 
+                                '&:hover': {
+                                  transform: 'scale(1.1)',
+                                  bgcolor: 'primary.light'
+                                }
+                              }}
                             >
                               <EditIcon />
                             </IconButton>
@@ -331,26 +409,45 @@ function IndividualList() {
                               size="small" 
                               color="error"
                               onClick={() => handleDelete(individual)}
+                              sx={{ 
+                                '&:hover': {
+                                  transform: 'scale(1.1)',
+                                  bgcolor: 'error.light'
+                                }
+                              }}
                             >
                               <DeleteIcon />
                             </IconButton>
-                          </TableCell>
+                          </Box>
                         )}
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <Typography color="textSecondary">
-                        No individuals found
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })
+            ) : (
+              <Grid item xs={12}>
+                <Paper 
+                  sx={{ 
+                    p: 4, 
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    bgcolor: 'background.paper'
+                  }}
+                >
+                  <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                    <PersonIcon sx={{ fontSize: 64, color: 'text.disabled' }} />
+                    <Typography color="textSecondary" variant="h6">
+                      No individuals found
+                    </Typography>
+                    <Typography color="textSecondary" variant="body2">
+                      Try adjusting your search or filters
+                    </Typography>
+                  </Box>
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
         </Fade>
 
         {admin && (
@@ -361,9 +458,9 @@ function IndividualList() {
               position: 'fixed', 
               bottom: 24, 
               right: 24,
-              transition: 'transform 0.2s',
+              transition: 'all 0.2s ease',
               '&:hover': {
-                transform: 'scale(1.1)'
+                transform: 'scale(1.1) rotate(90deg)'
               }
             }}
           >
