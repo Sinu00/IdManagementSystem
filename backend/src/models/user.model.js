@@ -14,8 +14,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
+      required: true,
       default: "admin",
     },
+    allowedMainPersons: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MainPerson"
+    }]
   },
   { timestamps: true }
 );

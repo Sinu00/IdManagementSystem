@@ -41,7 +41,7 @@ function Home() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
-  const { admin, logout } = useAuth();
+  const { admin, logout, allowedMainPersons } = useAuth();
   const [username, setUsername] = useState('');
 
   useEffect(() => {
@@ -85,12 +85,16 @@ function Home() {
     }
   }, []);
 
+  const isMainPersonAllowed = (mainPersonId) => {
+    return !admin || allowedMainPersons.includes(mainPersonId);
+  };
+
   if (loading) {
     return (
       <Box 
         sx={{ 
           width: '100%',
-          minHeight: '100vh',
+          height: '100vh',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -103,15 +107,14 @@ function Home() {
   }
 
   return (
-    <Box 
-      sx={{ 
-        width: '100%',
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        pt: 4,
-        pb: 6
-      }}
-    >
+    <Box sx={{ 
+      minHeight: '100vh',
+      bgcolor: 'background.default',
+      display: 'flex',
+      flexDirection: 'column',
+      pb: 0,
+      pt: 4
+    }}>
       <Container maxWidth="lg">
         {error && (
           <Alert 
@@ -128,14 +131,14 @@ function Home() {
 
         {stats && (
           <Fade in timeout={800}>
-            <Grid container spacing={3} sx={{ mb: 6 }}>
-              <Grid item xs={12} sm={4}>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
-                    p: 3, 
+                    p: 3,
                     bgcolor: 'primary.light',
-                    borderRadius: 3,
+                    borderRadius: 4,
                     position: 'relative',
                     overflow: 'hidden'
                   }}
@@ -166,7 +169,7 @@ function Home() {
                 <Paper 
                   elevation={0}
                   sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 3 }, 
                     bgcolor: 'warning.light',
                     borderRadius: 3,
                     position: 'relative',
@@ -199,7 +202,7 @@ function Home() {
                 <Paper 
                   elevation={0}
                   sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 3 }, 
                     bgcolor: 'error.light',
                     borderRadius: 3,
                     position: 'relative',
@@ -232,42 +235,49 @@ function Home() {
         )}
 
         <Fade in timeout={1000}>
-          <Grid container spacing={3}>
+          <Grid 
+            container 
+            spacing={3}
+            sx={{ 
+              position: 'relative',
+              zIndex: 1,
+              mb: 10
+            }}
+          >
             {mainPersons.map((person) => (
-              <Grid item xs={12} sm={6} md={4} key={person._id}>
+              <Grid item xs={12} sm={6} lg={4} key={person._id}>
                 <Card 
-                  onClick={() => navigate(`/main-person/${person._id}/companies`)}
+                  onClick={() => isMainPersonAllowed(person._id) && navigate(`/main-person/${person._id}/companies`)}
                   sx={{ 
-                    cursor: 'pointer',
+                    cursor: isMainPersonAllowed(person._id) ? 'pointer' : 'not-allowed',
                     transition: 'all 0.3s ease-in-out',
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    position: 'relative',
+                    borderRadius: 4,
                     height: '100%',
-                    '&:hover': {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    opacity: isMainPersonAllowed(person._id) ? 1 : 0.6,
+                    filter: isMainPersonAllowed(person._id) ? 'none' : 'grayscale(100%)',
+                    '&:hover': isMainPersonAllowed(person._id) ? {
                       transform: 'translateY(-4px)',
-                      boxShadow: theme.shadows[8],
-                      '& .arrow-icon': {
-                        transform: 'translateX(4px)'
-                      }
-                    }
+                      boxShadow: theme.shadows[8]
+                    } : {}
                   }}
                 >
                   <Box 
                     sx={{ 
-                      height: 6, 
-                      bgcolor: 'primary.main',
+                      height: 8,
+                      bgcolor: isMainPersonAllowed(person._id) ? 'primary.main' : 'grey.400',
                       width: '100%'
                     }} 
                   />
-                  <CardContent sx={{ p: 3 }}>
+                  <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Box display="flex" alignItems="center" gap={2} mb={2}>
                       <Avatar 
                         sx={{ 
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          width: 56,
-                          height: 56
+                          bgcolor: isMainPersonAllowed(person._id) ? 'primary.light' : 'grey.300',
+                          color: isMainPersonAllowed(person._id) ? 'primary.main' : 'grey.500',
+                          width: 56, 
+                          height: 56 
                         }}
                       >
                         <PersonIcon fontSize="large" />
@@ -286,42 +296,53 @@ function Home() {
 
                     <Box sx={{ pl: 1 }}>
                       <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                        <EmailIcon fontSize="small" color="action" />
+                        <EmailIcon 
+                          fontSize="small" 
+                          color={isMainPersonAllowed(person._id) ? "action" : "disabled"} 
+                        />
                         <Typography variant="body2" color="text.secondary">
                           {person.email}
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                        <PhoneIcon fontSize="small" color="action" />
+                        <PhoneIcon 
+                          fontSize="small" 
+                          color={isMainPersonAllowed(person._id) ? "action" : "disabled"} 
+                        />
                         <Typography variant="body2" color="text.secondary">
                           {person.contactNumber}
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center" gap={1}>
-                        <LocationIcon fontSize="small" color="action" />
+                        <LocationIcon 
+                          fontSize="small" 
+                          color={isMainPersonAllowed(person._id) ? "action" : "disabled"} 
+                        />
                         <Typography variant="body2" color="text.secondary">
                           {person.address}
                         </Typography>
                       </Box>
                     </Box>
 
-                    <IconButton 
-                      className="arrow-icon"
-                      size="small"
-                      sx={{ 
-                        position: 'absolute',
-                        right: 16,
-                        bottom: 16,
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          bgcolor: 'primary.dark'
-                        }
-                      }}
-                    >
-                      <ArrowForwardIcon />
-                    </IconButton>
+                    {isMainPersonAllowed(person._id) && (
+                      <IconButton 
+                        className="arrow-icon"
+                        size="small"
+                        sx={{ 
+                          position: 'absolute',
+                          right: 16,
+                          bottom: 12,
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            bgcolor: 'primary.dark'
+                          }
+                        }}
+                      >
+                        <ArrowForwardIcon />
+                      </IconButton>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
@@ -329,30 +350,34 @@ function Home() {
           </Grid>
         </Fade>
 
-        <Box sx={{ 
-          position: 'fixed', 
-          bottom: 0, 
-          left: 0, 
-          right: 0, 
-          p: 3, 
-          bgcolor: 'background.paper',
-          borderTop: 1,
-          borderColor: 'divider'
-        }}>
+        <Box 
+          sx={{ 
+            width: '100%',
+            mt: 'auto',
+            py: 3,
+            px: 2,
+            bgcolor: 'background.paper',
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+            boxShadow: '0px -4px 20px rgba(0, 0, 0, 0.08)',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10
+          }}
+        >
           <Container maxWidth="lg">
             <Stack 
-              direction="row" 
-              spacing={2} 
-              justifyContent="center"
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={3}
               alignItems="center"
+              justifyContent="center"
             >
               {admin ? (
                 <ProfileMenu 
                   username={username} 
-                  onLogout={() => {
-                    logout();
-                    setUsername('');
-                  }} 
+                  onLogout={logout}
                 />
               ) : (
                 <Button
@@ -361,10 +386,17 @@ function Home() {
                   onClick={() => navigate('/admin/login')}
                   sx={{
                     bgcolor: 'primary.main',
+                    color: 'white',
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: 3,
+                    minWidth: { xs: '100%', sm: 200 },
+                    fontWeight: 600,
                     '&:hover': {
                       bgcolor: 'primary.dark',
-                    },
-                    minWidth: 200
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.shadows[4]
+                    }
                   }}
                 >
                   Admin Login
@@ -373,16 +405,20 @@ function Home() {
               <Button
                 variant="contained"
                 startIcon={<PdfIcon />}
-                onClick={() => {
-                  // Add your PDF generation logic here
-                  console.log('Generate PDF');
-                }}
+                onClick={() => window.print()}
                 sx={{
                   bgcolor: 'secondary.main',
+                  color: 'white',
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: 3,
+                  minWidth: { xs: '100%', sm: 200 },
+                  fontWeight: 600,
                   '&:hover': {
                     bgcolor: 'secondary.dark',
-                  },
-                  minWidth: 200
+                    transform: 'translateY(-2px)',
+                    boxShadow: theme.shadows[4]
+                  }
                 }}
               >
                 Print PDF
@@ -395,4 +431,4 @@ function Home() {
   );
 }
 
-export default Home; 
+export default Home;
