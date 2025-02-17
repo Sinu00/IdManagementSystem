@@ -31,13 +31,16 @@ export const mainPersonApi = {
 
 export const companyApi = {
   getAll: () => axiosInstance.get('/companies'),
-  getStats: () => axiosInstance.get('/companies/stats'),
-  getById: (id) => axiosInstance.get(`/companies/${id}`),
   getByMainPerson: (mainPersonId) => 
-    axiosInstance.get(`/companies?mainPersonId=${mainPersonId}`),
-  create: (data) => axiosInstance.post('/companies', data),
-  update: (id, data) => axiosInstance.put(`/companies/${id}`, data),
-  delete: (id) => axiosInstance.delete(`/companies/${id}`),
+    axiosInstance.get(`/companies/main-person/${mainPersonId}`),
+  getById: (id) => axiosInstance.get(`/companies/${id}`),
+  get: (id) => axiosInstance.get(`/companies/${id}`),
+  create: (data) => 
+    axiosInstance.post('/companies', data),
+  update: (id, data) => 
+    axiosInstance.put(`/companies/${id}`, data),
+  delete: (id) => 
+    axiosInstance.delete(`/companies/${id}`)
 };
 
 export const individualApi = {

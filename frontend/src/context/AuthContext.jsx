@@ -14,12 +14,14 @@ function decodeToken(token) {
 export function AuthProvider({ children }) {
   const [admin, setAdmin] = useState(false);
   const [allowedMainPersons, setAllowedMainPersons] = useState([]);
+  const [username, setUsername] = useState('');
 
   const login = (token) => {
     localStorage.setItem('token', token);
     const decoded = decodeToken(token);
     if (decoded) {
       setAdmin(true);
+      setUsername(decoded.username);
       setAllowedMainPersons(decoded.allowedMainPersons || []);
     }
   };
@@ -27,6 +29,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('token');
     setAdmin(false);
+    setUsername('');
     setAllowedMainPersons([]);
   };
 
@@ -36,6 +39,7 @@ export function AuthProvider({ children }) {
       const decoded = decodeToken(token);
       if (decoded) {
         setAdmin(true);
+        setUsername(decoded.username);
         setAllowedMainPersons(decoded.allowedMainPersons || []);
       } else {
         logout();
@@ -44,7 +48,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ admin, allowedMainPersons, login, logout }}>
+    <AuthContext.Provider value={{ admin, username, allowedMainPersons, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

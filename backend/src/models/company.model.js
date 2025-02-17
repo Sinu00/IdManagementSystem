@@ -4,37 +4,44 @@ const companySchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Company name is required'],
       trim: true
     },
-    mainPerson: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "MainPerson",
-      required: true
+    address: {
+      type: String,
+      required: [true, 'Address is required'],
+      trim: true
     },
     crNumber: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
       trim: true
     },
     sponserId: {
       type: String,
-      required: true,
-      unique: true,
       trim: true
     },
     gosiNumber: {
       type: String,
-      required: true,
-      unique: true,
       trim: true
     },
     makthabNumber: {
       type: String,
-      required: true,
-      unique: true,
       trim: true
+    },
+    contactPerson: {
+      type: String,
+      trim: true
+    },
+    contactNumber: {
+      type: String,
+      trim: true
+    },
+    mainPerson: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MainPerson',
+      required: true
     }
   },
   { 
@@ -44,11 +51,27 @@ const companySchema = new mongoose.Schema(
   }
 );
 
-// Virtual for individuals in this company
+// Virtual for individuals
 companySchema.virtual('individuals', {
   ref: 'Individual',
   localField: '_id',
   foreignField: 'company'
+});
+
+// Pre-save middleware to ensure unique CR number within mainPerson
+companySchema.pre('save', async function(next) {
+  if (this.crNumber) {
+    const existingCompany = await this.constructor.findOne({
+      crNumber: this.crNumber,
+      mainPerson: this.mainPerson,
+      _id: { $ne: this._id }
+    });
+    
+    if (existingCompany) {
+      throw new Error('CR number already exists for this main person');
+    }
+  }
+  next();
 });
 
 // Virtual for card counts

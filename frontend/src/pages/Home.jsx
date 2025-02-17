@@ -41,8 +41,7 @@ function Home() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
-  const { admin, logout, allowedMainPersons } = useAuth();
-  const [username, setUsername] = useState('');
+  const { admin, logout, allowedMainPersons, username } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,22 +71,14 @@ function Home() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUsername(decoded.username);
-      } catch (error) {
-        console.error('Error decoding token:', error);
-        setUsername('');
-      }
-    }
-  }, []);
-
   const isMainPersonAllowed = (mainPersonId) => {
     if (!admin) return true; // If not admin, allow all
     return allowedMainPersons?.includes(mainPersonId);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login');
   };
 
   if (loading) {
@@ -385,7 +376,7 @@ function Home() {
               {admin ? (
                 <ProfileMenu 
                   username={username} 
-                  onLogout={logout}
+                  onLogout={handleLogout}
                 />
               ) : (
                 <Button

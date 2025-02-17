@@ -21,7 +21,8 @@ import {
   Select,
   MenuItem,
   Avatar,
-  Button
+  Button,
+  Fab
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,11 +34,16 @@ import {
   FilterList as FilterListIcon,
   Person as PersonIcon,
   Login as LoginIcon,
-  Badge as BadgeIcon
+  Badge as BadgeIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
+import ConfirmDialog from '../components/dialogs/ConfirmDialog';
+import CompanyDialog from '../components/dialogs/CompanyDialog';
 
 function CompanyList() {
   const [companies, setCompanies] = useState([]);
@@ -49,8 +55,14 @@ function CompanyList() {
   const navigate = useNavigate();
   const theme = useTheme();
   const [mainPerson, setMainPerson] = useState(null);
-  const { admin, logout } = useAuth();
-  const [username, setUsername] = useState('');
+  const { admin, logout, username } = useAuth();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [dialogMode, setDialogMode] = useState('add');
+  const [dialogError, setDialogError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,19 +82,6 @@ function CompanyList() {
 
     fetchData();
   }, [mainPersonId]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUsername(decoded.username);
-      } catch (error) {
-        console.error('Error decoding token:', error);
-        setUsername('');
-      }
-    }
-  }, []);
 
   const filteredAndSortedCompanies = companies
     .filter(company => {
@@ -104,7 +103,73 @@ function CompanyList() {
 
   const handleLogout = () => {
     logout();
-    setUsername('');
+  };
+
+  const handleAdd = () => {
+    setSelectedCompany(null);
+    setDialogMode('add');
+    setDialogError('');
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (company) => {
+    setSelectedCompany(company);
+    setDialogMode('edit');
+    setDialogError('');
+    setDialogOpen(true);
+  };
+
+  const handleDelete = (company) => {
+    setSelectedCompany(company);
+    setConfirmMessage(`Are you sure you want to delete ${company.name}?`);
+    setConfirmAction(() => () => handleConfirmDelete(company));
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async (company) => {
+    try {
+      await companyApi.delete(company._id);
+      const response = await companyApi.getByMainPerson(mainPersonId);
+      setCompanies(response.data);
+      setConfirmDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      setError('Failed to delete company');
+    }
+  };
+
+  const handleSubmit = async (formData) => {
+    try {
+      setDialogError('');
+      const message = dialogMode === 'add' 
+        ? 'Are you sure you want to add this company?' 
+        : `Are you sure you want to update ${selectedCompany.name}'s information?`;
+      
+      setConfirmMessage(message);
+      setConfirmAction(() => async () => {
+        try {
+          if (dialogMode === 'add') {
+            await companyApi.create({ ...formData, mainPerson: mainPersonId });
+          } else {
+            await companyApi.update(selectedCompany._id, formData);
+          }
+          
+          const response = await companyApi.getByMainPerson(mainPersonId);
+          setCompanies(response.data);
+          setDialogOpen(false);
+          setConfirmDialogOpen(false);
+          setDialogError('');
+        } catch (error) {
+          console.error('Error saving company:', error);
+          setDialogError(error.response?.data?.message || 'Failed to save company');
+          setConfirmDialogOpen(false);
+        }
+      });
+      setConfirmDialogOpen(true);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      setDialogError(error.message || 'An error occurred');
+    }
   };
 
   if (loading) {
@@ -241,64 +306,50 @@ function CompanyList() {
                 <Card 
                   onClick={() => navigate(`/company/${company._id}/individuals`)}
                   sx={{ 
+                    height: '100%',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease-in-out',
                     borderRadius: 3,
-                    height: '100%',
                     position: 'relative',
                     '&:hover': {
                       transform: 'translateY(-4px)',
-                      boxShadow: theme.shadows[8],
-                      '& .arrow-icon': {
-                        opacity: 1,
-                        transform: 'translateX(0)'
-                      }
+                      boxShadow: theme.shadows[8]
                     }
                   }}
                 >
                   <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
                   <CardContent sx={{ p: 3 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                      <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar 
-                          sx={{ 
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                            width: 56,
-                            height: 56
-                          }}
-                        >
-                          <BusinessIcon fontSize="large" />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" fontWeight="bold">
-                            {company.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {company.individuals?.length || 0} Total IDs
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <IconButton 
-                        className="arrow-icon"
-                        size="small"
+                    {/* Header Section */}
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                      <Avatar 
                         sx={{ 
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          transition: 'all 0.3s ease',
-                          opacity: 0,
-                          transform: 'translateX(-10px)',
-                          '&:hover': {
-                            bgcolor: 'primary.dark'
-                          }
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          width: 56,
+                          height: 56
                         }}
                       >
-                        <ArrowForwardIcon />
-                      </IconButton>
+                        <BusinessIcon fontSize="large" />
+                      </Avatar>
+                      <Box flex={1}>
+                        <Typography variant="h6" fontWeight="bold">
+                          {company.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {company.address}
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        label={`${company.totalIndividuals || 0} IDs`}
+                        color="primary"
+                        size="small"
+                        sx={{ fontWeight: 'medium' }}
+                      />
                     </Box>
 
                     <Divider sx={{ my: 2 }} />
 
+                    {/* Company Details Grid */}
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -309,27 +360,36 @@ function CompanyList() {
                           <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
                           Sponsor: {company.sponserId || 'N/A'}
                         </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
                           <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
                           GOSI: {company.gosiNumber || 'N/A'}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
                           <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
                           Makthab: {company.makthabNumber || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                          Contact: {company.contactPerson || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          <PhoneIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                          Phone: {company.contactNumber || 'N/A'}
                         </Typography>
                       </Grid>
                     </Grid>
 
+                    {/* Status Cards */}
                     <Box sx={{ mt: 3 }}>
                       <Grid container spacing={1}>
                         <Grid item xs={4}>
                           <Paper 
-                            elevation={0} 
+                            elevation={0}
                             sx={{ 
                               p: 1.5, 
-                              bgcolor: 'error.light',
+                              bgcolor: 'error.lighter',
                               textAlign: 'center',
                               borderRadius: 2,
                               transition: 'transform 0.2s ease',
@@ -342,16 +402,16 @@ function CompanyList() {
                               {company.redCards || 0}
                             </Typography>
                             <Typography variant="caption" color="error.dark" fontWeight="medium">
-                              Expired
+                              Critical
                             </Typography>
                           </Paper>
                         </Grid>
                         <Grid item xs={4}>
                           <Paper 
-                            elevation={0} 
+                            elevation={0}
                             sx={{ 
                               p: 1.5, 
-                              bgcolor: 'warning.light',
+                              bgcolor: 'warning.lighter',
                               textAlign: 'center',
                               borderRadius: 2,
                               transition: 'transform 0.2s ease',
@@ -370,10 +430,10 @@ function CompanyList() {
                         </Grid>
                         <Grid item xs={4}>
                           <Paper 
-                            elevation={0} 
+                            elevation={0}
                             sx={{ 
                               p: 1.5, 
-                              bgcolor: 'success.light',
+                              bgcolor: 'success.lighter',
                               textAlign: 'center',
                               borderRadius: 2,
                               transition: 'transform 0.2s ease',
@@ -392,13 +452,98 @@ function CompanyList() {
                         </Grid>
                       </Grid>
                     </Box>
+
+                    {/* Admin Actions */}
+                    {admin && (
+                      <Box 
+                        sx={{ 
+                          position: 'absolute',
+                          top: 12,
+                          right: 12,
+                          display: 'flex',
+                          gap: 1,
+                          zIndex: 2
+                        }}
+                      >
+                        <IconButton 
+                          size="small" 
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(company);
+                          }}
+                          sx={{ 
+                            bgcolor: 'background.paper',
+                            boxShadow: 1,
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              bgcolor: 'primary.lighter'
+                            }
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(company);
+                          }}
+                          sx={{ 
+                            bgcolor: 'background.paper',
+                            boxShadow: 1,
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              bgcolor: 'error.lighter'
+                            }
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
             ))}
           </Grid>
         </Fade>
+
+        {admin && (
+          <Fab
+            color="primary"
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24
+            }}
+            onClick={handleAdd}
+          >
+            <AddIcon />
+          </Fab>
+        )}
       </Container>
+
+      <CompanyDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setDialogError('');
+        }}
+        onSubmit={handleSubmit}
+        company={selectedCompany}
+        mode={dialogMode}
+        error={dialogError}
+      />
+
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={confirmAction}
+        title="Confirm Action"
+        message={confirmMessage}
+      />
     </Box>
   );
 }

@@ -58,7 +58,7 @@ function IndividualList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [company, setCompany] = useState(null);
-  const { admin, logout } = useAuth();
+  const { admin, logout, username } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -67,7 +67,6 @@ function IndividualList() {
   const [selectedIndividual, setSelectedIndividual] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [individualToDelete, setIndividualToDelete] = useState(null);
-  const [username, setUsername] = useState('');
   const [dialogMode, setDialogMode] = useState('add');
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
@@ -79,35 +78,22 @@ function IndividualList() {
       try {
         setLoading(true);
         const [companyResponse, individualsResponse] = await Promise.all([
-          companyApi.getById(companyId),
+          companyApi.get(companyId),
           individualApi.getByCompany(companyId)
         ]);
         
         setCompany(companyResponse.data);
         setAllIndividuals(individualsResponse.data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError(error.message);
-      } finally {
+        setError('Failed to load data');
         setLoading(false);
       }
     };
 
     fetchData();
   }, [companyId]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUsername(decoded.username);
-      } catch (error) {
-        console.error('Error decoding token:', error);
-        setUsername('');
-      }
-    }
-  }, []);
 
   const filteredData = useMemo(() => {
     return allIndividuals
@@ -229,7 +215,6 @@ function IndividualList() {
 
   const handleLogout = () => {
     logout();
-    setUsername('');
   };
 
   const getStatusColor = (status) => {
