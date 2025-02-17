@@ -86,7 +86,8 @@ function Home() {
   }, []);
 
   const isMainPersonAllowed = (mainPersonId) => {
-    return !admin || allowedMainPersons.includes(mainPersonId);
+    if (!admin) return true; // If not admin, allow all
+    return allowedMainPersons?.includes(mainPersonId);
   };
 
   if (loading) {

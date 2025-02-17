@@ -1,29 +1,55 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+function decodeToken(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
+}
+
+export function AuthProvider({ children }) {
   const [admin, setAdmin] = useState(false);
   const [allowedMainPersons, setAllowedMainPersons] = useState([]);
 
   const login = (token) => {
-    localStorage.setItem('adminToken', token);
-    const decoded = JSON.parse(atob(token.split('.')[1]));
-    setAdmin(true);
-    setAllowedMainPersons(decoded.allowedMainPersons || []);
+    localStorage.setItem('token', token);
+    const decoded = decodeToken(token);
+    if (decoded) {
+      setAdmin(true);
+      setAllowedMainPersons(decoded.allowedMainPersons || []);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
     setAdmin(false);
     setAllowedMainPersons([]);
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = decodeToken(token);
+      if (decoded) {
+        setAdmin(true);
+        setAllowedMainPersons(decoded.allowedMainPersons || []);
+      } else {
+        logout();
+      }
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ admin, allowedMainPersons, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext); 
+export function useAuth() {
+  return useContext(AuthContext);
+} 

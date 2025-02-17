@@ -41,7 +41,8 @@ import {
   Login as LoginIcon,
   Person as PersonIcon,
   Badge as BadgeIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  Autorenew as RenewIcon
 } from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -67,6 +68,10 @@ function IndividualList() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [individualToDelete, setIndividualToDelete] = useState(null);
   const [username, setUsername] = useState('');
+  const [dialogMode, setDialogMode] = useState('add');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [dialogError, setDialogError] = useState('');
   const theme = useTheme();
 
   useEffect(() => {
@@ -92,7 +97,7 @@ function IndividualList() {
   }, [companyId]);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = JSON.parse(atob(token.split('.')[1]));
@@ -144,44 +149,81 @@ function IndividualList() {
 
   const handleAdd = () => {
     setSelectedIndividual(null);
+    setDialogMode('add');
     setDialogOpen(true);
   };
 
   const handleEdit = (individual) => {
     setSelectedIndividual(individual);
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  const handleRenew = (individual) => {
+    setSelectedIndividual(individual);
+    setDialogMode('renew');
     setDialogOpen(true);
   };
 
   const handleDelete = (individual) => {
     setIndividualToDelete(individual);
+    setConfirmMessage(`Are you sure you want to delete ${individual.name}?`);
+    setConfirmAction(() => () => handleConfirmDelete(individual));
     setConfirmDialogOpen(true);
   };
 
-  const handleSubmit = async (formData) => {
+  const handleConfirmDelete = async (individual) => {
     try {
-      if (selectedIndividual) {
-        await individualApi.update(selectedIndividual._id, { ...formData, company: companyId });
-      } else {
-        await individualApi.create({ ...formData, company: companyId });
-      }
-      // Refresh the list
-      const response = await individualApi.getByCompany(companyId);
-      setAllIndividuals(response.data);
-      setDialogOpen(false);
-    } catch (error) {
-      console.error('Error saving individual:', error);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      await individualApi.delete(individualToDelete._id);
-      // Refresh the list
+      await individualApi.delete(individual._id);
       const response = await individualApi.getByCompany(companyId);
       setAllIndividuals(response.data);
       setConfirmDialogOpen(false);
     } catch (error) {
       console.error('Error deleting individual:', error);
+      setError('Failed to delete individual');
+    }
+  };
+
+  const handleSubmit = async (formData) => {
+    try {
+      setDialogError('');
+      let message;
+      if (dialogMode === 'add') {
+        message = 'Are you sure you want to add this individual?';
+      } else if (dialogMode === 'edit') {
+        message = `Are you sure you want to update ${selectedIndividual.name}'s information?`;
+      } else {
+        message = `Are you sure you want to renew ${selectedIndividual.name}'s ID?`;
+      }
+      
+      setConfirmMessage(message);
+      setConfirmAction(() => async () => {
+        try {
+          if (dialogMode === 'add') {
+            await individualApi.create({ ...formData, company: companyId });
+          } else if (dialogMode === 'edit') {
+            await individualApi.update(selectedIndividual._id, formData);
+          } else {
+            await individualApi.update(selectedIndividual._id, { 
+              expiryDate: formData.expiryDate
+            });
+          }
+          
+          const response = await individualApi.getByCompany(companyId);
+          setAllIndividuals(response.data);
+          setDialogOpen(false);
+          setConfirmDialogOpen(false);
+          setDialogError('');
+        } catch (error) {
+          console.error('Error saving individual:', error);
+          setDialogError(error.response?.data?.message || 'Failed to save individual');
+          setConfirmDialogOpen(false);
+        }
+      });
+      setConfirmDialogOpen(true);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      setDialogError(error.message || 'An error occurred');
     }
   };
 
@@ -407,6 +449,19 @@ function IndividualList() {
                             </IconButton>
                             <IconButton 
                               size="small" 
+                              color="warning"
+                              onClick={() => handleRenew(individual)}
+                              sx={{ 
+                                '&:hover': {
+                                  transform: 'scale(1.1)',
+                                  bgcolor: 'warning.light'
+                                }
+                              }}
+                            >
+                              <RenewIcon />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
                               color="error"
                               onClick={() => handleDelete(individual)}
                               sx={{ 
@@ -468,6 +523,41 @@ function IndividualList() {
           </Fab>
         )}
       </Container>
+
+      <IndividualDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setDialogError('');
+        }}
+        individual={selectedIndividual}
+        onSubmit={handleSubmit}
+        mode={dialogMode}
+        error={dialogError}
+      />
+
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={confirmAction}
+        title="Confirm Action"
+        message={confirmMessage}
+      />
+
+      {error && (
+        <Alert 
+          severity="error" 
+          onClose={() => setError(null)}
+          sx={{ 
+            position: 'fixed', 
+            top: 16, 
+            right: 16, 
+            zIndex: 2000 
+          }}
+        >
+          {error}
+        </Alert>
+      )}
     </Box>
   );
 }

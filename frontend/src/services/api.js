@@ -45,9 +45,12 @@ export const individualApi = {
   getByCompany: (companyId) => 
     axiosInstance.get(`/individuals/company/${companyId}`),
   get: (id) => axiosInstance.get(`/individuals/${id}`),
-  create: (data) => axiosInstance.post('/individuals', data),
-  update: (id, data) => axiosInstance.put(`/individuals/${id}`, data),
-  delete: (id) => axiosInstance.delete(`/individuals/${id}`),
+  create: (data) => 
+    axiosInstance.post('/individuals', data),
+  update: (id, data) => 
+    axiosInstance.put(`/individuals/${id}`, data),
+  delete: (id) => 
+    axiosInstance.delete(`/individuals/${id}`),
 };
 
 export const notificationApi = {

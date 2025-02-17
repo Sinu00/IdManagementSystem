@@ -19,9 +19,9 @@ router.post('/admin/login', async (req, res) => {
     const token = jwt.sign(
       { 
         id: user._id, 
-        role: user.role,
         username: user.username,
-        allowedMainPersons: user.allowedMainPersons
+        isAdmin: true,
+        allowedMainPersons: user.allowedMainPersons || []
       },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }

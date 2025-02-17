@@ -12,10 +12,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    role: {
-      type: String,
-      required: true,
-      default: "admin",
+    isAdmin: {
+      type: Boolean,
+      default: true,
     },
     allowedMainPersons: [{
       type: mongoose.Schema.Types.ObjectId,

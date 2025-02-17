@@ -80,7 +80,6 @@ router.get('/company/:companyId', async (req, res) => {
   try {
     const { companyId } = req.params;
     
-    // Validate companyId
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({ message: 'Invalid company ID' });
     }
@@ -92,6 +91,102 @@ router.get('/company/:companyId', async (req, res) => {
       });
 
     res.json(individuals);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create new individual (Admin only)
+router.post('/', adminProtect, async (req, res) => {
+  try {
+    const { name, nationality, phoneNumber, iqamaNumber, expiryDate, notes, company } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(company)) {
+      return res.status(400).json({ message: 'Invalid company ID' });
+    }
+
+    // Check if company exists
+    const companyExists = await Company.findById(company);
+    if (!companyExists) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Check if iqamaNumber is unique
+    const existingIndividual = await Individual.findOne({ iqamaNumber });
+    if (existingIndividual) {
+      return res.status(400).json({ message: 'Iqama number already exists' });
+    }
+
+    const individual = new Individual({
+      name,
+      nationality,
+      phoneNumber,
+      iqamaNumber,
+      expiryDate,
+      notes,
+      company
+    });
+
+    await individual.save();
+    res.status(201).json(individual);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update individual (Admin only)
+router.put('/:id', adminProtect, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid individual ID' });
+    }
+
+    // If iqamaNumber is being updated, check for uniqueness
+    if (updates.iqamaNumber) {
+      const existingIndividual = await Individual.findOne({
+        iqamaNumber: updates.iqamaNumber,
+        _id: { $ne: id }
+      });
+      if (existingIndividual) {
+        return res.status(400).json({ message: 'Iqama number already exists' });
+      }
+    }
+
+    const individual = await Individual.findByIdAndUpdate(
+      id,
+      { ...updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    res.json(individual);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete individual (Admin only)
+router.delete('/:id', adminProtect, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid individual ID' });
+    }
+
+    const individual = await Individual.findByIdAndDelete(id);
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    res.json({ message: 'Individual deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

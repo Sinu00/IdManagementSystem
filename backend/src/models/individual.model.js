@@ -4,27 +4,40 @@ const individualSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Name is required'],
+      trim: true
+    },
+    nationality: {
+      type: String,
+      required: [true, 'Nationality is required'],
+      trim: true
+    },
+    phoneNumber: {
+      type: String,
       trim: true
     },
     iqamaNumber: {
       type: String,
-      required: true,
+      required: [true, 'Iqama number is required'],
       unique: true,
       trim: true
     },
     expiryDate: {
       type: Date,
-      required: true
+      required: [true, 'Expiry date is required']
+    },
+    notes: {
+      type: String,
+      trim: true
+    },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Company',
+      required: [true, 'Company is required']
     },
     mainPerson: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MainPerson",
-      required: false
-    },
-    company: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
       required: false
     },
     reference: {
@@ -32,14 +45,6 @@ const individualSchema = new mongoose.Schema(
       trim: true
     },
     document: {
-      type: String,
-      trim: true
-    },
-    nationality: {
-      type: String,
-      trim: true
-    },
-    phoneNumber: {
       type: String,
       trim: true
     }
@@ -51,20 +56,20 @@ const individualSchema = new mongoose.Schema(
   }
 );
 
-// Add virtual for days until expiry
-individualSchema.virtual('daysUntilExpiry').get(function() {
-  return Math.ceil((this.expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-});
+// Add index for better query performance
+individualSchema.index({ company: 1 });
+individualSchema.index({ iqamaNumber: 1 }, { unique: true });
 
-// Add virtual for status
+// Add virtual for status calculation
 individualSchema.virtual('status').get(function() {
   const today = new Date();
-  const daysUntilExpiry = this.daysUntilExpiry;
-  
-  if (daysUntilExpiry < 0) return 'expired';
-  if (daysUntilExpiry <= 5) return 'red';
-  if (daysUntilExpiry <= 10) return 'orange';
-  return 'green';
+  const expiry = new Date(this.expiryDate);
+  const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+  if (daysUntilExpiry < 0) return 'Expired';
+  if (daysUntilExpiry <= 5) return 'Critical';
+  if (daysUntilExpiry <= 10) return 'Warning';
+  return 'Active';
 });
 
 const Individual = mongoose.model("Individual", individualSchema);
