@@ -257,9 +257,14 @@ function Home() {
                     flexDirection: 'column',
                     opacity: isMainPersonAllowed(person._id) ? 1 : 0.6,
                     filter: isMainPersonAllowed(person._id) ? 'none' : 'grayscale(100%)',
+                    position: 'relative',
                     '&:hover': isMainPersonAllowed(person._id) ? {
                       transform: 'translateY(-4px)',
-                      boxShadow: theme.shadows[8]
+                      boxShadow: theme.shadows[8],
+                      '& .arrow-icon': {
+                        opacity: 1,
+                        transform: 'translateX(0)'
+                      }
                     } : {}
                   }}
                 >
@@ -335,6 +340,8 @@ function Home() {
                           bgcolor: 'primary.main',
                           color: 'white',
                           transition: 'all 0.3s ease',
+                          opacity: 0,
+                          transform: 'translateX(-10px)',
                           '&:hover': {
                             bgcolor: 'primary.dark'
                           }
