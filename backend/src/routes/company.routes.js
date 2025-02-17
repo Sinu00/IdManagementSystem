@@ -159,13 +159,13 @@ router.get('/main-person/:mainPersonId', async (req, res) => {
       };
 
       individuals.forEach(individual => {
-        const daysUntilExpiry = Math.ceil((individual.expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+        const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
         
-        if (daysUntilExpiry <= 5) {
+        if (daysUntilExpiry <= 0) {
           counts.redCards++;
         } else if (daysUntilExpiry <= 10) {
           counts.orangeCards++;
-        } else {
+        } else if (daysUntilExpiry > 20) {
           counts.greenCards++;
         }
       });

@@ -79,20 +79,20 @@ companySchema.virtual('cardCounts').get(async function() {
   const individuals = await mongoose.model('Individual').find({ company: this._id });
   
   const counts = {
-    redCards: 0,
-    orangeCards: 0,
-    greenCards: 0,
+    redCards: 0,    // Expired
+    orangeCards: 0, // 10 days or less until expiry
+    greenCards: 0,  // More than 20 days until expiry
     totalIndividuals: individuals.length
   };
 
   individuals.forEach(individual => {
-    const daysUntilExpiry = Math.ceil((individual.expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+    const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
     
-    if (daysUntilExpiry <= 5) {
+    if (daysUntilExpiry <= 0) {
       counts.redCards++;
     } else if (daysUntilExpiry <= 10) {
       counts.orangeCards++;
-    } else {
+    } else if (daysUntilExpiry > 20) {
       counts.greenCards++;
     }
   });

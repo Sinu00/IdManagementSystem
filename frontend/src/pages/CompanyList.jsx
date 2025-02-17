@@ -37,13 +37,27 @@ import {
   Badge as BadgeIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Warning as WarningIcon,
+  Notifications as NotificationsIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import CompanyDialog from '../components/dialogs/CompanyDialog';
+
+function calculateTotalCounts(companies) {
+  return companies.reduce((totals, company) => {
+    return {
+      expired: totals.expired + (company.redCards || 0),
+      expiringSoon: totals.expiringSoon + (company.orangeCards || 0),
+      safe: totals.safe + (company.greenCards || 0),
+      total: totals.total + (company.totalIndividuals || 0)
+    };
+  }, { expired: 0, expiringSoon: 0, safe: 0, total: 0 });
+}
 
 function CompanyList() {
   const [companies, setCompanies] = useState([]);
@@ -212,7 +226,8 @@ function CompanyList() {
                 color: 'primary.dark'
               }}
             >
-              <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Box display="flex" alignItems="center" gap={3}>
+                {/* Left Section - Main Person Info */}
                 <Box display="flex" alignItems="center" gap={2}>
                   <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
                     <PersonIcon />
@@ -224,15 +239,93 @@ function CompanyList() {
                     <Typography variant="body2">
                       Managing {companies.length} Companies
                     </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Individuals: {calculateTotalCounts(companies).total}
+                    </Typography>
                   </Box>
                 </Box>
-                
-                {admin && (
-                  <ProfileMenu 
-                    username={username} 
-                    onLogout={handleLogout}
-                  />
-                )}
+
+                {/* Right Section - Summary Cards and Profile Menu */}
+                <Box display="flex" alignItems="center" gap={2} ml="auto">
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      px: 2,
+                      py: 1,
+                      bgcolor: 'error.main',
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      minWidth: 100
+                    }}
+                  >
+                    <WarningIcon sx={{ color: 'white', fontSize: 20 }} />
+                    <Box>
+                      <Typography variant="h6" color="white" fontWeight="bold">
+                        {calculateTotalCounts(companies).expired}
+                      </Typography>
+                      <Typography variant="caption" color="white">
+                        Expired
+                      </Typography>
+                    </Box>
+                  </Paper>
+
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      px: 2,
+                      py: 1,
+                      bgcolor: 'warning.main',
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      minWidth: 100
+                    }}
+                  >
+                    <NotificationsIcon sx={{ color: 'white', fontSize: 20 }} />
+                    <Box>
+                      <Typography variant="h6" color="white" fontWeight="bold">
+                        {calculateTotalCounts(companies).expiringSoon}
+                      </Typography>
+                      <Typography variant="caption" color="white">
+                        Expiring
+                      </Typography>
+                    </Box>
+                  </Paper>
+
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      px: 2,
+                      py: 1,
+                      bgcolor: 'success.main',
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      minWidth: 100
+                    }}
+                  >
+                    <CheckCircleIcon sx={{ color: 'white', fontSize: 20 }} />
+                    <Box>
+                      <Typography variant="h6" color="white" fontWeight="bold">
+                        {calculateTotalCounts(companies).safe}
+                      </Typography>
+                      <Typography variant="caption" color="white">
+                        Valid
+                      </Typography>
+                    </Box>
+                  </Paper>
+
+                  {admin && (
+                    <ProfileMenu 
+                      username={username} 
+                      onLogout={handleLogout}
+                    />
+                  )}
+                </Box>
               </Box>
             </Paper>
           </Fade>
@@ -402,7 +495,7 @@ function CompanyList() {
                               {company.redCards || 0}
                             </Typography>
                             <Typography variant="caption" color="error.dark" fontWeight="medium">
-                              Critical
+                              Expired
                             </Typography>
                           </Paper>
                         </Grid>
@@ -424,7 +517,7 @@ function CompanyList() {
                               {company.orangeCards || 0}
                             </Typography>
                             <Typography variant="caption" color="warning.dark" fontWeight="medium">
-                              Expiring
+                              Warning (≤10 days)
                             </Typography>
                           </Paper>
                         </Grid>
@@ -446,7 +539,7 @@ function CompanyList() {
                               {company.greenCards || 0}
                             </Typography>
                             <Typography variant="caption" color="success.dark" fontWeight="medium">
-                              Valid
+                              Safe (>20 days)
                             </Typography>
                           </Paper>
                         </Grid>
