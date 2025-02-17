@@ -30,24 +30,20 @@ export const mainPersonApi = {
 };
 
 export const companyApi = {
+  getAll: () => axiosInstance.get('/companies'),
+  getStats: () => axiosInstance.get('/companies/stats'),
+  getById: (id) => axiosInstance.get(`/companies/${id}`),
   getByMainPerson: (mainPersonId) => 
     axiosInstance.get(`/companies?mainPersonId=${mainPersonId}`),
-  get: (id) => axiosInstance.get(`/companies/${id}`),
   create: (data) => axiosInstance.post('/companies', data),
   update: (id, data) => axiosInstance.put(`/companies/${id}`, data),
   delete: (id) => axiosInstance.delete(`/companies/${id}`),
 };
 
 export const individualApi = {
-  getByCompany: (companyId, search = '', sort = 'name', filter = 'all') => 
-    axiosInstance.get(`/individuals`, {
-      params: {
-        companyId,
-        search,
-        sort,
-        filter
-      }
-    }),
+  getAll: () => axiosInstance.get('/individuals'),
+  getByCompany: (companyId) => 
+    axiosInstance.get(`/individuals/company/${companyId}`),
   get: (id) => axiosInstance.get(`/individuals/${id}`),
   create: (data) => axiosInstance.post('/individuals', data),
   update: (id, data) => axiosInstance.put(`/individuals/${id}`, data),

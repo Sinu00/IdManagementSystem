@@ -76,4 +76,25 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+router.get('/company/:companyId', async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    
+    // Validate companyId
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ message: 'Invalid company ID' });
+    }
+
+    const individuals = await Individual.find({ company: companyId })
+      .populate({
+        path: 'company',
+        select: 'name crNumber'
+      });
+
+    res.json(individuals);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router; 

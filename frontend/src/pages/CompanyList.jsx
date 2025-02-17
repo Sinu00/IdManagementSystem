@@ -146,28 +146,12 @@ function CompanyList() {
           </Fade>
         )}
 
-        <Box 
-          sx={{ 
-            display: 'flex',
-            gap: 2,
-            mb: 4,
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'stretch', sm: 'center' }
-          }}
-        >
+        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
           <TextField
+            fullWidth
             placeholder="Search companies..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            fullWidth
-            sx={{ 
-              flex: { xs: '1', sm: '1 1 50%' },
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: 'background.paper',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-              }
-            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -175,41 +159,36 @@ function CompanyList() {
                 </InputAdornment>
               ),
             }}
+            sx={{ flex: 1 }}
           />
+          
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Filter</InputLabel>
+            <Select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              label="Filter"
+              startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
+            >
+              <MenuItem value="all">All Companies</MenuItem>
+              <MenuItem value="withExpiring">With Expiring IDs</MenuItem>
+              <MenuItem value="withExpired">With Expired IDs</MenuItem>
+            </Select>
+          </FormControl>
 
-          <Box 
-            sx={{ 
-              display: 'flex',
-              gap: 2,
-              width: { xs: '100%', sm: 'auto' }
-            }}
-          >
-            <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
-              <InputLabel>Filter</InputLabel>
-              <Select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                label="Filter"
-              >
-                <MenuItem value="all">All Companies</MenuItem>
-                <MenuItem value="withExpiring">With Expiring IDs</MenuItem>
-                <MenuItem value="withExpired">With Expired IDs</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
-              <InputLabel>Sort By</InputLabel>
-              <Select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                label="Sort By"
-              >
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="expiringCount">Expiring IDs</MenuItem>
-                <MenuItem value="totalIds">Total IDs</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              label="Sort By"
+              startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
+            >
+              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="expiringCount">Expiring IDs</MenuItem>
+              <MenuItem value="totalIds">Total IDs</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
 
         <Fade in timeout={1000}>
@@ -222,25 +201,14 @@ function CompanyList() {
                     cursor: 'pointer',
                     transition: 'all 0.3s ease-in-out',
                     borderRadius: 3,
-                    overflow: 'hidden',
-                    position: 'relative',
                     height: '100%',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: theme.shadows[8],
-                      '& .arrow-icon': {
-                        transform: 'translateX(4px)'
-                      }
                     }
                   }}
                 >
-                  <Box 
-                    sx={{ 
-                      height: 6, 
-                      bgcolor: 'primary.main',
-                      width: '100%'
-                    }} 
-                  />
+                  <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
                   <CardContent sx={{ p: 3 }}>
                     <Box display="flex" alignItems="center" gap={2} mb={2}>
                       <Avatar 
@@ -257,73 +225,96 @@ function CompanyList() {
                         <Typography variant="h6" fontWeight="bold">
                           {company.name}
                         </Typography>
-                        <Chip 
-                          label={`${company.individuals?.length || 0} IDs`}
-                          size="small"
-                          sx={{ 
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                            fontWeight: 'medium',
-                            mt: 0.5
-                          }}
-                        />
                       </Box>
                     </Box>
 
                     <Divider sx={{ my: 2 }} />
 
-                    <Box sx={{ pl: 1 }}>
-                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                        <LocationIcon fontSize="small" color="action" />
-                        <Typography variant="body2" color="text.secondary">
-                          {company.address}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <PhoneIcon fontSize="small" color="action" />
-                        <Typography variant="body2" color="text.secondary">
-                          {company.contactNumber}
-                        </Typography>
-                      </Box>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <strong>CR Number:</strong> {company.crNumber}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <strong>Sponsor ID:</strong> {company.sponserId}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <strong>GOSI Number:</strong> {company.gosiNumber}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Makthab Number:</strong> {company.makthabNumber}
+                      </Typography>
                     </Box>
 
-                    {(company.hasExpiringIds || company.hasExpiredIds) && (
-                      <Box 
-                        sx={{ 
-                          position: 'absolute',
-                          top: 16,
-                          right: 16,
-                        }}
-                      >
-                        <Chip
-                          label={company.hasExpiredIds ? 'Expired IDs' : 'Expiring IDs'}
-                          size="small"
-                          sx={{ 
-                            bgcolor: company.hasExpiredIds ? 'error.light' : 'warning.light',
-                            color: company.hasExpiredIds ? 'error.dark' : 'warning.dark',
-                            fontWeight: 'medium'
-                          }}
-                        />
-                      </Box>
-                    )}
+                    <Divider sx={{ my: 2 }} />
 
-                    <IconButton 
-                      className="arrow-icon"
-                      size="small"
-                      sx={{ 
-                        position: 'absolute',
-                        right: 16,
-                        bottom: 16,
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          bgcolor: 'primary.dark'
-                        }
-                      }}
-                    >
-                      <ArrowForwardIcon />
-                    </IconButton>
+                    <Grid container spacing={1}>
+                      <Grid item xs={4}>
+                        <Paper 
+                          elevation={0} 
+                          sx={{ 
+                            p: 1, 
+                            bgcolor: 'error.light',
+                            textAlign: 'center',
+                            borderRadius: 2
+                          }}
+                        >
+                          <Typography variant="h6" color="error.dark">
+                            {company.redCards || 0}
+                          </Typography>
+                          <Typography variant="caption" color="error.dark">
+                            Red
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={4}>
+                        <Paper 
+                          elevation={0} 
+                          sx={{ 
+                            p: 1, 
+                            bgcolor: 'warning.light',
+                            textAlign: 'center',
+                            borderRadius: 2
+                          }}
+                        >
+                          <Typography variant="h6" color="warning.dark">
+                            {company.orangeCards || 0}
+                          </Typography>
+                          <Typography variant="caption" color="warning.dark">
+                            Orange
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={4}>
+                        <Paper 
+                          elevation={0} 
+                          sx={{ 
+                            p: 1, 
+                            bgcolor: 'success.light',
+                            textAlign: 'center',
+                            borderRadius: 2
+                          }}
+                        >
+                          <Typography variant="h6" color="success.dark">
+                            {company.greenCards || 0}
+                          </Typography>
+                          <Typography variant="caption" color="success.dark">
+                            Green
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                      <Chip 
+                        label={`${company.individuals?.length || 0} Total IDs`}
+                        size="small"
+                        sx={{ 
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 'medium'
+                        }}
+                      />
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>

@@ -1,75 +1,77 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
+  Container,
   TextField,
   IconButton,
-  MenuItem,
-  Select,
+  Grid,
+  Typography,
+  InputAdornment,
+  CircularProgress,
+  Fade,
+  Chip,
+  useTheme,
+  Paper,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
+  Avatar,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Pagination,
-  InputAdornment,
-  CircularProgress,
-  Container,
-  Fade,
-  Chip,
-  Typography,
-  useTheme,
   Fab,
-  Divider
+  Alert
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  FilterList as FilterListIcon,
-  Sort as SortIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Business as BusinessIcon,
+  Sort as SortIcon
 } from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { format, isBefore, addDays } from 'date-fns';
+import { format } from 'date-fns';
+import LoadingScreen from '../components/common/LoadingScreen';
 import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 
 function IndividualList() {
   const { id: companyId } = useParams();
   const [allIndividuals, setAllIndividuals] = useState([]);
-  const [filteredIndividuals, setFilteredIndividuals] = useState([]);
-  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [company, setCompany] = useState(null);
+  const { admin } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('name');
-  const [page, setPage] = useState(1);
-  const { admin } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedIndividual, setSelectedIndividual] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [individualToDelete, setIndividualToDelete] = useState(null);
-  const navigate = useNavigate();
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [individualsRes, companyRes] = await Promise.all([
-          individualApi.getByCompany(companyId),
-          companyApi.get(companyId)
+        const [companyResponse, individualsResponse] = await Promise.all([
+          companyApi.getById(companyId),
+          individualApi.getByCompany(companyId)
         ]);
-        setAllIndividuals(individualsRes.data);
-        setFilteredIndividuals(individualsRes.data);
-        setCompany(companyRes.data);
+        
+        setCompany(companyResponse.data);
+        setAllIndividuals(individualsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to load data');
+        setError(error.message);
       } finally {
         setLoading(false);
       }
@@ -78,54 +80,41 @@ function IndividualList() {
     fetchData();
   }, [companyId]);
 
-  useEffect(() => {
-    let result = [...allIndividuals];
-    
-    if (search) {
-      result = result.filter(individual => 
-        individual.name.toLowerCase().includes(search.toLowerCase()) ||
-        individual.idNumber.toLowerCase().includes(search.toLowerCase()) ||
-        individual.position.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    
-    if (filter !== 'all') {
-      result = result.filter(individual => {
-        if (filter === 'active') return individual.status === 'active';
-        if (filter === 'expired') return individual.status === 'expired';
-        if (filter === 'expiring') {
-          const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-          return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+  const filteredData = useMemo(() => {
+    return allIndividuals
+      .filter(individual => {
+        const matchesSearch = !search || 
+          individual.name?.toLowerCase().includes(search.toLowerCase()) ||
+          individual.iqamaNumber?.toLowerCase().includes(search.toLowerCase());
+
+        const matchesFilter = filter === 'all' || 
+          (filter === 'active' && calculateStatus(individual.expiryDate) === 'Active') ||
+          (filter === 'expiring' && ['Warning', 'Critical'].includes(calculateStatus(individual.expiryDate))) ||
+          (filter === 'expired' && calculateStatus(individual.expiryDate) === 'Expired');
+
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        switch (sort) {
+          case 'name':
+            return a.name?.localeCompare(b.name);
+          case 'expiryDate':
+            return new Date(a.expiryDate) - new Date(b.expiryDate);
+          default:
+            return 0;
         }
-        return true;
       });
-    }
-    
-    result.sort((a, b) => {
-      if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'expiryDate') return new Date(a.expiryDate) - new Date(b.expiryDate);
-      if (sort === 'issueDate') return new Date(a.issueDate) - new Date(b.issueDate);
-      return 0;
-    });
-    
-    setFilteredIndividuals(result);
-  }, [search, filter, sort, allIndividuals]);
+  }, [allIndividuals, search, filter, sort]);
 
-  const handleSearchChange = (e) => {
-    e.preventDefault();
-    setSearch(e.target.value);
-  };
-
-  const getExpiryStatus = (expiryDate) => {
+  const calculateStatus = (expiryDate) => {
+    if (!expiryDate) return 'Unknown';
     const today = new Date();
     const expiry = new Date(expiryDate);
-    
-    if (isBefore(expiry, today)) {
-      return 'Expired';
-    }
-    if (isBefore(expiry, addDays(today, 30))) {
-      return 'Expiring Soon';
-    }
+    const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiry < 0) return 'Expired';
+    if (daysUntilExpiry <= 5) return 'Critical';
+    if (daysUntilExpiry <= 10) return 'Warning';
     return 'Active';
   };
 
@@ -154,7 +143,6 @@ function IndividualList() {
       // Refresh the list
       const response = await individualApi.getByCompany(companyId);
       setAllIndividuals(response.data);
-      setFilteredIndividuals(response.data);
       setDialogOpen(false);
     } catch (error) {
       console.error('Error saving individual:', error);
@@ -167,262 +155,190 @@ function IndividualList() {
       // Refresh the list
       const response = await individualApi.getByCompany(companyId);
       setAllIndividuals(response.data);
-      setFilteredIndividuals(response.data);
       setConfirmDialogOpen(false);
     } catch (error) {
       console.error('Error deleting individual:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <Box 
-        sx={{ 
-          width: '100%',
-          minHeight: '100vh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          bgcolor: 'background.default'
-        }}
-      >
-        <CircularProgress size={40} />
-      </Box>
-    );
-  }
+  if (loading) return <LoadingScreen />;
+  if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Box 
-      component="main"
-      sx={{ 
-        width: '100%',
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        paddingTop: '24px',
-        paddingBottom: '24px'
-      }}
-    >
-      <Container 
-        maxWidth="lg"
-        sx={{
-          height: '100%'
-        }}
-      >
-        <Fade in timeout={800}>
-          <Box>
-            {/* Company Info Header */}
-            {company && (
-              <Box 
-                sx={{ 
-                  mb: 3,
-                  p: 3,
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                }}
-              >
-                <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  {company.name}
-                </Typography>
-                <Typography color="text.secondary">
-                  {company.address}
-                </Typography>
-              </Box>
-            )}
-
-            {/* Controls Section */}
-            <Box 
+    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 4, pb: 6 }}>
+      <Container maxWidth="lg">
+        {company && (
+          <Fade in timeout={800}>
+            <Paper 
+              elevation={0}
               sx={{ 
-                display: 'flex', 
-                gap: 2, 
-                mb: 3,
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'center' }
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                bgcolor: 'primary.light',
+                color: 'primary.dark'
               }}
             >
-              <TextField
-                placeholder="Search individuals..."
-                value={search}
-                onChange={handleSearchChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                  }
-                }}
-                fullWidth
-                sx={{ 
-                  flex: { xs: '1', sm: '1 1 50%' },
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    bgcolor: 'background.paper',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                  }
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <Box 
-                sx={{ 
-                  display: 'flex',
-                  gap: 2,
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
-                  <InputLabel>Filter</InputLabel>
-                  <Select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    label="Filter"
-                  >
-                    <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="expired">Expired</MenuItem>
-                    <MenuItem value="expiring">Expiring Soon</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl sx={{ minWidth: { xs: '50%', sm: 150 } }}>
-                  <InputLabel>Sort By</InputLabel>
-                  <Select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                    label="Sort By"
-                  >
-                    <MenuItem value="name">Name</MenuItem>
-                    <MenuItem value="expiryDate">Expiry Date</MenuItem>
-                    <MenuItem value="issueDate">Issue Date</MenuItem>
-                  </Select>
-                </FormControl>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                  <BusinessIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    {company.name}
+                  </Typography>
+                  <Typography variant="body2">
+                    Managing {filteredData.length} Individuals
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </Paper>
+          </Fade>
+        )}
 
-            {/* Table Section */}
-            <TableContainer 
-              component={Paper}
-              sx={{ 
-                borderRadius: 2,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                overflow: 'hidden'
-              }}
+        <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <TextField
+            fullWidth
+            placeholder="Search individuals..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flex: 1 }}
+          />
+          
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              label="Status"
+              startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
             >
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'primary.main' }}>
-                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Name</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>ID Number</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Position</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Issue Date</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Expiry Date</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredIndividuals.map((individual) => {
-                    const status = getExpiryStatus(individual.expiryDate);
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="expiring">Expiring Soon</MenuItem>
+              <MenuItem value="expired">Expired</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              label="Sort By"
+              startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
+            >
+              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="expiryDate">Expiry Date</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Fade in timeout={1000}>
+          <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Iqama Number</TableCell>
+                  <TableCell>Nationality</TableCell>
+                  <TableCell>Expiry Date</TableCell>
+                  <TableCell align="center">Status</TableCell>
+                  {admin && <TableCell align="center">Actions</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredData.length > 0 ? (
+                  filteredData.map((individual) => {
+                    const status = calculateStatus(individual.expiryDate);
                     return (
                       <TableRow 
                         key={individual._id}
                         sx={{ 
-                          '&:hover': { 
+                          '&:hover': {
                             bgcolor: 'action.hover',
-                            cursor: 'pointer'
-                          },
-                          transition: 'background-color 0.2s'
+                          }
                         }}
-                        onClick={() => handleEdit(individual)}
                       >
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{individual.name}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{individual.idNumber}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{individual.position}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{format(new Date(individual.issueDate), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{format(new Date(individual.expiryDate), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{individual.name}</TableCell>
+                        <TableCell>{individual.iqamaNumber}</TableCell>
+                        <TableCell>{individual.nationality}</TableCell>
                         <TableCell>
+                          {individual.expiryDate ? 
+                            format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
+                            'N/A'}
+                        </TableCell>
+                        <TableCell align="center">
                           <Chip 
                             label={status}
+                            color={
+                              status === 'Active' ? 'success' :
+                              status === 'Expired' ? 'error' :
+                              'warning'
+                            }
                             size="small"
-                            sx={{ 
-                              bgcolor: 
-                                status === 'Active' ? 'success.light' :
-                                status === 'Expired' ? 'error.light' :
-                                'warning.light',
-                              color: 
-                                status === 'Active' ? 'success.dark' :
-                                status === 'Expired' ? 'error.dark' :
-                                'warning.dark',
-                              fontWeight: 'medium'
-                            }}
                           />
                         </TableCell>
+                        {admin && (
+                          <TableCell align="center">
+                            <IconButton 
+                              size="small" 
+                              color="primary"
+                              onClick={() => handleEdit(individual)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => handleDelete(individual)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {/* Pagination Section */}
-            <Box 
-              sx={{ 
-                mt: 3, 
-                display: 'flex', 
-                justifyContent: 'center'
-              }}
-            >
-              <Pagination 
-                count={10} 
-                page={page} 
-                onChange={(e, value) => setPage(value)}
-                color="primary"
-                shape="rounded"
-                showFirstButton
-                showLastButton
-              />
-            </Box>
-          </Box>
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography color="textSecondary">
+                        No individuals found
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Fade>
+
+        {admin && (
+          <Fab
+            color="primary"
+            onClick={handleAdd}
+            sx={{ 
+              position: 'fixed', 
+              bottom: 24, 
+              right: 24,
+              transition: 'transform 0.2s',
+              '&:hover': {
+                transform: 'scale(1.1)'
+              }
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        )}
       </Container>
-
-      {/* Add Button */}
-      {admin && (
-        <Fab
-          color="primary"
-          sx={{ 
-            position: 'fixed', 
-            bottom: 24, 
-            right: 24,
-            transition: 'transform 0.2s',
-            '&:hover': {
-              transform: 'scale(1.1)'
-            }
-          }}
-          onClick={handleAdd}
-        >
-          <AddIcon />
-        </Fab>
-      )}
-
-      {/* Dialogs */}
-      <IndividualDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSubmit={handleSubmit}
-        individual={selectedIndividual}
-      />
-
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Confirm Delete"
-        message="Are you sure you want to delete this ID card? This action cannot be undone."
-      />
     </Box>
   );
 }

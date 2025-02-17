@@ -5,50 +5,44 @@ const individualSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
+      trim: true
     },
-    idNumber: {
+    iqamaNumber: {
       type: String,
       required: true,
       unique: true,
-      trim: true,
+      trim: true
     },
-    position: {
-      type: String,
-      required: true,
-      trim: true,
+    expiryDate: {
+      type: Date,
+      required: true
+    },
+    mainPerson: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MainPerson",
+      required: false
     },
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
-      validate: {
-        validator: async function(companyId) {
-          const company = await mongoose.model('Company').findById(companyId);
-          return company !== null;
-        },
-        message: 'Company does not exist'
-      }
+      required: false
     },
-    issueDate: {
-      type: Date,
-      required: true,
-      validate: {
-        validator: function(date) {
-          return date <= this.expiryDate;
-        },
-        message: 'Issue date must be before expiry date'
-      }
-    },
-    expiryDate: {
-      type: Date,
-      required: true,
-    },
-    status: {
+    reference: {
       type: String,
-      enum: ["active", "expired", "revoked"],
-      default: "active",
+      trim: true
     },
+    document: {
+      type: String,
+      trim: true
+    },
+    nationality: {
+      type: String,
+      trim: true
+    },
+    phoneNumber: {
+      type: String,
+      trim: true
+    }
   },
   { 
     timestamps: true,
@@ -62,12 +56,15 @@ individualSchema.virtual('daysUntilExpiry').get(function() {
   return Math.ceil((this.expiryDate - new Date()) / (1000 * 60 * 60 * 24));
 });
 
-// Add pre-save middleware to update status based on expiry date
-individualSchema.pre('save', function(next) {
-  if (this.expiryDate < new Date()) {
-    this.status = 'expired';
-  }
-  next();
+// Add virtual for status
+individualSchema.virtual('status').get(function() {
+  const today = new Date();
+  const daysUntilExpiry = this.daysUntilExpiry;
+  
+  if (daysUntilExpiry < 0) return 'expired';
+  if (daysUntilExpiry <= 5) return 'red';
+  if (daysUntilExpiry <= 10) return 'orange';
+  return 'green';
 });
 
 const Individual = mongoose.model("Individual", individualSchema);

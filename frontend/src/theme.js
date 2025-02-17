@@ -4,15 +4,50 @@ const theme = createTheme({
   palette: {
     primary: {
       main: '#1976d2',
+      light: '#e3f2fd',
+      dark: '#1565c0',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#9c27b0',
+    },
+    background: {
+      default: '#f5f5f5',
     },
     warning: {
       main: '#ff9800', // Orange for 10-day warning
     },
     error: {
       main: '#f44336', // Red for 5-day warning
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiCard: {
+      defaultProps: {
+        elevation: 2,
+      },
+    },
+    MuiPaper: {
+      defaultProps: {
+        elevation: 2,
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+        },
+      },
     },
   },
 });
