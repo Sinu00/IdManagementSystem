@@ -22,7 +22,7 @@ const createAdmin = async () => {
       await User.create({
         username: "Suhail",
         password: hashedPassword,
-        role: "admin",
+        isAdmin: true,
         allowedMainPersons: [
           "67b22c3748dc9b1348b1d635", // Mosa
           "67b22c3748dc9b1348b1d636", // Nasar
@@ -39,7 +39,7 @@ const createAdmin = async () => {
       await User.create({
         username: "Arif",
         password: hashedPassword,
-        role: "admin",
+        isAdmin: true,
         allowedMainPersons: [
           "67b22c3748dc9b1348b1d636" // Only Nasar
         ]

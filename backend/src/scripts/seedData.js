@@ -47,6 +47,7 @@ const seedDatabase = async () => {
           crNumber: companyData.crNumber,
           sponserId: companyData.sponserId,
           gosiNumber: companyData.gosiNumber,
+          molNumber: companyData.molNumber,
           makthabNumber: companyData.makthabNumber
         });
         console.log(`Created company: ${company.name} (CR: ${company.crNumber})`);
