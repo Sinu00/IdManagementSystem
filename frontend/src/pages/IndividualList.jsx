@@ -42,7 +42,10 @@ import {
   Person as PersonIcon,
   Badge as BadgeIcon,
   CalendarToday as CalendarIcon,
-  Autorenew as RenewIcon
+  Autorenew as RenewIcon,
+  LocationOn as LocationIcon,
+  Phone as PhoneIcon,
+  MonetizationOn as MonetizationIcon,
 } from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -51,6 +54,22 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import ProfileMenu from '../components/ProfileMenu';
+
+const calculateStatus = (expiryDate) => {
+  const daysUntilExpiry = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry <= 0) {
+    return 'Expired';
+  } else if (daysUntilExpiry <= 20) {
+    return 'Warning';
+  } else {
+    return 'Active';
+  }
+};
+
+const getDaysUntilExpiry = (expiryDate) => {
+  return Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+};
 
 function IndividualList() {
   const { id: companyId } = useParams();
@@ -96,42 +115,54 @@ function IndividualList() {
   }, [companyId]);
 
   const filteredData = useMemo(() => {
-    return allIndividuals
-      .filter(individual => {
-        const matchesSearch = !search || 
-          individual.name?.toLowerCase().includes(search.toLowerCase()) ||
-          individual.iqamaNumber?.toLowerCase().includes(search.toLowerCase());
+    return allIndividuals.filter(individual => {
+      const searchTermLower = search.toLowerCase().trim();
+      
+      // If no search term, return all individuals
+      if (!searchTermLower) return true;
 
-        const matchesFilter = filter === 'all' || 
-          (filter === 'active' && calculateStatus(individual.expiryDate) === 'Active') ||
-          (filter === 'expiring' && ['Warning', 'Critical'].includes(calculateStatus(individual.expiryDate))) ||
-          (filter === 'expired' && calculateStatus(individual.expiryDate) === 'Expired');
+      // Check all searchable fields
+      return (
+        individual.name?.toLowerCase().includes(searchTermLower) ||
+        individual.iqamaNumber?.toLowerCase().includes(searchTermLower) ||
+        individual.passportNumber?.toLowerCase().includes(searchTermLower) ||
+        individual.nationality?.toLowerCase().includes(searchTermLower) ||
+        individual.profession?.toLowerCase().includes(searchTermLower)
+      );
+    }).filter(individual => {
+      const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+      
+      // Filter by status
+      switch (filter) {
+        case 'expired':
+          return daysUntilExpiry <= 0;
+        case 'warning':
+          return daysUntilExpiry > 0 && daysUntilExpiry <= 20;
+        case 'active':
+          return daysUntilExpiry > 20;
+        default: // 'all'
+          return true;
+      }
+    });
+  }, [allIndividuals, search, filter]);
 
-        return matchesSearch && matchesFilter;
-      })
-      .sort((a, b) => {
-        switch (sort) {
-          case 'name':
-            return a.name?.localeCompare(b.name);
-          case 'expiryDate':
-            return new Date(a.expiryDate) - new Date(b.expiryDate);
-          default:
-            return 0;
-        }
-      });
-  }, [allIndividuals, search, filter, sort]);
+  const sortedData = useMemo(() => {
+    return [...filteredData].sort((a, b) => {
+      const daysUntilExpiryA = Math.ceil((new Date(a.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+      const daysUntilExpiryB = Math.ceil((new Date(b.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
 
-  const calculateStatus = (expiryDate) => {
-    if (!expiryDate) return 'Unknown';
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-
-    if (daysUntilExpiry < 0) return 'Expired';
-    if (daysUntilExpiry <= 5) return 'Critical';
-    if (daysUntilExpiry <= 10) return 'Warning';
-    return 'Active';
-  };
+      switch (sort) {
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'expiryDate':
+          return daysUntilExpiryA - daysUntilExpiryB;
+        case 'nationality':
+          return (a.nationality || '').localeCompare(b.nationality || '');
+        default:
+          return 0;
+      }
+    });
+  }, [filteredData, sort]);
 
   const handleAdd = () => {
     setSelectedIndividual(null);
@@ -191,7 +222,8 @@ function IndividualList() {
             await individualApi.update(selectedIndividual._id, formData);
           } else {
             await individualApi.update(selectedIndividual._id, { 
-              expiryDate: formData.expiryDate
+              expiryDate: formData.expiryDate,
+              amount: formData.amount
             });
           }
           
@@ -249,7 +281,7 @@ function IndividualList() {
                 color: 'primary.dark'
               }}
             >
-              <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
                 <Box display="flex" alignItems="center" gap={2}>
                   <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
                     <BusinessIcon />
@@ -263,13 +295,46 @@ function IndividualList() {
                     </Typography>
                   </Box>
                 </Box>
-                
-                {admin && (
-                  <ProfileMenu 
-                    username={username} 
-                    onLogout={handleLogout}
-                  />
-                )}
+
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    gap: 4,
+                    alignItems: 'center'
+                  }}
+                >
+                  <Box>
+                    <Grid container spacing={2} sx={{ width: 'auto', minWidth: '400px' }}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="primary.dark" gutterBottom>
+                          <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                          CR: {company.crNumber || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="primary.dark" gutterBottom>
+                          <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                          GOSI: {company.gosiNumber || 'N/A'}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="primary.dark" gutterBottom>
+                          <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                          Sponsor: {company.sponserId || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" color="primary.dark" gutterBottom>
+                          <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                          Maktab: {company.makthabNumber || 'N/A'}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+
+                  {admin && (
+                    <ProfileMenu 
+                      username={username} 
+                      onLogout={handleLogout}
+                    />
+                  )}
+                </Box>
               </Box>
             </Paper>
           </Fade>
@@ -317,7 +382,6 @@ function IndividualList() {
             >
               <MenuItem value="all">All Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="expiring">Expiring Soon</MenuItem>
               <MenuItem value="expired">Expired</MenuItem>
             </Select>
           </FormControl>
@@ -338,11 +402,11 @@ function IndividualList() {
 
         <Fade in timeout={1000}>
           <Grid container spacing={3}>
-            {filteredData.length > 0 ? (
-              filteredData.map((individual) => {
+            {sortedData.length > 0 ? (
+              sortedData.map((individual) => {
                 const status = calculateStatus(individual.expiryDate);
                 return (
-                  <Grid item xs={12} sm={6} md={4} key={individual._id}>
+                  <Grid item xs={12} sm={6} md={3} key={individual._id}>
                     <Card
                       sx={{
                         height: '100%',
@@ -376,37 +440,85 @@ function IndividualList() {
                               {individual.nationality}
                             </Typography>
                           </Box>
-                          <Chip 
-                            label={status}
-                            color={
-                              status === 'Active' ? 'success' :
-                              status === 'Expired' ? 'error' :
-                              'warning'
-                            }
-                            size="small"
-                            sx={{ 
-                              fontWeight: 'medium',
-                              minWidth: 80
-                            }}
-                          />
                         </Box>
 
                         <Divider sx={{ my: 2 }} />
 
-                        <Grid container spacing={2}>
+                        <Grid container spacing={0}>
                           <Grid item xs={12}>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              Iqama: {individual.iqamaNumber}
-                            </Typography>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Iqama: {individual.iqamaNumber}
+                              </Typography>
+                            </Box>
                           </Grid>
+                          
                           <Grid item xs={12}>
-                            <Typography variant="body2" color="text.secondary">
-                              <CalendarIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              Expiry: {individual.expiryDate ? 
-                                format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
-                                'N/A'}
-                            </Typography>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <CalendarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Expiry: {individual.expiryDate ? 
+                                  format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
+                                  'N/A'}
+                              </Typography>
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <PhoneIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Phone: {individual.phoneNumber || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <PersonIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Referred by: {individual.referredBy || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <MonetizationIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Amount: {individual.amount ? `SAR ${individual.amount}` : 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Box 
+                              display="flex" 
+                              justifyContent="flex-end" 
+                              alignItems="center"
+                              mt={0}
+                            >
+                              <Chip
+                                label={`${Math.abs(getDaysUntilExpiry(individual.expiryDate))} days ${getDaysUntilExpiry(individual.expiryDate) < 0 ? 'overdue' : 'left'}`}
+                                size="small"
+                                sx={{
+                                  '& .MuiChip-root': {
+                                    bgcolor: status === 'Active' ? 'success.main' : 
+                                            status === 'Warning' ? 'warning.main' : 
+                                            'error.main',
+                                  },
+                                  bgcolor: status === 'Active' ? 'success.main' : 
+                                          status === 'Warning' ? 'warning.main' : 
+                                          'error.main',
+                                  color: '#fff',
+                                  fontWeight: 'medium',
+                                  '& .MuiChip-label': {
+                                    px: 1
+                                  }
+                                }}
+                              />
+                            </Box>
                           </Grid>
                         </Grid>
 
@@ -421,42 +533,36 @@ function IndividualList() {
                           >
                             <IconButton 
                               size="small" 
-                              color="primary"
-                              onClick={() => handleEdit(individual)}
-                              sx={{ 
-                                '&:hover': {
-                                  transform: 'scale(1.1)',
-                                  bgcolor: 'primary.light'
-                                }
-                              }}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              color="warning"
                               onClick={() => handleRenew(individual)}
                               sx={{ 
-                                '&:hover': {
-                                  transform: 'scale(1.1)',
-                                  bgcolor: 'warning.light'
-                                }
+                                color: 'primary.main',
+                                bgcolor: 'primary.lighter',
+                                '&:hover': { bgcolor: 'primary.light' }
                               }}
                             >
-                              <RenewIcon />
+                              <RenewIcon fontSize="small" />
                             </IconButton>
                             <IconButton 
                               size="small" 
-                              color="error"
-                              onClick={() => handleDelete(individual)}
+                              onClick={() => handleEdit(individual)}
                               sx={{ 
-                                '&:hover': {
-                                  transform: 'scale(1.1)',
-                                  bgcolor: 'error.light'
-                                }
+                                color: 'info.main',
+                                bgcolor: 'info.lighter',
+                                '&:hover': { bgcolor: 'info.light' }
                               }}
                             >
-                              <DeleteIcon />
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleDelete(individual)}
+                              sx={{ 
+                                color: 'error.main',
+                                bgcolor: 'error.lighter',
+                                '&:hover': { bgcolor: 'error.light' }
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Box>
                         )}

@@ -559,7 +559,7 @@ function CompanyList() {
                               {company.greenCards || 0}
                             </Typography>
                             <Typography variant="caption" color="success.dark" fontWeight="medium">
-                              Safe (>20 days)
+                              Safe (≥20 days)
                             </Typography>
                           </Paper>
                         </Grid>

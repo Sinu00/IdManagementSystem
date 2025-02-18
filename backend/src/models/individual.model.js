@@ -47,6 +47,14 @@ const individualSchema = new mongoose.Schema(
     document: {
       type: String,
       trim: true
+    },
+    referredBy: {
+      type: String,
+      trim: true
+    },
+    amount: {
+      type: Number,
+      default: 0
     }
   },
   { 
