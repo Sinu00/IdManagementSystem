@@ -111,6 +111,7 @@ function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 margin="normal"
+                placeholder="Enter your username"
                 required
                 InputProps={{
                   startAdornment: (
@@ -128,6 +129,7 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 margin="normal"
+                placeholder="Enter your password"
                 required
                 InputProps={{
                   startAdornment: (
