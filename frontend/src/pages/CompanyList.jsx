@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -97,23 +97,52 @@ function CompanyList() {
     fetchData();
   }, [mainPersonId]);
 
-  const filteredAndSortedCompanies = companies
-    .filter(company => {
-      if (filter === 'all') return true;
-      if (filter === 'withExpiring') return company.hasExpiringIds;
-      if (filter === 'withExpired') return company.hasExpiredIds;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'expiringCount') return (b.expiringCount || 0) - (a.expiringCount || 0);
-      if (sort === 'totalIds') return (b.individuals?.length || 0) - (a.individuals?.length || 0);
-      return 0;
-    })
-    .filter(company =>
-      company.name.toLowerCase().includes(search.toLowerCase()) ||
-      company.address.toLowerCase().includes(search.toLowerCase())
-    );
+  const filteredAndSortedCompanies = useMemo(() => {
+    return companies
+      .filter(company => {
+        if (filter === 'withExpiring') {
+          return (company.orangeCards || 0) > 0;
+        }
+        if (filter === 'withExpired') {
+          return (company.redCards || 0) > 0;
+        }
+        return true;
+      })
+      .filter(company => {
+        if (!search) return true;
+        
+        const searchTerm = search.toLowerCase();
+        const companyName = company.name.toLowerCase();
+        
+        return (
+          companyName.includes(searchTerm) ||
+          company.crNumber?.toLowerCase().includes(searchTerm) ||
+          company.sponserId?.toLowerCase().includes(searchTerm) ||
+          company.gosiNumber?.toLowerCase().includes(searchTerm) ||
+          company.molNumber?.toLowerCase().includes(searchTerm)
+        );
+      })
+      .sort((a, b) => {
+        switch (sort) {
+          case 'name':
+            return a.name.localeCompare(b.name, ['ar', 'en']);
+          case 'expiringCount':
+            const aExpiring = (a.orangeCards || 0);
+            const bExpiring = (b.orangeCards || 0);
+            return bExpiring - aExpiring;
+          case 'expiredCount':
+            const aExpired = (a.redCards || 0);
+            const bExpired = (b.redCards || 0);
+            return bExpired - aExpired;
+          case 'totalCount':
+            const aTotal = (a.redCards || 0) + (a.orangeCards || 0) + (a.greenCards || 0);
+            const bTotal = (b.redCards || 0) + (b.orangeCards || 0) + (b.greenCards || 0);
+            return bTotal - aTotal;
+          default:
+            return 0;
+        }
+      });
+  }, [companies, filter, search, sort]);
 
   const handleLogout = () => {
     logout();
@@ -365,7 +394,7 @@ function CompanyList() {
         >
           <TextField
             fullWidth
-            placeholder="Search companies..."
+            placeholder="البحث عن الشركات..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -379,25 +408,29 @@ function CompanyList() {
               flex: 1,
               '& .MuiOutlinedInput-root': {
                 backgroundColor: 'background.paper'
+              },
+              '& .MuiInputBase-input': {
+                direction: 'rtl',
+                textAlign: 'right'
               }
             }}
           />
           
-          <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel>Filter</InputLabel>
+          <FormControl sx={{ minWidth: 180 }}>
+            <InputLabel>Filter Status</InputLabel>
             <Select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              label="Filter"
+              label="Filter Status"
               startAdornment={<FilterListIcon color="action" sx={{ mr: 1 }} />}
             >
               <MenuItem value="all">All Companies</MenuItem>
-              <MenuItem value="withExpiring">With Expiring IDs</MenuItem>
-              <MenuItem value="withExpired">With Expired IDs</MenuItem>
+              <MenuItem value="withExpiring">Has Expiring IDs</MenuItem>
+              <MenuItem value="withExpired">Has Expired IDs</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 150 }}>
+          <FormControl sx={{ minWidth: 180 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sort}
@@ -405,9 +438,10 @@ function CompanyList() {
               label="Sort By"
               startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
             >
-              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="name">Company Name</MenuItem>
               <MenuItem value="expiringCount">Expiring IDs</MenuItem>
-              <MenuItem value="totalIds">Total IDs</MenuItem>
+              <MenuItem value="expiredCount">Expired IDs</MenuItem>
+              <MenuItem value="totalCount">Total IDs</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -433,7 +467,13 @@ function CompanyList() {
                   <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
                   <CardContent sx={{ p: 3 }}>
                     {/* Header Section */}
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+
+                      <Box flex={1}>
+                        <Typography variant="h5" fontWeight="bold">
+                          {company.name}
+                        </Typography>
+                      </Box>
                       <Avatar 
                         sx={{ 
                           bgcolor: 'primary.light',
@@ -444,20 +484,6 @@ function CompanyList() {
                       >
                         <BusinessIcon fontSize="large" />
                       </Avatar>
-                      <Box flex={1}>
-                        <Typography variant="h6" fontWeight="bold">
-                          {company.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {company.address}
-                        </Typography>
-                      </Box>
-                      <Chip 
-                        label={`${company.totalIndividuals || 0} IDs`}
-                        color="primary"
-                        size="small"
-                        sx={{ fontWeight: 'medium' }}
-                      />
                     </Box>
 
                     <Divider sx={{ my: 2 }} />
@@ -473,95 +499,164 @@ function CompanyList() {
                           <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
                           Sponsor: {company.sponserId || 'N/A'}
                         </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
                           <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
                           GOSI: {company.gosiNumber || 'N/A'}
                         </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
                           <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          Makthab: {company.makthabNumber || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          Contact: {company.contactPerson || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          <PhoneIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          Phone: {company.contactNumber || 'N/A'}
+                          MOL: {company.molNumber || 'N/A'}
                         </Typography>
                       </Grid>
                     </Grid>
 
                     {/* Status Cards */}
                     <Box sx={{ mt: 3 }}>
-                      <Grid container spacing={1}>
+                      <Grid container spacing={2}>
                         <Grid item xs={4}>
-                          <Paper 
-                            elevation={0}
-                            sx={{ 
-                              p: 1.5, 
+                          <Box
+                            sx={{
+                              p: 1.5,
                               bgcolor: 'error.lighter',
-                              textAlign: 'center',
                               borderRadius: 2,
-                              transition: 'transform 0.2s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              position: 'relative',
+                              overflow: 'hidden',
                               '&:hover': {
-                                transform: 'scale(1.05)'
+                                transform: 'translateY(-3px)',
+                                transition: 'transform 0.2s ease-in-out'
+                              },
+                              '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '2px',
+                                bgcolor: 'error.main'
                               }
                             }}
                           >
-                            <Typography variant="h5" color="error.dark" fontWeight="bold">
+                            <Typography 
+                              variant="h5" 
+                              color="error.dark" 
+                              fontWeight="bold"
+                              sx={{ mb: 0.5 }}
+                            >
                               {company.redCards || 0}
                             </Typography>
-                            <Typography variant="caption" color="error.dark" fontWeight="medium">
+                            <Typography 
+                              variant="caption" 
+                              color="error.dark" 
+                              fontWeight="medium"
+                              sx={{ 
+                                whiteSpace: 'nowrap',
+                                fontSize: '0.7rem'
+                              }}
+                            >
                               Expired
                             </Typography>
-                          </Paper>
+                          </Box>
                         </Grid>
+
                         <Grid item xs={4}>
-                          <Paper 
-                            elevation={0}
-                            sx={{ 
-                              p: 1.5, 
+                          <Box
+                            sx={{
+                              p: 1.5,
                               bgcolor: 'warning.lighter',
-                              textAlign: 'center',
                               borderRadius: 2,
-                              transition: 'transform 0.2s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              position: 'relative',
+                              overflow: 'hidden',
                               '&:hover': {
-                                transform: 'scale(1.05)'
+                                transform: 'translateY(-3px)',
+                                transition: 'transform 0.2s ease-in-out'
+                              },
+                              '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '2px',
+                                bgcolor: 'warning.main'
                               }
                             }}
                           >
-                            <Typography variant="h5" color="warning.dark" fontWeight="bold">
+                            <Typography 
+                              variant="h5" 
+                              color="warning.dark" 
+                              fontWeight="bold"
+                              sx={{ mb: 0.5 }}
+                            >
                               {company.orangeCards || 0}
                             </Typography>
-                            <Typography variant="caption" color="warning.dark" fontWeight="medium">
-                              Warning (≤10 days)
+                            <Typography 
+                              variant="caption" 
+                              color="warning.dark" 
+                              fontWeight="medium"
+                              sx={{ 
+                                whiteSpace: 'nowrap',
+                                fontSize: '0.7rem'
+                              }}
+                            >
+                              Warning
                             </Typography>
-                          </Paper>
+                          </Box>
                         </Grid>
+
                         <Grid item xs={4}>
-                          <Paper 
-                            elevation={0}
-                            sx={{ 
-                              p: 1.5, 
+                          <Box
+                            sx={{
+                              p: 1.5,
                               bgcolor: 'success.lighter',
-                              textAlign: 'center',
                               borderRadius: 2,
-                              transition: 'transform 0.2s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              position: 'relative',
+                              overflow: 'hidden',
                               '&:hover': {
-                                transform: 'scale(1.05)'
+                                transform: 'translateY(-3px)',
+                                transition: 'transform 0.2s ease-in-out'
+                              },
+                              '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '2px',
+                                bgcolor: 'success.main'
                               }
                             }}
                           >
-                            <Typography variant="h5" color="success.dark" fontWeight="bold">
-                              {company.greenCards || 0}
+                            <Typography 
+                              variant="h5" 
+                              color="success.dark" 
+                              fontWeight="bold"
+                              sx={{ mb: 0.5 }}
+                            >
+                             {company.totalIndividuals || 0}
                             </Typography>
-                            <Typography variant="caption" color="success.dark" fontWeight="medium">
-                              Safe (≥20 days)
+                            <Typography 
+                              variant="caption" 
+                              color="success.dark" 
+                              fontWeight="medium"
+                              sx={{ 
+                                whiteSpace: 'nowrap',
+                                fontSize: '0.7rem'
+                              }}
+                            >
+                              Total IDs
                             </Typography>
-                          </Paper>
+                          </Box>
                         </Grid>
                       </Grid>
                     </Box>

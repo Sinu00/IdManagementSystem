@@ -7,11 +7,6 @@ const companySchema = new mongoose.Schema(
       required: [true, 'Company name is required'],
       trim: true
     },
-    address: {
-      type: String,
-      required: [true, 'Address is required'],
-      trim: true
-    },
     crNumber: {
       type: String,
       unique: true,
@@ -26,15 +21,7 @@ const companySchema = new mongoose.Schema(
       type: String,
       trim: true
     },
-    makthabNumber: {
-      type: String,
-      trim: true
-    },
-    contactPerson: {
-      type: String,
-      trim: true
-    },
-    contactNumber: {
+    molNumber: {
       type: String,
       trim: true
     },

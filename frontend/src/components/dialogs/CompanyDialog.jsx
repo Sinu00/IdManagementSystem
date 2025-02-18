@@ -8,53 +8,44 @@ import {
   Button,
   Box,
   Alert,
-  Stack
+  Grid
 } from '@mui/material';
-import CustomDialog from './CustomDialog';
 
-function CompanyDialog({ open, onClose, onSubmit, company, mode, error }) {
+function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }) {
   const [formData, setFormData] = useState({
     name: company?.name || '',
-    address: company?.address || '',
     crNumber: company?.crNumber || '',
     sponserId: company?.sponserId || '',
     gosiNumber: company?.gosiNumber || '',
-    makthabNumber: company?.makthabNumber || '',
-    contactPerson: company?.contactPerson || '',
-    contactNumber: company?.contactNumber || ''
+    molNumber: company?.molNumber || ''
   });
 
   useEffect(() => {
-    if (company) {
-      setFormData({
-        name: company.name || '',
-        address: company.address || '',
-        crNumber: company.crNumber || '',
-        sponserId: company.sponserId || '',
-        gosiNumber: company.gosiNumber || '',
-        makthabNumber: company.makthabNumber || '',
-        contactPerson: company.contactPerson || '',
-        contactNumber: company.contactNumber || ''
-      });
-    } else {
+    if (mode === 'add') {
       setFormData({
         name: '',
-        address: '',
         crNumber: '',
         sponserId: '',
         gosiNumber: '',
-        makthabNumber: '',
-        contactPerson: '',
-        contactNumber: ''
+        molNumber: ''
+      });
+    } else if (company) {
+      setFormData({
+        name: company.name || '',
+        crNumber: company.crNumber || '',
+        sponserId: company.sponserId || '',
+        gosiNumber: company.gosiNumber || '',
+        molNumber: company.molNumber || ''
       });
     }
-  }, [company]);
+  }, [company, mode]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -63,126 +54,85 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode, error }) {
   };
 
   return (
-    <CustomDialog
-      open={open}
-      onClose={onClose}
-      title={mode === 'add' ? 'Add New Company' : 'Edit Company'}
-      onSubmit={handleSubmit}
-      error={error}
-      submitText={mode === 'add' ? 'Add Company' : 'Save Changes'}
-      maxWidth="xs"
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2
+        }
+      }}
     >
-      <TextField
-        fullWidth
-        label="Company Name"
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        required
-        size="medium"
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="Address"
-        name="address"
-        value={formData.address}
-        onChange={handleChange}
-        required
-        multiline
-        rows={3}
-        size="medium"
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="CR Number"
-        name="crNumber"
-        value={formData.crNumber}
-        onChange={handleChange}
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="Sponsor ID"
-        name="sponserId"
-        value={formData.sponserId}
-        onChange={handleChange}
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="GOSI Number"
-        name="gosiNumber"
-        value={formData.gosiNumber}
-        onChange={handleChange}
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="Makthab Number"
-        name="makthabNumber"
-        value={formData.makthabNumber}
-        onChange={handleChange}
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="Contact Person"
-        name="contactPerson"
-        value={formData.contactPerson}
-        onChange={handleChange}
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-      <TextField
-        fullWidth
-        label="Contact Number"
-        name="contactNumber"
-        value={formData.contactNumber}
-        onChange={handleChange}
-        sx={{ 
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            bgcolor: 'background.paper'
-          }
-        }}
-      />
-    </CustomDialog>
+      <DialogTitle>
+        {mode === 'add' ? 'Add Company' : 'Edit Company'}
+      </DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Company Name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="CR Number"
+                name="crNumber"
+                value={formData.crNumber}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Sponsor ID"
+                name="sponserId"
+                value={formData.sponserId}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="GOSI Number"
+                name="gosiNumber"
+                value={formData.gosiNumber}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="MOL Number"
+                name="molNumber"
+                value={formData.molNumber}
+                onChange={handleChange}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" color="primary">
+          {mode === 'add' ? 'Add' : 'Save Changes'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
