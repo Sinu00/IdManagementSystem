@@ -12,7 +12,8 @@ import {
   Chip,
   Paper,
   Button,
-  IconButton
+  IconButton,
+  Alert
 } from '@mui/material';
 import { format } from 'date-fns';
 import { individualApi } from '../services/api';
@@ -33,6 +34,7 @@ import DialogActions from '@mui/material/DialogActions';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TextField } from '@mui/material';
 
 function ExpiringSoonIds() {
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ function ExpiringSoonIds() {
     const fetchExpiringIds = async () => {
       try {
         setLoading(true);
-        const response = await individualApi.getExpiringSoon(mainPersonId);
+        const response = await individualApi.getExpiringSoon(mainPersonId, 30);
         setExpiringIds(response.data);
       } catch (error) {
         console.error('Error fetching expiring IDs:', error);
@@ -78,7 +80,7 @@ function ExpiringSoonIds() {
       });
       
       // Refresh the list
-      const response = await individualApi.getExpiringSoon(mainPersonId);
+      const response = await individualApi.getExpiringSoon(mainPersonId, 30);
       setExpiringIds(response.data);
       
       setDialogOpen(false);
@@ -117,7 +119,7 @@ function ExpiringSoonIds() {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4" fontWeight="bold">
-          Expiring Soon IDs
+          IDs Expiring Within 30 Days
         </Typography>
       </Box>
 
@@ -129,7 +131,7 @@ function ExpiringSoonIds() {
               Action Required
             </Typography>
             <Typography variant="subtitle1" color="warning.main">
-              {expiringIds.length} IDs are expiring soon and need attention
+              {expiringIds.length} IDs will expire within the next 30 days
             </Typography>
           </Box>
         </Box>
@@ -138,17 +140,20 @@ function ExpiringSoonIds() {
       <Grid container spacing={3}>
         {expiringIds.map((individual) => (
           <Grid item xs={12} sm={6} md={4} key={individual._id}>
-            <Card sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'warning.main',
-              transition: 'transform 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: 4
-              }
-            }}>
+            <Card 
+              sx={{ 
+                borderColor: 'warning.main',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: (theme) => theme.shadows[4]
+                }
+              }}
+              onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+            >
               <CardContent>
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center" gap={1}>
@@ -162,7 +167,7 @@ function ExpiringSoonIds() {
                     <Box display="flex" alignItems="center" gap={1}>
                       <BadgeIcon fontSize="small" color="action" />
                       <Typography variant="body2" color="text.secondary">
-                        ID: {individual.idNumber}
+                        Iqama: {individual.iqamaNumber}
                       </Typography>
                     </Box>
                     
@@ -187,15 +192,6 @@ function ExpiringSoonIds() {
                       color="warning"
                       size="small"
                     />
-                    {admin && (
-                      <IconButton 
-                        size="small"
-                        onClick={() => handleModify(individual)}
-                        color="primary"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    )}
                   </Box>
                 </Box>
               </CardContent>

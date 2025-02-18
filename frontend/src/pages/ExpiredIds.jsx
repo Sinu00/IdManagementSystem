@@ -14,7 +14,9 @@ import {
   Button,
   IconButton,
   Alert,
-  TextField
+  TextField,
+  Avatar,
+  Divider
 } from '@mui/material';
 import { format } from 'date-fns';
 import { individualApi } from '../services/api';
@@ -165,17 +167,20 @@ function ExpiredIds() {
       <Grid container spacing={3}>
         {expiredIds.map((individual) => (
           <Grid item xs={12} sm={6} md={4} key={individual._id}>
-            <Card sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'error.main',
-              transition: 'transform 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: 4
-              }
-            }}>
+            <Card 
+              sx={{ 
+                borderColor: 'error.main',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: (theme) => theme.shadows[4]
+                }
+              }}
+              onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+            >
               <CardContent>
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Box display="flex" alignItems="center" gap={1}>
@@ -189,7 +194,7 @@ function ExpiredIds() {
                     <Box display="flex" alignItems="center" gap={1}>
                       <BadgeIcon fontSize="small" color="action" />
                       <Typography variant="body2" color="text.secondary">
-                        ID: {individual.idNumber}
+                        Iqama: {individual.iqamaNumber}
                       </Typography>
                     </Box>
                     
@@ -214,15 +219,6 @@ function ExpiredIds() {
                       color="error"
                       size="small"
                     />
-                    {admin && (
-                      <IconButton 
-                        size="small"
-                        onClick={() => handleModify(individual)}
-                        color="primary"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    )}
                   </Box>
                 </Box>
               </CardContent>

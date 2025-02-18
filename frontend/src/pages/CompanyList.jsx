@@ -99,15 +99,15 @@ function CompanyList() {
 
   const filteredAndSortedCompanies = useMemo(() => {
     return companies
-      .filter(company => {
+    .filter(company => {
         if (filter === 'withExpiring') {
           return (company.orangeCards || 0) > 0;
         }
         if (filter === 'withExpired') {
           return (company.redCards || 0) > 0;
         }
-        return true;
-      })
+      return true;
+    })
       .filter(company => {
         if (!search) return true;
         
@@ -122,7 +122,7 @@ function CompanyList() {
           company.molNumber?.toLowerCase().includes(searchTerm)
         );
       })
-      .sort((a, b) => {
+    .sort((a, b) => {
         switch (sort) {
           case 'name':
             return a.name.localeCompare(b.name, ['ar', 'en']);
@@ -139,7 +139,7 @@ function CompanyList() {
             const bTotal = (b.redCards || 0) + (b.orangeCards || 0) + (b.greenCards || 0);
             return bTotal - aTotal;
           default:
-            return 0;
+      return 0;
         }
       });
   }, [companies, filter, search, sort]);
@@ -337,37 +337,6 @@ function CompanyList() {
                       </Typography>
                     </Box>
                   </Paper>
-
-                  <Paper 
-                    elevation={0}
-                    sx={{ 
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'success.main',
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      minWidth: 100,
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s ease-in-out',
-                      '&:hover': {
-                        transform: 'scale(1.05)',
-                        boxShadow: theme.shadows[4]
-                      }
-                    }}
-                  >
-                    <CheckCircleIcon sx={{ color: 'white', fontSize: 20 }} />
-                    <Box>
-                      <Typography variant="h6" color="white" fontWeight="bold">
-                        {calculateTotalCounts(companies).safe}
-                      </Typography>
-                      <Typography variant="caption" color="white">
-                        Valid
-                      </Typography>
-                    </Box>
-                  </Paper>
-
                   {admin && (
                     <ProfileMenu 
                       username={username} 
@@ -517,8 +486,8 @@ function CompanyList() {
                       <Grid container spacing={2}>
                         <Grid item xs={4}>
                           <Box
-                            sx={{
-                              p: 1.5,
+                            sx={{ 
+                              p: 1.5, 
                               bgcolor: 'error.lighter',
                               borderRadius: 2,
                               display: 'flex',
@@ -565,8 +534,8 @@ function CompanyList() {
 
                         <Grid item xs={4}>
                           <Box
-                            sx={{
-                              p: 1.5,
+                            sx={{ 
+                              p: 1.5, 
                               bgcolor: 'warning.lighter',
                               borderRadius: 2,
                               display: 'flex',
@@ -613,8 +582,8 @@ function CompanyList() {
 
                         <Grid item xs={4}>
                           <Box
-                            sx={{
-                              p: 1.5,
+                            sx={{ 
+                              p: 1.5, 
                               bgcolor: 'success.lighter',
                               borderRadius: 2,
                               display: 'flex',

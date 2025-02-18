@@ -55,7 +55,8 @@ export const individualApi = {
   delete: (id) => 
     axiosInstance.delete(`/individuals/${id}`),
   getExpired: (mainPersonId) => axiosInstance.get(`/individuals/expired/${mainPersonId}`),
-  getExpiringSoon: (mainPersonId) => axiosInstance.get(`/individuals/expiring-soon/${mainPersonId}`),
+  getExpiringSoon: (mainPersonId, days = 30) => 
+    axiosInstance.get(`/individuals/expiring-soon/${mainPersonId}?days=${days}`),
   getValid: (mainPersonId) => axiosInstance.get(`/individuals/valid/${mainPersonId}`),
 };
 

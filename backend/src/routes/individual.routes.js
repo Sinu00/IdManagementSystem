@@ -230,6 +230,7 @@ router.get('/expired/:mainPersonId', async (req, res) => {
 router.get('/expiring-soon/:mainPersonId', async (req, res) => {
   try {
     const { mainPersonId } = req.params;
+    const days = parseInt(req.query.days) || 30; // Default to 30 days if not specified
     
     if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
       return res.status(400).json({ message: 'Invalid main person ID' });
@@ -239,16 +240,16 @@ router.get('/expiring-soon/:mainPersonId', async (req, res) => {
     const companies = await Company.find({ mainPerson: mainPersonId });
     const companyIds = companies.map(company => company._id);
 
-    // Find all individuals expiring in the next 10 days
+    // Find all individuals expiring in the next X days
     const today = new Date();
-    const tenDaysFromNow = new Date();
-    tenDaysFromNow.setDate(today.getDate() + 10);
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + days);
 
     const expiringIndividuals = await Individual.find({
       company: { $in: companyIds },
       expiryDate: { 
         $gt: today,
-        $lte: tenDaysFromNow
+        $lte: futureDate
       }
     }).populate({
       path: 'company',

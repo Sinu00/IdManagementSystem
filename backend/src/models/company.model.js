@@ -67,8 +67,8 @@ companySchema.virtual('cardCounts').get(async function() {
   
   const counts = {
     redCards: 0,    // Expired
-    orangeCards: 0, // 10 days or less until expiry
-    greenCards: 0,  // More than 20 days until expiry
+    orangeCards: 0, // 30 days or less until expiry
+    greenCards: 0,  // More than 30 days until expiry
     totalIndividuals: individuals.length
   };
 
@@ -77,9 +77,9 @@ companySchema.virtual('cardCounts').get(async function() {
     
     if (daysUntilExpiry <= 0) {
       counts.redCards++;
-    } else if (daysUntilExpiry <= 10) {
+    } else if (daysUntilExpiry <= 30) {
       counts.orangeCards++;
-    } else if (daysUntilExpiry > 20) {
+    } else {
       counts.greenCards++;
     }
   });

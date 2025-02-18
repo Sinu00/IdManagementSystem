@@ -163,9 +163,9 @@ router.get('/main-person/:mainPersonId', async (req, res) => {
         
         if (daysUntilExpiry <= 0) {
           counts.redCards++;
-        } else if (daysUntilExpiry <= 10) {
+        } else if (daysUntilExpiry <= 30) { // Changed from 10 to 30
           counts.orangeCards++;
-        } else if (daysUntilExpiry > 20) {
+        } else {
           counts.greenCards++;
         }
       });
