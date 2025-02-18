@@ -40,7 +40,8 @@ export const companyApi = {
   update: (id, data) => 
     axiosInstance.put(`/companies/${id}`, data),
   delete: (id) => 
-    axiosInstance.delete(`/companies/${id}`)
+    axiosInstance.delete(`/companies/${id}`),
+  getStats: () => axiosInstance.get('/companies/stats'),
 };
 
 export const individualApi = {

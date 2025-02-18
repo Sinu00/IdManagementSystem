@@ -30,7 +30,7 @@ import {
   Login as LoginIcon,
   PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
-import { mainPersonApi, notificationApi } from '../services/api';
+import { mainPersonApi, notificationApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
 
@@ -47,15 +47,17 @@ function Home() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [mainPersonsRes, expiringRes] = await Promise.all([
+        const [mainPersonsRes, expiringRes, companiesRes] = await Promise.all([
           mainPersonApi.getAll(),
-          notificationApi.getExpiring(10)
+          notificationApi.getExpiring(10),
+          companyApi.getStats()
         ]);
         
         setMainPersons(mainPersonsRes.data);
         setStats({
           totalMainPersons: mainPersonsRes.data.length,
           expiringIds: expiringRes.data.length,
+          totalIndividuals: companiesRes.data.totalIndividuals,
           urgentExpiring: expiringRes.data.filter(id => 
             Math.ceil((new Date(id.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 5
           ).length
@@ -180,10 +182,10 @@ function Home() {
                   </Box>
                   <Box display="flex" flexDirection="column" gap={1}>
                     <Typography variant="h3" fontWeight="bold" color="warning.dark">
-                      {stats.expiringIds}
+                      {stats.totalIndividuals}
                     </Typography>
                     <Typography variant="subtitle1" color="warning.dark">
-                      Expiring IDs
+                      Total IDs
                     </Typography>
                   </Box>
                 </Paper>
@@ -320,15 +322,6 @@ function Home() {
                           />
                           <Typography variant="body2" color="text.secondary">
                             {person.contactNumber}
-                          </Typography>
-                        </Box>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <LocationIcon 
-                            fontSize="small" 
-                            color={isAllowed ? "action" : "disabled"} 
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            {person.address}
                           </Typography>
                         </Box>
                       </Box>

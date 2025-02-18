@@ -2,8 +2,65 @@ import express from 'express';
 import { adminProtect } from '../middleware/auth.middleware.js';
 import Company from '../models/company.model.js';
 import mongoose from 'mongoose';
+import Individual from '../models/individual.model.js';
 
 const router = express.Router();
+
+// Add the stats route BEFORE other routes that use path parameters
+router.get('/stats', async (req, res) => {
+  try {
+    // Use aggregation to get accurate count
+    const individuals = await Individual.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalCount: { $sum: 1 },
+          uniqueCount: { $addToSet: "$_id" }
+        }
+      }
+    ]);
+    
+    const totalIndividuals = individuals.length > 0 ? individuals[0].uniqueCount.length : 0;
+    
+    // Get all individuals for card counting
+    const allIndividuals = await Individual.find();
+    
+    const stats = {
+      totalCompanies: await Company.countDocuments(),
+      totalIndividuals: totalIndividuals,
+      redCards: 0,
+      orangeCards: 0,
+      greenCards: 0
+    };
+
+    // Calculate card statistics
+    allIndividuals.forEach(individual => {
+      const daysUntilExpiry = Math.ceil(
+        (new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
+      );
+      
+      if (daysUntilExpiry <= 0) {
+        stats.redCards++;
+      } else if (daysUntilExpiry <= 30) {
+        stats.orangeCards++;
+      } else {
+        stats.greenCards++;
+      }
+    });
+
+    // Add verification logs
+    console.log('Stats calculation:', {
+      totalIndividuals,
+      individualIds: individuals.length > 0 ? individuals[0].uniqueCount : [],
+      rawCount: await Individual.countDocuments()
+    });
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching company stats:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Get companies by main person (Public)
 router.get('/', async (req, res) => {
@@ -179,6 +236,67 @@ router.get('/main-person/:mainPersonId', async (req, res) => {
     res.json(companiesWithCounts);
   } catch (error) {
     console.error('Error fetching companies:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Add this temporary debug route (remove in production)
+router.get('/debug-individuals', async (req, res) => {
+  try {
+    const duplicates = await Individual.aggregate([
+      {
+        $group: {
+          _id: { iqamaNumber: "$iqamaNumber" },
+          count: { $sum: 1 },
+          ids: { $push: "$_id" }
+        }
+      },
+      {
+        $match: {
+          count: { $gt: 1 }
+        }
+      }
+    ]);
+
+    const allIndividuals = await Individual.find().select('_id iqamaNumber company');
+
+    res.json({
+      totalCount: allIndividuals.length,
+      uniqueCount: new Set(allIndividuals.map(i => i._id.toString())).size,
+      possibleDuplicates: duplicates,
+      allIndividuals: allIndividuals
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Add this temporary cleanup route (remove in production)
+router.post('/cleanup-individuals', async (req, res) => {
+  try {
+    const duplicates = await Individual.aggregate([
+      {
+        $group: {
+          _id: { iqamaNumber: "$iqamaNumber" },
+          count: { $sum: 1 },
+          ids: { $push: "$_id" }
+        }
+      },
+      {
+        $match: {
+          count: { $gt: 1 }
+        }
+      }
+    ]);
+
+    // Keep the first occurrence of each duplicate and remove others
+    for (const dup of duplicates) {
+      const [keepId, ...removeIds] = dup.ids;
+      await Individual.deleteMany({ _id: { $in: removeIds } });
+    }
+
+    res.json({ message: 'Cleanup completed', removedDuplicates: duplicates.length });
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });

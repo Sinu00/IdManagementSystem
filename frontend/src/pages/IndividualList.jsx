@@ -29,7 +29,7 @@ import {
   Button,
   Card,
   CardContent,
-  Divider
+  Divider,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -46,6 +46,7 @@ import {
   LocationOn as LocationIcon,
   Phone as PhoneIcon,
   MonetizationOn as MonetizationIcon,
+  PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
 import { individualApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -328,6 +329,21 @@ function IndividualList() {
                     </Grid>
                   </Box>
 
+
+                    <IconButton
+  onClick={() => window.print()}
+  sx={{
+    bgcolor: 'secondary.main',
+    color: 'white',
+    '&:hover': {
+      bgcolor: 'secondary.dark',
+      transform: 'translateY(-2px)',
+      boxShadow: theme => theme.shadows[4]
+    }
+  }}
+>
+  <PdfIcon />
+</IconButton>
                   {admin && (
                     <ProfileMenu 
                       username={username} 
