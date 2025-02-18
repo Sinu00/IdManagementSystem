@@ -49,9 +49,17 @@ function ProfileMenu({ username, onLogout }) {
         onClick={handleClose}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        PaperProps={{
+          elevation: 2,
+          sx: {
+            mt: 1,
+            borderRadius: 2,
+            minWidth: 180
+          }
+        }}
       >
         <Box sx={{ px: 2, py: 1 }}>
-          <Typography variant="subtitle1" color="primary.main">
+          <Typography variant="subtitle1" color="primary.main" fontWeight="500">
             {username}
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -59,7 +67,13 @@ function ProfileMenu({ username, onLogout }) {
           </Typography>
         </Box>
         <Divider />
-        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+        <MenuItem 
+          onClick={handleLogout} 
+          sx={{ 
+            color: 'error.main',
+            py: 1.5
+          }}
+        >
           Logout
         </MenuItem>
       </Menu>

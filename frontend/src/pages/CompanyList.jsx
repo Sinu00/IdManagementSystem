@@ -249,6 +249,7 @@ function CompanyList() {
                 <Box display="flex" alignItems="center" gap={2} ml="auto">
                   <Paper 
                     elevation={0}
+                    onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
                     sx={{ 
                       px: 2,
                       py: 1,
@@ -257,7 +258,13 @@ function CompanyList() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
-                      minWidth: 100
+                      minWidth: 100,
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: theme.shadows[4]
+                      }
                     }}
                   >
                     <WarningIcon sx={{ color: 'white', fontSize: 20 }} />
@@ -273,6 +280,7 @@ function CompanyList() {
 
                   <Paper 
                     elevation={0}
+                    onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
                     sx={{ 
                       px: 2,
                       py: 1,
@@ -281,7 +289,13 @@ function CompanyList() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
-                      minWidth: 100
+                      minWidth: 100,
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: theme.shadows[4]
+                      }
                     }}
                   >
                     <NotificationsIcon sx={{ color: 'white', fontSize: 20 }} />
@@ -305,7 +319,13 @@ function CompanyList() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
-                      minWidth: 100
+                      minWidth: 100,
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: theme.shadows[4]
+                      }
                     }}
                   >
                     <CheckCircleIcon sx={{ color: 'white', fontSize: 20 }} />

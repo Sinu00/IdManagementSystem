@@ -54,6 +54,9 @@ export const individualApi = {
     axiosInstance.put(`/individuals/${id}`, data),
   delete: (id) => 
     axiosInstance.delete(`/individuals/${id}`),
+  getExpired: (mainPersonId) => axiosInstance.get(`/individuals/expired/${mainPersonId}`),
+  getExpiringSoon: (mainPersonId) => axiosInstance.get(`/individuals/expiring-soon/${mainPersonId}`),
+  getValid: (mainPersonId) => axiosInstance.get(`/individuals/valid/${mainPersonId}`),
 };
 
 export const notificationApi = {

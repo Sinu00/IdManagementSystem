@@ -192,4 +192,89 @@ router.delete('/:id', adminProtect, async (req, res) => {
   }
 });
 
+// Add this new route to get expired IDs by main person
+router.get('/expired/:mainPersonId', async (req, res) => {
+  try {
+    const { mainPersonId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
+      return res.status(400).json({ message: 'Invalid main person ID' });
+    }
+
+    // Get all companies belonging to the main person
+    const companies = await Company.find({ mainPerson: mainPersonId });
+    const companyIds = companies.map(company => company._id);
+
+    // Find all expired individuals from these companies
+    const today = new Date();
+    const expiredIndividuals = await Individual.find({
+      company: { $in: companyIds },
+      expiryDate: { $lt: today }
+    }).populate({
+      path: 'company',
+      select: 'name mainPerson',
+      populate: {
+        path: 'mainPerson',
+        select: 'name'
+      }
+    }).sort({ expiryDate: 1 });
+
+    res.json(expiredIndividuals);
+  } catch (error) {
+    console.error('Error fetching expired IDs:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Add this new route to get expiring IDs by main person
+router.get('/expiring-soon/:mainPersonId', async (req, res) => {
+  try {
+    const { mainPersonId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
+      return res.status(400).json({ message: 'Invalid main person ID' });
+    }
+
+    // Get all companies belonging to the main person
+    const companies = await Company.find({ mainPerson: mainPersonId });
+    const companyIds = companies.map(company => company._id);
+
+    // Find all individuals expiring in the next 10 days
+    const today = new Date();
+    const tenDaysFromNow = new Date();
+    tenDaysFromNow.setDate(today.getDate() + 10);
+
+    const expiringIndividuals = await Individual.find({
+      company: { $in: companyIds },
+      expiryDate: { 
+        $gt: today,
+        $lte: tenDaysFromNow
+      }
+    }).populate({
+      path: 'company',
+      select: 'name mainPerson',
+      populate: {
+        path: 'mainPerson',
+        select: 'name'
+      }
+    }).sort({ expiryDate: 1 });
+
+    // Calculate days until expiry for each individual
+    const individualsWithDays = expiringIndividuals.map(individual => {
+      const daysUntilExpiry = Math.ceil(
+        (new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
+      );
+      return {
+        ...individual.toObject(),
+        daysUntilExpiry
+      };
+    });
+
+    res.json(individualsWithDays);
+  } catch (error) {
+    console.error('Error fetching expiring IDs:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router; 

@@ -78,7 +78,6 @@ function Home() {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
   };
 
   if (loading) {
@@ -236,116 +235,130 @@ function Home() {
               mb: 10
             }}
           >
-            {mainPersons.map((person) => (
-              <Grid item xs={12} sm={6} lg={4} key={person._id}>
-                <Card 
-                  onClick={() => isMainPersonAllowed(person._id) && navigate(`/main-person/${person._id}/companies`)}
-                  sx={{ 
-                    cursor: isMainPersonAllowed(person._id) ? 'pointer' : 'not-allowed',
-                    transition: 'all 0.3s ease-in-out',
-                    borderRadius: 4,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    opacity: isMainPersonAllowed(person._id) ? 1 : 0.6,
-                    filter: isMainPersonAllowed(person._id) ? 'none' : 'grayscale(100%)',
-                    position: 'relative',
-                    '&:hover': isMainPersonAllowed(person._id) ? {
-                      transform: 'translateY(-4px)',
-                      boxShadow: theme.shadows[8],
-                      '& .arrow-icon': {
-                        opacity: 1,
-                        transform: 'translateX(0)'
-                      }
-                    } : {}
-                  }}
-                >
-                  <Box 
+            {mainPersons.map((person) => {
+              const isAllowed = isMainPersonAllowed(person._id);
+              return (
+                <Grid item xs={12} sm={6} lg={4} key={person._id}>
+                  <Card 
+                    onClick={() => isAllowed && navigate(`/main-person/${person._id}/companies`)}
                     sx={{ 
-                      height: 8,
-                      bgcolor: isMainPersonAllowed(person._id) ? 'primary.main' : 'grey.400',
-                      width: '100%'
-                    }} 
-                  />
-                  <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: isMainPersonAllowed(person._id) ? 'primary.light' : 'grey.300',
-                          color: isMainPersonAllowed(person._id) ? 'primary.main' : 'grey.500',
-                          width: 56, 
-                          height: 56 
-                        }}
-                      >
-                        <PersonIcon fontSize="large" />
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" fontWeight="bold">
-                          {person.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Main Person
-                        </Typography>
+                      cursor: isAllowed ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s ease-in-out',
+                      borderRadius: 4,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      opacity: isAllowed ? 1 : 0.7,
+                      filter: isAllowed ? 'none' : 'grayscale(100%)',
+                      position: 'relative',
+                      '&:hover': isAllowed ? {
+                        transform: 'translateY(-4px)',
+                        boxShadow: theme.shadows[8],
+                        '& .arrow-icon': {
+                          opacity: 1,
+                          transform: 'translateX(0)'
+                        }
+                      } : {},
+                      '&::after': !isAllowed ? {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        borderRadius: 4,
+                        pointerEvents: 'none'
+                      } : {}
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        height: 8,
+                        bgcolor: isAllowed ? 'primary.main' : 'grey.400',
+                        width: '100%'
+                      }} 
+                    />
+                    <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <Box display="flex" alignItems="center" gap={2} mb={2}>
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: isAllowed ? 'primary.light' : 'grey.300',
+                            color: isAllowed ? 'primary.main' : 'grey.500',
+                            width: 56, 
+                            height: 56 
+                          }}
+                        >
+                          <PersonIcon fontSize="large" />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" fontWeight="bold">
+                            {person.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Main Person
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
 
-                    <Divider sx={{ my: 2 }} />
+                      <Divider sx={{ my: 2 }} />
 
-                    <Box sx={{ pl: 1 }}>
-                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                        <EmailIcon 
-                          fontSize="small" 
-                          color={isMainPersonAllowed(person._id) ? "action" : "disabled"} 
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {person.email}
-                        </Typography>
+                      <Box sx={{ pl: 1 }}>
+                        <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+                          <EmailIcon 
+                            fontSize="small" 
+                            color={isAllowed ? "action" : "disabled"} 
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            {person.email}
+                          </Typography>
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+                          <PhoneIcon 
+                            fontSize="small" 
+                            color={isAllowed ? "action" : "disabled"} 
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            {person.contactNumber}
+                          </Typography>
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <LocationIcon 
+                            fontSize="small" 
+                            color={isAllowed ? "action" : "disabled"} 
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            {person.address}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                        <PhoneIcon 
-                          fontSize="small" 
-                          color={isMainPersonAllowed(person._id) ? "action" : "disabled"} 
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {person.contactNumber}
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <LocationIcon 
-                          fontSize="small" 
-                          color={isMainPersonAllowed(person._id) ? "action" : "disabled"} 
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {person.address}
-                        </Typography>
-                      </Box>
-                    </Box>
 
-                    {isMainPersonAllowed(person._id) && (
-                      <IconButton 
-                        className="arrow-icon"
-                        size="small"
-                        sx={{ 
-                          position: 'absolute',
-                          right: 16,
-                          bottom: 12,
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          transition: 'all 0.3s ease',
-                          opacity: 0,
-                          transform: 'translateX(-10px)',
-                          '&:hover': {
-                            bgcolor: 'primary.dark'
-                          }
-                        }}
-                      >
-                        <ArrowForwardIcon />
-                      </IconButton>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                      {isAllowed && (
+                        <IconButton 
+                          className="arrow-icon"
+                          size="small"
+                          sx={{ 
+                            position: 'absolute',
+                            right: 16,
+                            bottom: 12,
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            transition: 'all 0.3s ease',
+                            opacity: 0,
+                            transform: 'translateX(-10px)',
+                            '&:hover': {
+                              bgcolor: 'primary.dark'
+                            }
+                          }}
+                        >
+                          <ArrowForwardIcon />
+                        </IconButton>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         </Fade>
 

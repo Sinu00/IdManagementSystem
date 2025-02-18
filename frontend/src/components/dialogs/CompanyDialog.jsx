@@ -10,6 +10,7 @@ import {
   Alert,
   Stack
 } from '@mui/material';
+import CustomDialog from './CustomDialog';
 
 function CompanyDialog({ open, onClose, onSubmit, company, mode, error }) {
   const [formData, setFormData] = useState({
@@ -62,87 +63,126 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode, error }) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {mode === 'add' ? 'Add New Company' : 'Edit Company'}
-      </DialogTitle>
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <Stack spacing={2}>
-            <TextField
-              fullWidth
-              label="Company Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              multiline
-              rows={2}
-            />
-            <TextField
-              fullWidth
-              label="CR Number"
-              name="crNumber"
-              value={formData.crNumber}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="Sponsor ID"
-              name="sponserId"
-              value={formData.sponserId}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="GOSI Number"
-              name="gosiNumber"
-              value={formData.gosiNumber}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="Makthab Number"
-              name="makthabNumber"
-              value={formData.makthabNumber}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="Contact Person"
-              name="contactPerson"
-              value={formData.contactPerson}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              label="Contact Number"
-              name="contactNumber"
-              value={formData.contactNumber}
-              onChange={handleChange}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained" color="primary">
-            {mode === 'add' ? 'Add' : 'Save'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+    <CustomDialog
+      open={open}
+      onClose={onClose}
+      title={mode === 'add' ? 'Add New Company' : 'Edit Company'}
+      onSubmit={handleSubmit}
+      error={error}
+      submitText={mode === 'add' ? 'Add Company' : 'Save Changes'}
+      maxWidth="xs"
+    >
+      <TextField
+        fullWidth
+        label="Company Name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        required
+        size="medium"
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="Address"
+        name="address"
+        value={formData.address}
+        onChange={handleChange}
+        required
+        multiline
+        rows={3}
+        size="medium"
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="CR Number"
+        name="crNumber"
+        value={formData.crNumber}
+        onChange={handleChange}
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="Sponsor ID"
+        name="sponserId"
+        value={formData.sponserId}
+        onChange={handleChange}
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="GOSI Number"
+        name="gosiNumber"
+        value={formData.gosiNumber}
+        onChange={handleChange}
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="Makthab Number"
+        name="makthabNumber"
+        value={formData.makthabNumber}
+        onChange={handleChange}
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="Contact Person"
+        name="contactPerson"
+        value={formData.contactPerson}
+        onChange={handleChange}
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+      <TextField
+        fullWidth
+        label="Contact Number"
+        name="contactNumber"
+        value={formData.contactNumber}
+        onChange={handleChange}
+        sx={{ 
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            bgcolor: 'background.paper'
+          }
+        }}
+      />
+    </CustomDialog>
   );
 }
 

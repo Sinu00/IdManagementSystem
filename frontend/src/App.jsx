@@ -11,6 +11,8 @@ const CompanyList = lazy(() => import('./pages/CompanyList'));
 const IndividualList = lazy(() => import('./pages/IndividualList'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const ExpiredIds = lazy(() => import('./pages/ExpiredIds'));
+const ExpiringSoonIds = lazy(() => import('./pages/ExpiringSoonIds'));
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
                   <Notifications />
                 </ProtectedRoute>
               } />
+              <Route path="/expired-ids/:mainPersonId" element={<ExpiredIds />} />
+              <Route path="/expiring-soon/:mainPersonId" element={<ExpiringSoonIds />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
