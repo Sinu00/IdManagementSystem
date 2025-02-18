@@ -99,7 +99,17 @@ router.get('/company/:companyId', async (req, res) => {
 // Create new individual (Admin only)
 router.post('/', adminProtect, async (req, res) => {
   try {
-    const { name, nationality, phoneNumber, iqamaNumber, expiryDate, notes, company } = req.body;
+    const { 
+      name, 
+      nationality, 
+      phoneNumber, 
+      iqamaNumber, 
+      expiryDate, 
+      notes, 
+      company,
+      referredBy,
+      amount
+    } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(company)) {
       return res.status(400).json({ message: 'Invalid company ID' });
@@ -124,7 +134,9 @@ router.post('/', adminProtect, async (req, res) => {
       iqamaNumber,
       expiryDate,
       notes,
-      company
+      company,
+      referredBy,
+      amount: parseFloat(amount) || 0
     });
 
     await individual.save();

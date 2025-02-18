@@ -22,7 +22,8 @@ import {
   MenuItem,
   Avatar,
   Button,
-  Fab
+  Fab,
+  Stack
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -69,7 +70,7 @@ function CompanyList() {
   const navigate = useNavigate();
   const theme = useTheme();
   const [mainPerson, setMainPerson] = useState(null);
-  const { admin, logout, username } = useAuth();
+  const { user, logout } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -119,7 +120,8 @@ function CompanyList() {
           company.crNumber?.toLowerCase().includes(searchTerm) ||
           company.sponserId?.toLowerCase().includes(searchTerm) ||
           company.gosiNumber?.toLowerCase().includes(searchTerm) ||
-          company.molNumber?.toLowerCase().includes(searchTerm)
+          company.molNumber?.toLowerCase().includes(searchTerm) ||
+          company.makthabNumber?.toLowerCase().includes(searchTerm)
         );
       })
     .sort((a, b) => {
@@ -255,7 +257,13 @@ function CompanyList() {
                 color: 'primary.dark'
               }}
             >
-              <Box display="flex" alignItems="center" gap={3}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 2
+              }}>
                 {/* Left Section - Main Person Info */}
                 <Box display="flex" alignItems="center" gap={2}>
                   <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
@@ -275,7 +283,11 @@ function CompanyList() {
                 </Box>
 
                 {/* Right Section - Summary Cards and Profile Menu */}
-                <Box display="flex" alignItems="center" gap={2} ml="auto">
+                <Stack 
+                  direction="row" 
+                  spacing={2} 
+                  alignItems="center"
+                >
                   <Paper 
                     elevation={0}
                     onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
@@ -337,13 +349,12 @@ function CompanyList() {
                       </Typography>
                     </Box>
                   </Paper>
-                  {admin && (
-                    <ProfileMenu 
-                      username={username} 
-                      onLogout={handleLogout}
-                    />
-                  )}
-                </Box>
+
+                  <ProfileMenu 
+                    username={user?.username}
+                    onLogout={handleLogout}
+                  />
+                </Stack>
               </Box>
             </Paper>
           </Fade>
@@ -631,7 +642,7 @@ function CompanyList() {
                     </Box>
 
                     {/* Admin Actions */}
-                    {admin && (
+                    {user?.isAdmin && (
                       <Box 
                         sx={{ 
                           position: 'absolute',
@@ -687,7 +698,7 @@ function CompanyList() {
           </Grid>
         </Fade>
 
-        {admin && (
+        {user?.isAdmin && (
           <Fab
             color="primary"
             sx={{

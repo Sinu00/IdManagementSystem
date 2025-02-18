@@ -1,54 +1,51 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
 
-function decodeToken(token) {
-  try {
-    return JSON.parse(atob(token.split('.')[1]));
-  } catch (error) {
-    console.error('Error decoding token:', error);
-    return null;
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [admin, setAdmin] = useState(false);
-  const [allowedMainPersons, setAllowedMainPersons] = useState([]);
-  const [username, setUsername] = useState('');
-
-  const login = (token) => {
-    localStorage.setItem('token', token);
-    const decoded = decodeToken(token);
-    if (decoded) {
-      setAdmin(true);
-      setUsername(decoded.username);
-      setAllowedMainPersons(decoded.allowedMainPersons || []);
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    setAdmin(false);
-    setUsername('');
-    setAllowedMainPersons([]);
-  };
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const decoded = decodeToken(token);
-      if (decoded) {
-        setAdmin(true);
-        setUsername(decoded.username);
-        setAllowedMainPersons(decoded.allowedMainPersons || []);
-      } else {
-        logout();
+      try {
+        const decoded = jwtDecode(token);
+        setUser({
+          username: decoded.username,
+          isAdmin: decoded.isAdmin,
+          allowedMainPersons: decoded.allowedMainPersons || []
+        });
+      } catch (error) {
+        console.error('Invalid token:', error);
+        localStorage.removeItem('token');
       }
     }
+    setLoading(false);
   }, []);
 
+  const login = (token) => {
+    localStorage.setItem('token', token);
+    const decoded = jwtDecode(token);
+    setUser({
+      username: decoded.username,
+      isAdmin: decoded.isAdmin,
+      allowedMainPersons: decoded.allowedMainPersons || []
+    });
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  if (loading) {
+    return null;
+  }
+
   return (
-    <AuthContext.Provider value={{ admin, username, allowedMainPersons, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

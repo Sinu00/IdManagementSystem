@@ -2,15 +2,15 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3000/api',
+const api = axios.create({
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Add a request interceptor to include the token
-axiosInstance.interceptors.request.use(
+// Add request interceptor to add auth token
+api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -23,48 +23,34 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+export const authApi = {
+  login: (credentials) => api.post('/auth/login', credentials),
+};
+
 export const mainPersonApi = {
-  getAll: () => axiosInstance.get('/main-persons'),
-  create: (data) => axiosInstance.post('/main-persons', data),
-  update: (id, data) => axiosInstance.put(`/main-persons/${id}`, data),
+  getAll: () => api.get('/main-persons'),
 };
 
 export const companyApi = {
-  getAll: () => axiosInstance.get('/companies'),
-  getByMainPerson: (mainPersonId) => 
-    axiosInstance.get(`/companies/main-person/${mainPersonId}`),
-  getById: (id) => axiosInstance.get(`/companies/${id}`),
-  get: (id) => axiosInstance.get(`/companies/${id}`),
-  create: (data) => 
-    axiosInstance.post('/companies', data),
-  update: (id, data) => 
-    axiosInstance.put(`/companies/${id}`, data),
-  delete: (id) => 
-    axiosInstance.delete(`/companies/${id}`),
-  getStats: () => axiosInstance.get('/companies/stats'),
+  getByMainPerson: (mainPersonId) => api.get(`/companies/main-person/${mainPersonId}`),
+  getById: (id) => api.get(`/companies/${id}`),
+  create: (data) => api.post('/companies', data),
+  update: (id, data) => api.put(`/companies/${id}`, data),
+  delete: (id) => api.delete(`/companies/${id}`),
+  getStats: () => api.get('/companies/stats'),
 };
 
 export const individualApi = {
-  getAll: () => axiosInstance.get('/individuals'),
-  getByCompany: (companyId) => 
-    axiosInstance.get(`/individuals/company/${companyId}`),
-  get: (id) => axiosInstance.get(`/individuals/${id}`),
-  create: (data) => 
-    axiosInstance.post('/individuals', data),
-  update: (id, data) => 
-    axiosInstance.put(`/individuals/${id}`, data),
-  delete: (id) => 
-    axiosInstance.delete(`/individuals/${id}`),
-  getExpired: (mainPersonId) => axiosInstance.get(`/individuals/expired/${mainPersonId}`),
-  getExpiringSoon: (mainPersonId, days = 30) => 
-    axiosInstance.get(`/individuals/expiring-soon/${mainPersonId}?days=${days}`),
-  getValid: (mainPersonId) => axiosInstance.get(`/individuals/valid/${mainPersonId}`),
+  getByCompany: (companyId) => api.get(`/individuals/company/${companyId}`),
+  create: (data) => api.post('/individuals', data),
+  update: (id, data) => api.put(`/individuals/${id}`, data),
+  delete: (id) => api.delete(`/individuals/${id}`),
+  getExpired: (mainPersonId) => api.get(`/individuals/expired/${mainPersonId}`),
+  getExpiringSoon: (mainPersonId) => api.get(`/individuals/expiring-soon/${mainPersonId}`),
 };
 
 export const notificationApi = {
-  getExpiring: (days = 10) => axiosInstance.get(`/notifications?days=${days}`),
+  getExpiring: (days = 10) => api.get(`/notifications?days=${days}`),
 };
 
-export const authApi = {
-  login: (credentials) => axiosInstance.post('/auth/admin/login', credentials),
-}; 
+export default api; 

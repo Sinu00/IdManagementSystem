@@ -5,7 +5,7 @@ import User from '../models/user.model.js';
 
 const router = express.Router();
 
-router.post('/admin/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ 
@@ -20,14 +20,20 @@ router.post('/admin/login', async (req, res) => {
       { 
         id: user._id, 
         username: user.username,
-        isAdmin: true,
+        isAdmin: user.isAdmin,
         allowedMainPersons: user.allowedMainPersons || []
       },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    res.json({ token });
+    res.json({ 
+      token,
+      user: {
+        username: user.username,
+        isAdmin: user.isAdmin
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

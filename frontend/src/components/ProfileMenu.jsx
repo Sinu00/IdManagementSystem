@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import {
-  Box,
   IconButton,
   Menu,
   MenuItem,
-  Typography,
   Avatar,
-  Divider
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Divider,
+  Box,
+  Typography
 } from '@mui/material';
-import { Person as PersonIcon } from '@mui/icons-material';
+import {
+  Logout as LogoutIcon,
+  Person as PersonIcon
+} from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 
 function ProfileMenu({ username, onLogout }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { user } = useAuth();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -28,56 +36,116 @@ function ProfileMenu({ username, onLogout }) {
   };
 
   return (
-    <Box>
-      <IconButton
-        onClick={handleClick}
-        size="small"
-        sx={{ ml: 2 }}
-        aria-controls={open ? 'profile-menu' : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
-      >
-        <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-          <PersonIcon />
-        </Avatar>
-      </IconButton>
+    <>
+      <Tooltip title="Account settings">
+        <IconButton
+          onClick={handleClick}
+          size="small"
+          sx={{ 
+            ml: 2,
+            bgcolor: user?.isAdmin ? 'error.main' : 'primary.main',
+            color: 'white',
+            '&:hover': {
+              bgcolor: user?.isAdmin ? 'error.dark' : 'primary.dark',
+            }
+          }}
+        >
+          <Avatar sx={{ 
+            width: 32, 
+            height: 32,
+            bgcolor: 'inherit',
+            color: 'inherit'
+          }}>
+            <PersonIcon />
+          </Avatar>
+        </IconButton>
+      </Tooltip>
       <Menu
         anchorEl={anchorEl}
-        id="profile-menu"
+        id="account-menu"
         open={open}
         onClose={handleClose}
         onClick={handleClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            mt: 1.5,
+            bgcolor: user?.isAdmin ? 'error.lighter' : 'primary.lighter',
+            '& .MuiAvatar-root': {
+              width: 32,
+              height: 32,
+              ml: -0.5,
+              mr: 1,
+            },
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: 'inherit',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+            },
+          },
+        }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          elevation: 2,
-          sx: {
-            mt: 1,
-            borderRadius: 2,
-            minWidth: 180
-          }
-        }}
       >
         <Box sx={{ px: 2, py: 1 }}>
-          <Typography variant="subtitle1" color="primary.main" fontWeight="500">
-            {username}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Administrator
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <PersonIcon sx={{ 
+              color: user?.isAdmin ? 'error.dark' : 'primary.dark',
+              fontSize: 20 
+            }} />
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                color: user?.isAdmin ? 'error.dark' : 'primary.dark',
+                fontWeight: 'bold'
+              }}
+            >
+              {username}
+            </Typography>
+          </Box>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: user?.isAdmin ? 'error.dark' : 'primary.dark',
+              opacity: 0.8,
+              display: 'block',
+              ml: 3.5
+            }}
+          >
+            {user?.isAdmin ? 'Administrator' : 'Regular User'}
           </Typography>
         </Box>
-        <Divider />
+        <Divider sx={{ 
+          borderColor: user?.isAdmin ? 'error.main' : 'primary.main',
+          opacity: 0.2
+        }} />
         <MenuItem 
-          onClick={handleLogout} 
-          sx={{ 
-            color: 'error.main',
-            py: 1.5
+          onClick={handleLogout}
+          sx={{
+            color: user?.isAdmin ? 'error.dark' : 'primary.dark',
+            '&:hover': {
+              bgcolor: user?.isAdmin ? 'error.light' : 'primary.light',
+            }
           }}
         >
-          Logout
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" sx={{ 
+              color: user?.isAdmin ? 'error.dark' : 'primary.dark' 
+            }} />
+          </ListItemIcon>
+          <ListItemText>Logout</ListItemText>
         </MenuItem>
       </Menu>
-    </Box>
+    </>
   );
 }
 

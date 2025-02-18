@@ -17,7 +17,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
     crNumber: company?.crNumber || '',
     sponserId: company?.sponserId || '',
     gosiNumber: company?.gosiNumber || '',
-    molNumber: company?.molNumber || ''
+    molNumber: company?.molNumber || '',
+    makthabNumber: company?.makthabNumber || ''
   });
 
   useEffect(() => {
@@ -27,7 +28,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
         crNumber: '',
         sponserId: '',
         gosiNumber: '',
-        molNumber: ''
+        molNumber: '',
+        makthabNumber: ''
       });
     } else if (company) {
       setFormData({
@@ -35,7 +37,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
         crNumber: company.crNumber || '',
         sponserId: company.sponserId || '',
         gosiNumber: company.gosiNumber || '',
-        molNumber: company.molNumber || ''
+        molNumber: company.molNumber || '',
+        makthabNumber: company.makthabNumber || ''
       });
     }
   }, [company, mode]);

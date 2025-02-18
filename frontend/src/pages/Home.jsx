@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -28,7 +28,8 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   Login as LoginIcon,
-  PictureAsPdf as PdfIcon
+  PictureAsPdf as PdfIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -41,7 +42,7 @@ function Home() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
-  const { admin, logout, allowedMainPersons, username } = useAuth();
+  const { admin, logout, allowedMainPersons, username, user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,13 +74,26 @@ function Home() {
     fetchData();
   }, []);
 
-  const isMainPersonAllowed = (mainPersonId) => {
-    if (!admin) return true; // If not admin, allow all
-    return allowedMainPersons?.includes(mainPersonId);
-  };
+  const isMainPersonAllowed = useCallback((person) => {
+    // If user is not logged in, no access
+    if (!user) return false;
+    
+    // If user is admin with full access (Suhail)
+    if (user.isAdmin && user.allowedMainPersons.includes(person._id)) {
+      return true;
+    }
+    
+    // For regular users, check if they have access to this main person
+    if (!user.isAdmin && user.allowedMainPersons.includes(person._id)) {
+      return true;
+    }
+    
+    return false;
+  }, [user]);
 
   const handleLogout = () => {
     logout();
+    navigate('/login');
   };
 
   if (loading) {
@@ -227,211 +241,203 @@ function Home() {
           </Fade>
         )}
 
-        <Fade in timeout={1000}>
-          <Grid 
-            container 
-            spacing={3}
-            sx={{ 
-              position: 'relative',
-              zIndex: 1,
-              mb: 10
-            }}
-          >
-            {mainPersons.map((person) => {
-              const isAllowed = isMainPersonAllowed(person._id);
-              return (
-                <Grid item xs={12} sm={6} lg={4} key={person._id}>
-                  <Card 
-                    onClick={() => isAllowed && navigate(`/main-person/${person._id}/companies`)}
-                    sx={{ 
-                      cursor: isAllowed ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.3s ease-in-out',
-                      borderRadius: 4,
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      opacity: isAllowed ? 1 : 0.7,
-                      filter: isAllowed ? 'none' : 'grayscale(100%)',
-                      position: 'relative',
-                      '&:hover': isAllowed ? {
-                        transform: 'translateY(-4px)',
-                        boxShadow: theme.shadows[8],
-                        '& .arrow-icon': {
-                          opacity: 1,
-                          transform: 'translateX(0)'
-                        }
-                      } : {},
-                      '&::after': !isAllowed ? {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                        borderRadius: 4,
-                        pointerEvents: 'none'
-                      } : {}
-                    }}
-                  >
-                    <Box 
-                      sx={{ 
-                        height: 8,
-                        bgcolor: isAllowed ? 'primary.main' : 'grey.400',
-                        width: '100%'
-                      }} 
-                    />
-                    <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <Box display="flex" alignItems="center" gap={2} mb={2}>
-                        <Avatar 
-                          sx={{ 
-                            bgcolor: isAllowed ? 'primary.light' : 'grey.300',
-                            color: isAllowed ? 'primary.main' : 'grey.500',
-                            width: 56, 
-                            height: 56 
-                          }}
-                        >
-                          <PersonIcon fontSize="large" />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" fontWeight="bold">
-                            {person.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Main Person
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Box sx={{ pl: 1 }}>
-                        <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                          <EmailIcon 
-                            fontSize="small" 
-                            color={isAllowed ? "action" : "disabled"} 
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            {person.email}
-                          </Typography>
-                        </Box>
-                        <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                          <PhoneIcon 
-                            fontSize="small" 
-                            color={isAllowed ? "action" : "disabled"} 
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            {person.contactNumber}
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      {isAllowed && (
-                        <IconButton 
-                          className="arrow-icon"
-                          size="small"
-                          sx={{ 
-                            position: 'absolute',
-                            right: 16,
-                            bottom: 12,
-                            bgcolor: 'primary.main',
-                            color: 'white',
-                            transition: 'all 0.3s ease',
-                            opacity: 0,
-                            transform: 'translateX(-10px)',
-                            '&:hover': {
-                              bgcolor: 'primary.dark'
-                            }
-                          }}
-                        >
-                          <ArrowForwardIcon />
-                        </IconButton>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Fade>
-
-        <Box 
-          sx={{ 
-            width: '100%',
-            mt: 'auto',
-            py: 3,
-            px: 2,
-            bgcolor: 'background.paper',
-            borderTopLeftRadius: 30,
-            borderTopRightRadius: 30,
-            boxShadow: '0px -4px 20px rgba(0, 0, 0, 0.08)',
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 10
-          }}
-        >
-          <Container maxWidth="lg">
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              spacing={3}
-              alignItems="center"
-              justifyContent="center"
-            >
-              {admin ? (
-                <ProfileMenu 
-                  username={username} 
-                  onLogout={handleLogout}
-                />
-              ) : (
-                <Button
-                  variant="contained"
-                  startIcon={<LoginIcon />}
-                  onClick={() => navigate('/admin/login')}
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 3,
-                    minWidth: { xs: '100%', sm: 200 },
-                    fontWeight: 600,
-                    '&:hover': {
-                      bgcolor: 'primary.dark',
-                      transform: 'translateY(-2px)',
-                      boxShadow: theme.shadows[4]
-                    }
+        <Grid container spacing={3}>
+          {mainPersons.map((person) => {
+            const isAllowed = isMainPersonAllowed(person);
+            return (
+              <Grid item xs={12} sm={6} lg={4} key={person._id}>
+                <Card 
+                  onClick={() => isAllowed && navigate(`/main-person/${person._id}/companies`)}
+                  sx={{ 
+                    cursor: isAllowed ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.3s ease-in-out',
+                    borderRadius: 4,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    opacity: isAllowed ? 1 : 0.5,
+                    filter: isAllowed ? 'none' : 'grayscale(100%)',
+                    position: 'relative',
+                    '&:hover': isAllowed ? {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8],
+                      '& .arrow-icon': {
+                        opacity: 1,
+                        transform: 'translateX(0)'
+                      }
+                    } : {},
+                    '&::after': !isAllowed ? {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                      zIndex: 1
+                    } : undefined
                   }}
                 >
-                  Admin Login
-                </Button>
-              )}
-              <Button
-                variant="contained"
-                startIcon={<PdfIcon />}
-                onClick={() => window.print()}
-                sx={{
-                  bgcolor: 'secondary.main',
-                  color: 'white',
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 3,
-                  minWidth: { xs: '100%', sm: 200 },
-                  fontWeight: 600,
-                  '&:hover': {
-                    bgcolor: 'secondary.dark',
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4]
-                  }
-                }}
-              >
-                Print PDF
-              </Button>
-            </Stack>
-          </Container>
-        </Box>
+                  {!isAllowed && (
+                    <LockIcon 
+                      sx={{ 
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        color: 'text.disabled',
+                        fontSize: 40,
+                        zIndex: 2
+                      }} 
+                    />
+                  )}
+
+                  <Box 
+                    sx={{ 
+                      height: 8,
+                      bgcolor: isAllowed ? 'primary.main' : 'grey.400',
+                      width: '100%'
+                    }} 
+                  />
+                  
+                  <CardContent sx={{ p: 3, flex: 1 }}>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: isAllowed ? 'primary.light' : 'grey.300',
+                          color: isAllowed ? 'primary.main' : 'grey.500',
+                          width: 56, 
+                          height: 56 
+                        }}
+                      >
+                        <PersonIcon fontSize="large" />
+                      </Avatar>
+                      <Box>
+                        <Typography 
+                          variant="h6" 
+                          fontWeight="bold"
+                          color={isAllowed ? 'text.primary' : 'text.disabled'}
+                        >
+                          {person.name}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color={isAllowed ? 'text.secondary' : 'text.disabled'}
+                        >
+                          Main Person
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    <Box sx={{ pl: 1 }}>
+                      <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+                        <EmailIcon 
+                          fontSize="small" 
+                          color={isAllowed ? "primary" : "disabled"} 
+                        />
+                        <Typography 
+                          variant="body2" 
+                          color={isAllowed ? 'text.secondary' : 'text.disabled'}
+                        >
+                          {person.email}
+                        </Typography>
+                      </Box>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <PhoneIcon 
+                          fontSize="small" 
+                          color={isAllowed ? "primary" : "disabled"} 
+                        />
+                        <Typography 
+                          variant="body2" 
+                          color={isAllowed ? 'text.secondary' : 'text.disabled'}
+                        >
+                          {person.contactNumber}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {isAllowed && (
+                      <IconButton 
+                        className="arrow-icon"
+                        size="small"
+                        sx={{ 
+                          position: 'absolute',
+                          right: 16,
+                          bottom: 16,
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          transition: 'all 0.3s ease',
+                          opacity: 0,
+                          transform: 'translateX(-10px)',
+                          '&:hover': {
+                            bgcolor: 'primary.dark'
+                          }
+                        }}
+                      >
+                        <ArrowForwardIcon />
+                      </IconButton>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
       </Container>
+
+      <Box 
+        sx={{ 
+          width: '100%',
+          mt: 'auto',
+          py: 3,
+          px: 2,
+          bgcolor: 'background.paper',
+          borderTopLeftRadius: 30,
+          borderTopRightRadius: 30,
+          boxShadow: '0px -4px 20px rgba(0, 0, 0, 0.08)',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack 
+            direction="row" 
+            spacing={3}
+            alignItems="center"
+            justifyContent="center"
+          >
+            <ProfileMenu 
+              username={user?.username} 
+              onLogout={handleLogout}
+            />
+            <Button
+              variant="contained"
+              startIcon={<PdfIcon />}
+              onClick={() => window.print()}
+              sx={{
+                bgcolor: 'secondary.main',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                borderRadius: 3,
+                fontWeight: 600,
+                '&:hover': {
+                  bgcolor: 'secondary.dark',
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme.shadows[4]
+                }
+              }}
+            >
+              Print PDF
+            </Button>
+          </Stack>
+        </Container>
+      </Box>
     </Box>
   );
 }

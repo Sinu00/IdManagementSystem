@@ -48,12 +48,6 @@ router.get('/stats', async (req, res) => {
       }
     });
 
-    // Add verification logs
-    console.log('Stats calculation:', {
-      totalIndividuals,
-      individualIds: individuals.length > 0 ? individuals[0].uniqueCount : [],
-      rawCount: await Individual.countDocuments()
-    });
 
     res.json(stats);
   } catch (error) {
@@ -74,22 +68,18 @@ router.get('/', async (req, res) => {
 });
 
 // Get company by ID
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid company ID' });
-    }
-
     const company = await Company.findById(req.params.id)
-      .populate('mainPerson', 'name email contactNumber');
-
+      .populate('mainPerson');
+    
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });
     }
 
     res.json(company);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
 });
 

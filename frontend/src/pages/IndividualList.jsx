@@ -30,6 +30,7 @@ import {
   Card,
   CardContent,
   Divider,
+  Stack,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -78,7 +79,7 @@ function IndividualList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [company, setCompany] = useState(null);
-  const { admin, logout, username } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -98,7 +99,7 @@ function IndividualList() {
       try {
         setLoading(true);
         const [companyResponse, individualsResponse] = await Promise.all([
-          companyApi.get(companyId),
+          companyApi.getById(companyId),
           individualApi.getByCompany(companyId)
         ]);
         
@@ -218,13 +219,18 @@ function IndividualList() {
       setConfirmAction(() => async () => {
         try {
           if (dialogMode === 'add') {
-            await individualApi.create({ ...formData, company: companyId });
+            await individualApi.create({ 
+              ...formData, 
+              company: companyId,
+              amount: parseFloat(formData.amount) || 0,
+              referredBy: formData.referredBy || ''
+            });
           } else if (dialogMode === 'edit') {
             await individualApi.update(selectedIndividual._id, formData);
           } else {
             await individualApi.update(selectedIndividual._id, { 
               expiryDate: formData.expiryDate,
-              amount: formData.amount
+              amount: parseFloat(formData.amount) || 0
             });
           }
           
@@ -248,6 +254,7 @@ function IndividualList() {
 
   const handleLogout = () => {
     logout();
+    navigate('/login');
   };
 
   const getStatusColor = (status) => {
@@ -282,7 +289,13 @@ function IndividualList() {
                 color: 'primary.dark'
               }}
             >
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between">
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 2
+              }}>
                 <Box display="flex" alignItems="center" gap={2}>
                   <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
                     <BusinessIcon />
@@ -297,60 +310,60 @@ function IndividualList() {
                   </Box>
                 </Box>
 
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    gap: 4,
-                    alignItems: 'center'
-                  }}
+                <Stack 
+                  direction="row" 
+                  spacing={2} 
+                  alignItems="center"
                 >
-                  <Box>
-                    <Grid container spacing={2} sx={{ width: 'auto', minWidth: '400px' }}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="primary.dark" gutterBottom>
-                          <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          CR: {company.crNumber || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="primary.dark" gutterBottom>
-                          <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          GOSI: {company.gosiNumber || 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="primary.dark" gutterBottom>
-                          <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          Sponsor: {company.sponserId || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="primary.dark" gutterBottom>
-                          <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          Maktab: {company.makthabNumber || 'N/A'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Box>
+                  <Paper
+                    elevation={0}
+                    sx={{ 
+                      px: 2,
+                      py: 1,
+                      bgcolor: 'transparent',
+                      borderRadius: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1
+                    }}
+                  >
+                    <Typography variant="body2" color="primary.dark" gutterBottom>
+                      <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                      CR: {company.crNumber || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="primary.dark" gutterBottom>
+                      <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                      GOSI: {company.gosiNumber || 'N/A'}
+                    </Typography>
+                  </Paper>
+                  
+                  <Paper
+                    elevation={0}
+                    sx={{ 
+                      px: 2,
+                      py: 1,
+                      bgcolor: 'transparent',
+                      borderRadius: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1
+                    }}
+                  >
+                    <Typography variant="body2" color="primary.dark" gutterBottom>
+                      <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                      Sponsor: {company.sponserId || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="primary.dark" gutterBottom>
+                      <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                      MOI: {company.makthabNumber || company.molNumber || 'N/A'}
+                    </Typography>
+                  </Paper>
 
-
-                    <IconButton
-  onClick={() => window.print()}
-  sx={{
-    bgcolor: 'secondary.main',
-    color: 'white',
-    '&:hover': {
-      bgcolor: 'secondary.dark',
-      transform: 'translateY(-2px)',
-      boxShadow: theme => theme.shadows[4]
-    }
-  }}
->
-  <PdfIcon />
-</IconButton>
-                  {admin && (
-                    <ProfileMenu 
-                      username={username} 
-                      onLogout={handleLogout}
-                    />
-                  )}
-                </Box>
+                  <ProfileMenu 
+                    username={user?.username}
+                    onLogout={handleLogout}
+                  />
+                </Stack>
               </Box>
             </Paper>
           </Fade>
@@ -538,7 +551,7 @@ function IndividualList() {
                           </Grid>
                         </Grid>
 
-                        {admin && (
+                        {user?.isAdmin && (
                           <Box 
                             sx={{ 
                               display: 'flex', 
@@ -612,7 +625,7 @@ function IndividualList() {
           </Grid>
         </Fade>
 
-        {admin && (
+        {user?.isAdmin && (
           <Fab
             color="primary"
             onClick={handleAdd}

@@ -22,9 +22,9 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     phoneNumber: '',
     iqamaNumber: '',
     expiryDate: null,
-    notes: '',
     referredBy: '',
-    amount: ''
+    amount: '0',
+    notes: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -41,14 +41,19 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
         notes: individual.notes || '',
         referredBy: individual.referredBy || '',
-        amount: individual.amount ? individual.amount.toString() : ''
+        amount: individual.amount ? individual.amount.toString() : '0'
       });
     }
   }, [individual, mode]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const submissionData = {
+      ...formData,
+      amount: parseFloat(formData.amount) || 0,
+      referredBy: formData.referredBy || ''
+    };
+    onSubmit(submissionData);
   };
 
   const isRenewMode = mode === 'renew';
@@ -156,6 +161,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                   type="number"
                   value={formData.amount}
                   onChange={handleChange}
+                  required
                 />
               </Grid>
             </Grid>
