@@ -106,7 +106,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
               </Typography>
               <Stack spacing={1}>
                 <Typography variant="body2">
-                  Last renewed by: {individual.lastRenewedBy?.username || 'N/A'}
+                  Last renewed by: {individual.lastRenewedBy || 'N/A'}
                 </Typography>
                 {individual.lastRenewalDate && (
                   <Typography variant="body2">

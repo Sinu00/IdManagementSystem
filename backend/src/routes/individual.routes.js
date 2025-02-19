@@ -98,7 +98,7 @@ router.post('/', adminProtect, async (req, res) => {
   try {
     const individualData = {
       ...req.body,
-      lastRenewedBy: req.user.id,     // Using req.user.id instead of _id
+      lastRenewedBy: req.user.username,     // Using req.user.username instead of _id
       lastRenewalDate: new Date()
     };
 
@@ -129,7 +129,7 @@ router.put('/:id', adminProtect, async (req, res) => {
     );
 
     if (isRenewalOperation) {
-      updates.lastRenewedBy = req.user.id;
+      updates.lastRenewedBy = req.user.username;
       updates.lastRenewalDate = new Date();
     }
 

@@ -13,7 +13,8 @@ import {
   Paper,
   Button,
   IconButton,
-  Alert
+  Alert,
+  Skeleton
 } from '@mui/material';
 import { format } from 'date-fns';
 import { individualApi } from '../services/api';
@@ -35,6 +36,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TextField } from '@mui/material';
+import { ExpiredCardSkeletonList } from '../components/skeletons/ExpiredCardSkeleton';
 
 function ExpiringSoonIds() {
   const [loading, setLoading] = useState(true);
@@ -91,14 +93,6 @@ function ExpiringSoonIds() {
     }
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -128,77 +122,89 @@ function ExpiringSoonIds() {
           <WarningIcon sx={{ fontSize: 40, color: 'warning.main' }} />
           <Box>
             <Typography variant="h5" color="warning.main" fontWeight="bold">
-              Action Required
+              {loading ? <Skeleton width={200} /> : 'Action Required'}
             </Typography>
             <Typography variant="subtitle1" color="warning.main">
-              {expiringIds.length} IDs will expire within the next 30 days
+              {loading ? (
+                <Skeleton width={300} />
+              ) : (
+                `${expiringIds.length} IDs will expire within the next 30 days`
+              )}
             </Typography>
           </Box>
         </Box>
       </Paper>
 
-      <Grid container spacing={3}>
-        {expiringIds.map((individual) => (
-          <Grid item xs={12} sm={6} md={4} key={individual._id}>
-            <Card 
-              sx={{ 
-                borderColor: 'warning.main',
-                borderWidth: 1,
-                borderStyle: 'solid',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: (theme) => theme.shadows[4]
-                }
-              }}
-              onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
-            >
-              <CardContent>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <PersonIcon color="warning" />
-                    <Typography variant="h6">
-                      {individual.name}
-                    </Typography>
-                  </Box>
-                  
-                  <Box display="flex" flexDirection="column" gap={1}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <BadgeIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        Iqama: {individual.iqamaNumber}
-                      </Typography>
-                    </Box>
-                    
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <BusinessIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        {individual.company.name}
-                      </Typography>
-                    </Box>
-                    
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <EventIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        Expires on: {format(new Date(individual.expiryDate), 'dd/MM/yyyy')}
-                      </Typography>
-                    </Box>
-                  </Box>
+      <Fade in timeout={1000}>
+        <Box>
+          {loading ? (
+            <ExpiredCardSkeletonList count={6} />
+          ) : (
+            <Grid container spacing={3}>
+              {expiringIds.map((individual) => (
+                <Grid item xs={12} sm={6} md={4} key={individual._id}>
+                  <Card 
+                    sx={{ 
+                      borderColor: 'warning.main',
+                      borderWidth: 1,
+                      borderStyle: 'solid',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: (theme) => theme.shadows[4]
+                      }
+                    }}
+                    onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+                  >
+                    <CardContent>
+                      <Box display="flex" flexDirection="column" gap={2}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <PersonIcon color="warning" />
+                          <Typography variant="h6">
+                            {individual.name}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <BadgeIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              Iqama: {individual.iqamaNumber}
+                            </Typography>
+                          </Box>
+                          
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <BusinessIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              {individual.company.name}
+                            </Typography>
+                          </Box>
+                          
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <EventIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              Expires on: {format(new Date(individual.expiryDate), 'dd/MM/yyyy')}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Chip 
-                      label={`Expires in ${individual.daysUntilExpiry} days`}
-                      color="warning"
-                      size="small"
-                    />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                          <Chip 
+                            label={`Expires in ${individual.daysUntilExpiry} days`}
+                            color="warning"
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      </Fade>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>Modify Expiry Date</DialogTitle>

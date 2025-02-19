@@ -16,7 +16,8 @@ import {
   Alert,
   TextField,
   Avatar,
-  Divider
+  Divider,
+  Skeleton
 } from '@mui/material';
 import { format } from 'date-fns';
 import { individualApi } from '../services/api';
@@ -35,6 +36,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { styled } from '@mui/material/styles';
+import { ExpiredCardSkeletonList } from '../components/skeletons/ExpiredCardSkeleton';
 
 const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
   width: '100%',
@@ -118,26 +120,7 @@ function ExpiredIds() {
     }
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper elevation={0} sx={{ p: 3, bgcolor: 'error.lighter', borderRadius: 3 }}>
-          <Typography color="error">{error}</Typography>
-          <Button onClick={() => window.location.reload()} sx={{ mt: 2 }}>
-            Try Again
-          </Button>
-        </Paper>
-      </Container>
-    );
-  }
+  if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -155,77 +138,89 @@ function ExpiredIds() {
           <WarningIcon sx={{ fontSize: 40, color: 'error.main' }} />
           <Box>
             <Typography variant="h5" color="error.main" fontWeight="bold">
-              Attention Required
+              {loading ? <Skeleton width={200} /> : 'Attention Required'}
             </Typography>
             <Typography variant="subtitle1" color="error.main">
-              {expiredIds.length} IDs have expired and need immediate attention
+              {loading ? (
+                <Skeleton width={300} />
+              ) : (
+                `${expiredIds.length} IDs have expired and need immediate attention`
+              )}
             </Typography>
           </Box>
         </Box>
       </Paper>
 
-      <Grid container spacing={3}>
-        {expiredIds.map((individual) => (
-          <Grid item xs={12} sm={6} md={4} key={individual._id}>
-            <Card 
-              sx={{ 
-                borderColor: 'error.main',
-                borderWidth: 1,
-                borderStyle: 'solid',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: (theme) => theme.shadows[4]
-                }
-              }}
-              onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
-            >
-              <CardContent>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <PersonIcon color="error" />
-                    <Typography variant="h6">
-                      {individual.name}
-                    </Typography>
-                  </Box>
-                  
-                  <Box display="flex" flexDirection="column" gap={1}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <BadgeIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        Iqama: {individual.iqamaNumber}
-                      </Typography>
-                    </Box>
-                    
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <BusinessIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        {individual.company.name}
-                      </Typography>
-                    </Box>
-                    
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <EventIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        Expired on: {format(new Date(individual.expiryDate), 'dd/MM/yyyy')}
-                      </Typography>
-                    </Box>
-                  </Box>
+      <Fade in timeout={1000}>
+        <Box>
+          {loading ? (
+            <ExpiredCardSkeletonList count={6} />
+          ) : (
+            <Grid container spacing={3}>
+              {expiredIds.map((individual) => (
+                <Grid item xs={12} sm={6} md={4} key={individual._id}>
+                  <Card 
+                    sx={{ 
+                      borderColor: 'error.main',
+                      borderWidth: 1,
+                      borderStyle: 'solid',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: (theme) => theme.shadows[4]
+                      }
+                    }}
+                    onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+                  >
+                    <CardContent>
+                      <Box display="flex" flexDirection="column" gap={2}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <PersonIcon color="error" />
+                          <Typography variant="h6">
+                            {individual.name}
+                          </Typography>
+                        </Box>
+                        
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <BadgeIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              Iqama: {individual.iqamaNumber}
+                            </Typography>
+                          </Box>
+                          
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <BusinessIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              {individual.company.name}
+                            </Typography>
+                          </Box>
+                          
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <EventIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              Expired on: {format(new Date(individual.expiryDate), 'dd/MM/yyyy')}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                  <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Chip 
-                      label="Expired"
-                      color="error"
-                      size="small"
-                    />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                          <Chip 
+                            label="Expired"
+                            color="error"
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      </Fade>
 
       <CustomDialog
         open={dialogOpen}

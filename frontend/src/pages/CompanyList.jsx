@@ -24,7 +24,8 @@ import {
   Button,
   Fab,
   Stack,
-  Tooltip
+  Tooltip,
+  Skeleton
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -51,6 +52,8 @@ import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import CompanyDialog from '../components/dialogs/CompanyDialog';
+import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 function calculateTotalCounts(companies) {
   return companies.reduce((totals, company) => {
@@ -220,23 +223,6 @@ function CompanyList() {
     }
   };
 
-  if (loading) {
-    return (
-      <Box 
-        sx={{ 
-          width: '100%',
-          minHeight: '100vh',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          bgcolor: 'background.default'
-        }}
-      >
-        <CircularProgress size={40} />
-      </Box>
-    );
-  }
-
   return (
     <Box 
       sx={{ 
@@ -248,202 +234,204 @@ function CompanyList() {
       }}
     >
       <Container maxWidth="lg">
-        {mainPerson && (
-          <Fade in timeout={800}>
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                borderRadius: '24px 24px 0 0',
-                bgcolor: 'primary.light',
-                color: 'primary.dark'
-              }}
-            >
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 2
-              }}>
-                {/* Left Section - Main Person Info */}
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                    <PersonIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">
-                      {mainPerson.name}
-                    </Typography>
-                    <Typography variant="body2">
-                      Managing {companies.length} Companies
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Individuals: {calculateTotalCounts(companies).total}
-                    </Typography>
-                  </Box>
+        <Fade in timeout={800}>
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 3,
+              borderRadius: '24px 24px 0 0',
+              bgcolor: 'primary.light',
+              color: 'primary.dark'
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 2
+            }}>
+              {/* Left Section - Main Person Info */}
+              <Box display="flex" alignItems="center" gap={2}>
+                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                  <PersonIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    {mainPerson?.name || <Skeleton width={200} />}
+                  </Typography>
+                  <Typography variant="body2">
+                    {loading ? <Skeleton width={150} /> : `Managing ${companies.length} Companies`}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {loading ? (
+                      <Skeleton width={180} />
+                    ) : (
+                      `Total Individuals: ${calculateTotalCounts(companies).total}`
+                    )}
+                  </Typography>
                 </Box>
+              </Box>
 
-                {/* Right Section - Summary Cards and Profile Menu */}
-                <Stack 
-                  direction="row" 
-                  spacing={2} 
-                  alignItems="center"
-                  sx={{
-                    width: { xs: '100%', sm: 'auto' },  // Full width on mobile
-                    justifyContent: { xs: 'space-between', sm: 'flex-start' }  // Space between on mobile
-                  }}
-                >
-                  {/* Left side buttons wrapper */}
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Tooltip title="View Expired IDs">
-                      <Box sx={{ position: 'relative' }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
-                          sx={{ 
-                            bgcolor: 'error.main',
-                            color: 'white',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': {
-                              bgcolor: 'error.dark',
-                              transform: 'scale(1.1)',
-                              boxShadow: theme.shadows[4]
-                            }
-                          }}
-                        >
-                          <Avatar sx={{ 
-                            width: 32, 
-                            height: 32,
-                            bgcolor: 'inherit',
-                            color: 'inherit'
-                          }}>
-                            <ErrorIcon sx={{ fontSize: 20 }} />
-                          </Avatar>
-                        </IconButton>
-                        {calculateTotalCounts(companies).expired > 0 && (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: -5,
-                              right: -5,
-                              bgcolor: 'white',
-                              color: 'error.main',
-                              borderRadius: '50%',
-                              width: 20,
-                              height: 20,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                              boxShadow: theme.shadows[2],
-                              border: '2px solid',
-                              borderColor: 'error.main',
-                              zIndex: 1
-                            }}
-                          >
-                            {calculateTotalCounts(companies).expired}
-                          </Box>
-                        )}
-                      </Box>
-                    </Tooltip>
-
-                    <Tooltip title="View Expiring Soon IDs">
-                      <Box sx={{ position: 'relative' }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
-                          sx={{ 
-                            bgcolor: 'warning.main',
-                            color: 'white',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': {
-                              bgcolor: 'warning.dark',
-                              transform: 'scale(1.1)',
-                              boxShadow: theme.shadows[4]
-                            }
-                          }}
-                        >
-                          <Avatar sx={{ 
-                            width: 32, 
-                            height: 32,
-                            bgcolor: 'inherit',
-                            color: 'inherit'
-                          }}>
-                            <WarningIcon sx={{ fontSize: 20 }} />
-                          </Avatar>
-                        </IconButton>
-                        {calculateTotalCounts(companies).expiringSoon > 0 && (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: -5,
-                              right: -5,
-                              bgcolor: 'white',
-                              color: 'warning.main',
-                              borderRadius: '50%',
-                              width: 20,
-                              height: 20,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                              boxShadow: theme.shadows[2],
-                              border: '2px solid',
-                              borderColor: 'warning.main',
-                              zIndex: 1
-                            }}
-                          >
-                            {calculateTotalCounts(companies).expiringSoon}
-                          </Box>
-                        )}
-                      </Box>
-                    </Tooltip>
-                  </Box>
-
-                  <Stack 
-                    direction="row" 
-                    spacing={2}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Tooltip title="Print PDF">
+              {/* Right Section - Summary Cards and Profile Menu */}
+              <Stack 
+                direction="row" 
+                spacing={2} 
+                alignItems="center"
+                sx={{
+                  width: { xs: '100%', sm: 'auto' },  // Full width on mobile
+                  justifyContent: { xs: 'space-between', sm: 'flex-start' }  // Space between on mobile
+                }}
+              >
+                {/* Left side buttons wrapper */}
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Tooltip title="View Expired IDs">
+                    <Box sx={{ position: 'relative' }}>
                       <IconButton
-                        onClick={() => window.print()}
                         size="small"
+                        onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
                         sx={{ 
-                          ml: 2,
-                          bgcolor: 'secondary.main',
+                          bgcolor: 'error.main',
                           color: 'white',
+                          transition: 'all 0.2s ease-in-out',
                           '&:hover': {
-                            bgcolor: 'secondary.dark',
+                            bgcolor: 'error.dark',
+                            transform: 'scale(1.1)',
+                            boxShadow: theme.shadows[4]
                           }
                         }}
                       >
-                        <Avatar 
-                          sx={{ 
-                            width: 32, 
-                            height: 32,
-                            bgcolor: 'inherit',
-                            color: 'inherit'
-                          }}
-                        >
-                          <PdfIcon />
+                        <Avatar sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}>
+                          <ErrorIcon sx={{ fontSize: 20 }} />
                         </Avatar>
                       </IconButton>
-                    </Tooltip>
-                    <ProfileMenu 
-                      username={user?.username} 
-                      onLogout={handleLogout}
-                    />
-                  </Stack>
+                      {calculateTotalCounts(companies).expired > 0 && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -5,
+                            right: -5,
+                            bgcolor: 'white',
+                            color: 'error.main',
+                            borderRadius: '50%',
+                            width: 20,
+                            height: 20,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            boxShadow: theme.shadows[2],
+                            border: '2px solid',
+                            borderColor: 'error.main',
+                            zIndex: 1
+                          }}
+                        >
+                          {calculateTotalCounts(companies).expired}
+                        </Box>
+                      )}
+                    </Box>
+                  </Tooltip>
+
+                  <Tooltip title="View Expiring Soon IDs">
+                    <Box sx={{ position: 'relative' }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
+                        sx={{ 
+                          bgcolor: 'warning.main',
+                          color: 'white',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            bgcolor: 'warning.dark',
+                            transform: 'scale(1.1)',
+                            boxShadow: theme.shadows[4]
+                          }
+                        }}
+                      >
+                        <Avatar sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}>
+                          <WarningIcon sx={{ fontSize: 20 }} />
+                        </Avatar>
+                      </IconButton>
+                      {calculateTotalCounts(companies).expiringSoon > 0 && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -5,
+                            right: -5,
+                            bgcolor: 'white',
+                            color: 'warning.main',
+                            borderRadius: '50%',
+                            width: 20,
+                            height: 20,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            boxShadow: theme.shadows[2],
+                            border: '2px solid',
+                            borderColor: 'warning.main',
+                            zIndex: 1
+                          }}
+                        >
+                          {calculateTotalCounts(companies).expiringSoon}
+                        </Box>
+                      )}
+                    </Box>
+                  </Tooltip>
+                </Box>
+
+                <Stack 
+                  direction="row" 
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Tooltip title="Print PDF">
+                    <IconButton
+                      onClick={() => window.print()}
+                      size="small"
+                      sx={{ 
+                        ml: 2,
+                        bgcolor: 'secondary.main',
+                        color: 'white',
+                        '&:hover': {
+                          bgcolor: 'secondary.dark',
+                        }
+                      }}
+                    >
+                      <Avatar 
+                        sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}
+                      >
+                        <PdfIcon />
+                      </Avatar>
+                    </IconButton>
+                  </Tooltip>
+                  <ProfileMenu 
+                    username={user?.username} 
+                    onLogout={handleLogout}
+                  />
                 </Stack>
-              </Box>
-            </Paper>
-          </Fade>
-        )}
+              </Stack>
+            </Box>
+          </Paper>
+        </Fade>
 
         <Box 
           sx={{ 
@@ -515,275 +503,281 @@ function CompanyList() {
         </Box>
 
         <Fade in timeout={1000}>
-          <Grid container spacing={3}>
-            {filteredAndSortedCompanies.map((company) => (
-              <Grid item xs={12} sm={6} md={4} key={company._id}>
-                <Card 
-                  onClick={() => navigate(`/company/${company._id}/individuals`)}
-                  sx={{ 
-                    height: '100%',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease-in-out',
-                    borderRadius: 3,
-                    position: 'relative',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: theme.shadows[8]
-                    }
-                  }}
-                >
-                  <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
-                  <CardContent sx={{ p: 3 }}>
-                    {/* Header Section */}
-                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <Box>
+            {loading ? (
+              <CompanyCardSkeletonList count={6} />
+            ) : (
+              <Grid container spacing={3}>
+                {filteredAndSortedCompanies.map((company) => (
+                  <Grid item xs={12} sm={6} md={4} key={company._id}>
+                    <Card 
+                      onClick={() => navigate(`/company/${company._id}/individuals`)}
+                      sx={{ 
+                        height: '100%',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease-in-out',
+                        borderRadius: 3,
+                        position: 'relative',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: theme.shadows[8]
+                        }
+                      }}
+                    >
+                      <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
+                      <CardContent sx={{ p: 3 }}>
+                        {/* Header Section */}
+                        <Box display="flex" alignItems="center" gap={1} mb={2}>
 
-                      <Box flex={1}>
-                        <Typography variant="h5" fontWeight="bold">
-                          {company.name}
-                        </Typography>
-                      </Box>
-                      <Avatar 
-                        sx={{ 
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                          width: 56,
-                          height: 56
-                        }}
-                      >
-                        <BusinessIcon fontSize="large" />
-                      </Avatar>
-                    </Box>
-
-                    <Divider sx={{ my: 2 }} />
-
-                    {/* Company Details Grid */}
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          CR: {company.crNumber || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          Sponsor: {company.sponserId || 'N/A'}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          GOSI: {company.gosiNumber || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                          MOL: {company.molNumber || 'N/A'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-
-                    {/* Status Cards */}
-                    <Box sx={{ mt: 3 }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={4}>
-                          <Box
-                            sx={{ 
-                              p: 1.5, 
-                              bgcolor: 'error.lighter',
-                              borderRadius: 2,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              '&:hover': {
-                                transform: 'translateY(-3px)',
-                                transition: 'transform 0.2s ease-in-out'
-                              },
-                              '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '2px',
-                                bgcolor: 'error.main'
-                              }
-                            }}
-                          >
-                            <Typography 
-                              variant="h5" 
-                              color="error.dark" 
-                              fontWeight="bold"
-                              sx={{ mb: 0.5 }}
-                            >
-                              {company.redCards || 0}
-                            </Typography>
-                            <Typography 
-                              variant="caption" 
-                              color="error.dark" 
-                              fontWeight="medium"
-                              sx={{ 
-                                whiteSpace: 'nowrap',
-                                fontSize: '0.7rem'
-                              }}
-                            >
-                              Expired
+                          <Box flex={1}>
+                            <Typography variant="h5" fontWeight="bold">
+                              {company.name}
                             </Typography>
                           </Box>
-                        </Grid>
-
-                        <Grid item xs={4}>
-                          <Box
+                          <Avatar 
                             sx={{ 
-                              p: 1.5, 
-                              bgcolor: 'warning.lighter',
-                              borderRadius: 2,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              '&:hover': {
-                                transform: 'translateY(-3px)',
-                                transition: 'transform 0.2s ease-in-out'
-                              },
-                              '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '2px',
-                                bgcolor: 'warning.main'
-                              }
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
+                              width: 56,
+                              height: 56
                             }}
                           >
-                            <Typography 
-                              variant="h5" 
-                              color="warning.dark" 
-                              fontWeight="bold"
-                              sx={{ mb: 0.5 }}
-                            >
-                              {company.orangeCards || 0}
+                            <BusinessIcon fontSize="large" />
+                          </Avatar>
+                        </Box>
+
+                        <Divider sx={{ my: 2 }} />
+
+                        {/* Company Details Grid */}
+                        <Grid container spacing={2}>
+                          <Grid item xs={6}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              CR: {company.crNumber || 'N/A'}
                             </Typography>
-                            <Typography 
-                              variant="caption" 
-                              color="warning.dark" 
-                              fontWeight="medium"
-                              sx={{ 
-                                whiteSpace: 'nowrap',
-                                fontSize: '0.7rem'
-                              }}
-                            >
-                              Warning
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              Sponsor: {company.sponserId || 'N/A'}
                             </Typography>
-                          </Box>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              GOSI: {company.gosiNumber || 'N/A'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              MOL: {company.molNumber || 'N/A'}
+                            </Typography>
+                          </Grid>
                         </Grid>
 
-                        <Grid item xs={4}>
-                          <Box
+                        {/* Status Cards */}
+                        <Box sx={{ mt: 3 }}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={4}>
+                              <Box
+                                sx={{ 
+                                  p: 1.5, 
+                                  bgcolor: 'error.lighter',
+                                  borderRadius: 2,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  '&:hover': {
+                                    transform: 'translateY(-3px)',
+                                    transition: 'transform 0.2s ease-in-out'
+                                  },
+                                  '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '2px',
+                                    bgcolor: 'error.main'
+                                  }
+                                }}
+                              >
+                                <Typography 
+                                  variant="h5" 
+                                  color="error.dark" 
+                                  fontWeight="bold"
+                                  sx={{ mb: 0.5 }}
+                                >
+                                  {company.redCards || 0}
+                                </Typography>
+                                <Typography 
+                                  variant="caption" 
+                                  color="error.dark" 
+                                  fontWeight="medium"
+                                  sx={{ 
+                                    whiteSpace: 'nowrap',
+                                    fontSize: '0.7rem'
+                                  }}
+                                >
+                                  Expired
+                                </Typography>
+                              </Box>
+                            </Grid>
+
+                            <Grid item xs={4}>
+                              <Box
+                                sx={{ 
+                                  p: 1.5, 
+                                  bgcolor: 'warning.lighter',
+                                  borderRadius: 2,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  '&:hover': {
+                                    transform: 'translateY(-3px)',
+                                    transition: 'transform 0.2s ease-in-out'
+                                  },
+                                  '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '2px',
+                                    bgcolor: 'warning.main'
+                                  }
+                                }}
+                              >
+                                <Typography 
+                                  variant="h5" 
+                                  color="warning.dark" 
+                                  fontWeight="bold"
+                                  sx={{ mb: 0.5 }}
+                                >
+                                  {company.orangeCards || 0}
+                                </Typography>
+                                <Typography 
+                                  variant="caption" 
+                                  color="warning.dark" 
+                                  fontWeight="medium"
+                                  sx={{ 
+                                    whiteSpace: 'nowrap',
+                                    fontSize: '0.7rem'
+                                  }}
+                                >
+                                  Warning
+                                </Typography>
+                              </Box>
+                            </Grid>
+
+                            <Grid item xs={4}>
+                              <Box
+                                sx={{ 
+                                  p: 1.5, 
+                                  bgcolor: 'success.lighter',
+                                  borderRadius: 2,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  '&:hover': {
+                                    transform: 'translateY(-3px)',
+                                    transition: 'transform 0.2s ease-in-out'
+                                  },
+                                  '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '2px',
+                                    bgcolor: 'success.main'
+                                  }
+                                }}
+                              >
+                                <Typography 
+                                  variant="h5" 
+                                  color="success.dark" 
+                                  fontWeight="bold"
+                                  sx={{ mb: 0.5 }}
+                                >
+                                 {company.totalIndividuals || 0}
+                                </Typography>
+                                <Typography 
+                                  variant="caption" 
+                                  color="success.dark" 
+                                  fontWeight="medium"
+                                  sx={{ 
+                                    whiteSpace: 'nowrap',
+                                    fontSize: '0.7rem'
+                                  }}
+                                >
+                                  Total IDs
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </Box>
+
+                        {/* Admin Actions */}
+                        {user?.isAdmin && (
+                          <Box 
                             sx={{ 
-                              p: 1.5, 
-                              bgcolor: 'success.lighter',
-                              borderRadius: 2,
+                              position: 'absolute',
+                              top: 12,
+                              right: 12,
                               display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              '&:hover': {
-                                transform: 'translateY(-3px)',
-                                transition: 'transform 0.2s ease-in-out'
-                              },
-                              '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '2px',
-                                bgcolor: 'success.main'
-                              }
+                              gap: 1,
+                              zIndex: 2
                             }}
                           >
-                            <Typography 
-                              variant="h5" 
-                              color="success.dark" 
-                              fontWeight="bold"
-                              sx={{ mb: 0.5 }}
-                            >
-                             {company.totalIndividuals || 0}
-                            </Typography>
-                            <Typography 
-                              variant="caption" 
-                              color="success.dark" 
-                              fontWeight="medium"
+                            <IconButton 
+                              size="small" 
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(company);
+                              }}
                               sx={{ 
-                                whiteSpace: 'nowrap',
-                                fontSize: '0.7rem'
+                                bgcolor: 'background.paper',
+                                boxShadow: 1,
+                                '&:hover': {
+                                  transform: 'scale(1.1)',
+                                  bgcolor: 'primary.lighter'
+                                }
                               }}
                             >
-                              Total IDs
-                            </Typography>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(company);
+                              }}
+                              sx={{ 
+                                bgcolor: 'background.paper',
+                                boxShadow: 1,
+                                '&:hover': {
+                                  transform: 'scale(1.1)',
+                                  bgcolor: 'error.lighter'
+                                }
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
                           </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-
-                    {/* Admin Actions */}
-                    {user?.isAdmin && (
-                      <Box 
-                        sx={{ 
-                          position: 'absolute',
-                          top: 12,
-                          right: 12,
-                          display: 'flex',
-                          gap: 1,
-                          zIndex: 2
-                        }}
-                      >
-                        <IconButton 
-                          size="small" 
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(company);
-                          }}
-                          sx={{ 
-                            bgcolor: 'background.paper',
-                            boxShadow: 1,
-                            '&:hover': {
-                              transform: 'scale(1.1)',
-                              bgcolor: 'primary.lighter'
-                            }
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(company);
-                          }}
-                          sx={{ 
-                            bgcolor: 'background.paper',
-                            boxShadow: 1,
-                            '&:hover': {
-                              transform: 'scale(1.1)',
-                              bgcolor: 'error.lighter'
-                            }
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    )}
-                  </CardContent>
-                </Card>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
+            )}
+          </Box>
         </Fade>
 
         {user?.isAdmin && (

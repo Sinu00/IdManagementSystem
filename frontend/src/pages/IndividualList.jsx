@@ -26,6 +26,7 @@ import {
   Divider,
   Stack,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -50,6 +51,7 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import ProfileMenu from '../components/ProfileMenu';
+import { IndividualCardSkeletonList } from '../components/skeletons/IndividualCardSkeleton';
 
 const calculateStatus = (expiryDate) => {
   const daysUntilExpiry = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -265,133 +267,130 @@ function IndividualList() {
     }
   };
 
-  if (loading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 4, pb: 6 }}>
       <Container maxWidth="lg">
-        {company && (
-          <Fade in timeout={800}>
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                borderRadius: '24px 24px 0 0',
-                bgcolor: 'primary.light',
-                color: 'primary.dark'
-              }}
-            >
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 2
-              }}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                    <BusinessIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">
-                      {company.name}
-                    </Typography>
-                    <Typography variant="body2">
-                      Managing {filteredData.length} Individuals
-                    </Typography>
-                  </Box>
+        <Fade in timeout={800}>
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 3,
+              borderRadius: '24px 24px 0 0',
+              bgcolor: 'primary.light',
+              color: 'primary.dark'
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 2
+            }}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                  <BusinessIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight="bold">
+                    {company?.name || <Skeleton width={200} />}
+                  </Typography>
+                  <Typography variant="body2">
+                    {loading ? <Skeleton width={150} /> : `Managing ${filteredData.length} Individuals`}
+                  </Typography>
                 </Box>
+              </Box>
 
+              <Stack 
+                direction="row" 
+                spacing={2} 
+                alignItems="center"
+              >
+                <Paper
+                  elevation={0}
+                  sx={{ 
+                    px: 2,
+                    py: 1,
+                    bgcolor: 'transparent',
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1
+                  }}
+                >
+                  <Typography variant="body2" color="primary.dark" gutterBottom>
+                    <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                    CR: {company?.crNumber || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="primary.dark" gutterBottom>
+                    <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                    GOSI: {company?.gosiNumber || 'N/A'}
+                  </Typography>
+                </Paper>
+                
+                <Paper
+                  elevation={0}
+                  sx={{ 
+                    px: 2,
+                    py: 1,
+                    bgcolor: 'transparent',
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1
+                  }}
+                >
+                  <Typography variant="body2" color="primary.dark" gutterBottom>
+                    <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                    Sponsor: {company?.sponserId || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" color="primary.dark" gutterBottom>
+                    <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                    MOI: {company?.makthabNumber || company?.molNumber || 'N/A'}
+                  </Typography>
+                </Paper>
                 <Stack 
                   direction="row" 
-                  spacing={2} 
+                  spacing={2}
                   alignItems="center"
+                  justifyContent="center"
                 >
-                  <Paper
-                    elevation={0}
-                    sx={{ 
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'transparent',
-                      borderRadius: 2,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1
-                    }}
-                  >
-                    <Typography variant="body2" color="primary.dark" gutterBottom>
-                      <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                      CR: {company.crNumber || 'N/A'}
-                    </Typography>
-                    <Typography variant="body2" color="primary.dark" gutterBottom>
-                      <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                      GOSI: {company.gosiNumber || 'N/A'}
-                    </Typography>
-                  </Paper>
-                  
-                  <Paper
-                    elevation={0}
-                    sx={{ 
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'transparent',
-                      borderRadius: 2,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1
-                    }}
-                  >
-                    <Typography variant="body2" color="primary.dark" gutterBottom>
-                      <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                      Sponsor: {company.sponserId || 'N/A'}
-                    </Typography>
-                    <Typography variant="body2" color="primary.dark" gutterBottom>
-                      <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                      MOI: {company.makthabNumber || company.molNumber || 'N/A'}
-                    </Typography>
-                  </Paper>
-                  <Stack 
-                    direction="row" 
-                    spacing={2}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Tooltip title="Print PDF">
-                      <IconButton
-                        onClick={() => window.print()}
-                        size="small"
+                  <Tooltip title="Print PDF">
+                    <IconButton
+                      onClick={() => window.print()}
+                      size="small"
+                      sx={{ 
+                        ml: 2,
+                        bgcolor: 'secondary.main',
+                        color: 'white',
+                        '&:hover': {
+                          bgcolor: 'secondary.dark',
+                        }
+                      }}
+                    >
+                      <Avatar 
                         sx={{ 
-                          ml: 2,
-                          bgcolor: 'secondary.main',
-                          color: 'white',
-                          '&:hover': {
-                            bgcolor: 'secondary.dark',
-                          }
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
                         }}
                       >
-                        <Avatar 
-                          sx={{ 
-                            width: 32, 
-                            height: 32,
-                            bgcolor: 'inherit',
-                            color: 'inherit'
-                          }}
-                        >
-                          <PdfIcon />
-                        </Avatar>
-                      </IconButton>
-                    </Tooltip>
-                    <ProfileMenu 
-                      username={user?.username} 
-                      onLogout={handleLogout}
-                    />
-                  </Stack>
+                        <PdfIcon />
+                      </Avatar>
+                    </IconButton>
+                  </Tooltip>
+                  <ProfileMenu 
+                    username={user?.username} 
+                    onLogout={handleLogout}
+                  />
                 </Stack>
-              </Box>
-            </Paper>
-          </Fade>
-        )}
+              </Stack>
+            </Box>
+          </Paper>
+        </Fade>
 
         <Box 
           sx={{ 
@@ -457,199 +456,205 @@ function IndividualList() {
         </Box>
 
         <Fade in timeout={1000}>
-          <Grid container spacing={3}>
-            {sortedData.length > 0 ? (
-              sortedData.map((individual) => {
-                const status = calculateStatus(individual.expiryDate);
-                return (
-                  <Grid item xs={12} sm={6} md={3} key={individual._id}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        borderRadius: 3,
-                        transition: 'all 0.3s ease',
-                        position: 'relative',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: theme.shadows[8]
-                        }
+          <Box>
+            {loading ? (
+              <IndividualCardSkeletonList count={8} />
+            ) : (
+              <Grid container spacing={3}>
+                {sortedData.length > 0 ? (
+                  sortedData.map((individual) => {
+                    const status = calculateStatus(individual.expiryDate);
+                    return (
+                      <Grid item xs={12} sm={6} md={3} key={individual._id}>
+                        <Card
+                          sx={{
+                            height: '100%',
+                            borderRadius: 3,
+                            transition: 'all 0.3s ease',
+                            position: 'relative',
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: theme.shadows[8]
+                            }
+                          }}
+                        >
+                          <Box sx={{ height: 6, bgcolor: getStatusColor(status), width: '100%' }} />
+                          <CardContent sx={{ p: 3 }}>
+                            <Box display="flex" alignItems="center" gap={2} mb={2}>
+                              <Avatar 
+                                sx={{ 
+                                  width: 48, 
+                                  height: 48,
+                                  bgcolor: 'primary.light',
+                                  color: 'primary.main'
+                                }}
+                              >
+                                {individual.name?.charAt(0)}
+                              </Avatar>
+                              <Box flex={1}>
+                                <Typography variant="h6" fontWeight="bold">
+                                  {individual.name}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  {individual.nationality}
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Divider sx={{ my: 2 }} />
+
+                            <Grid container spacing={0}>
+                              <Grid item xs={12}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    Iqama: {individual.iqamaNumber}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              
+                              <Grid item xs={12}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <CalendarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    Expiry: {individual.expiryDate ? 
+                                      format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
+                                      'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={12}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <PhoneIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    Phone: {individual.phoneNumber || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={12}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <PersonIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    Referred by: {individual.referredBy || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={12}>
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <MonetizationIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography variant="body2" color="text.secondary">
+                                    Amount: {individual.amount ? `SAR ${individual.amount}` : 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={12}>
+                                <Box 
+                                  display="flex" 
+                                  justifyContent="flex-end" 
+                                  alignItems="center"
+                                  mt={0}
+                                >
+                                  <Chip
+                                    label={`${Math.abs(getDaysUntilExpiry(individual.expiryDate))} days ${getDaysUntilExpiry(individual.expiryDate) < 0 ? 'overdue' : 'left'}`}
+                                    size="small"
+                                    sx={{
+                                      '& .MuiChip-root': {
+                                        bgcolor: status === 'Active' ? 'success.main' : 
+                                                status === 'Warning' ? 'warning.main' : 
+                                                'error.main',
+                                      },
+                                      bgcolor: status === 'Active' ? 'success.main' : 
+                                              status === 'Warning' ? 'warning.main' : 
+                                              'error.main',
+                                      color: '#fff',
+                                      fontWeight: 'medium',
+                                      '& .MuiChip-label': {
+                                        px: 1
+                                      }
+                                    }}
+                                  />
+                                </Box>
+                              </Grid>
+                            </Grid>
+
+                            {user?.isAdmin && (
+                              <Box 
+                                sx={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'flex-end',
+                                  mt: 2,
+                                  gap: 1
+                                }}
+                              >
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleRenew(individual)}
+                                  sx={{ 
+                                    color: 'primary.main',
+                                    bgcolor: 'primary.lighter',
+                                    '&:hover': { bgcolor: 'primary.light' }
+                                  }}
+                                >
+                                  <RenewIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleEdit(individual)}
+                                  sx={{ 
+                                    color: 'info.main',
+                                    bgcolor: 'info.lighter',
+                                    '&:hover': { bgcolor: 'info.light' }
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleDelete(individual)}
+                                  sx={{ 
+                                    color: 'error.main',
+                                    bgcolor: 'error.lighter',
+                                    '&:hover': { bgcolor: 'error.light' }
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    );
+                  })
+                ) : (
+                  <Grid item xs={12}>
+                    <Paper 
+                      sx={{ 
+                        p: 4, 
+                        textAlign: 'center',
+                        borderRadius: 2,
+                        bgcolor: 'background.paper'
                       }}
                     >
-                      <Box sx={{ height: 6, bgcolor: getStatusColor(status), width: '100%' }} />
-                      <CardContent sx={{ p: 3 }}>
-                        <Box display="flex" alignItems="center" gap={2} mb={2}>
-                          <Avatar 
-                            sx={{ 
-                              width: 48, 
-                              height: 48,
-                              bgcolor: 'primary.light',
-                              color: 'primary.main'
-                            }}
-                          >
-                            {individual.name?.charAt(0)}
-                          </Avatar>
-                          <Box flex={1}>
-                            <Typography variant="h6" fontWeight="bold">
-                              {individual.name}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {individual.nationality}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Divider sx={{ my: 2 }} />
-
-                        <Grid container spacing={0}>
-                          <Grid item xs={12}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                              <Typography variant="body2" color="text.secondary">
-                                Iqama: {individual.iqamaNumber}
-                              </Typography>
-                            </Box>
-                          </Grid>
-                          
-                          <Grid item xs={12}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <CalendarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                              <Typography variant="body2" color="text.secondary">
-                                Expiry: {individual.expiryDate ? 
-                                  format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
-                                  'N/A'}
-                              </Typography>
-                            </Box>
-                          </Grid>
-
-                          <Grid item xs={12}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <PhoneIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                              <Typography variant="body2" color="text.secondary">
-                                Phone: {individual.phoneNumber || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Grid>
-
-                          <Grid item xs={12}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <PersonIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                              <Typography variant="body2" color="text.secondary">
-                                Referred by: {individual.referredBy || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Grid>
-
-                          <Grid item xs={12}>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <MonetizationIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                              <Typography variant="body2" color="text.secondary">
-                                Amount: {individual.amount ? `SAR ${individual.amount}` : 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Grid>
-
-                          <Grid item xs={12}>
-                            <Box 
-                              display="flex" 
-                              justifyContent="flex-end" 
-                              alignItems="center"
-                              mt={0}
-                            >
-                              <Chip
-                                label={`${Math.abs(getDaysUntilExpiry(individual.expiryDate))} days ${getDaysUntilExpiry(individual.expiryDate) < 0 ? 'overdue' : 'left'}`}
-                                size="small"
-                                sx={{
-                                  '& .MuiChip-root': {
-                                    bgcolor: status === 'Active' ? 'success.main' : 
-                                            status === 'Warning' ? 'warning.main' : 
-                                            'error.main',
-                                  },
-                                  bgcolor: status === 'Active' ? 'success.main' : 
-                                          status === 'Warning' ? 'warning.main' : 
-                                          'error.main',
-                                  color: '#fff',
-                                  fontWeight: 'medium',
-                                  '& .MuiChip-label': {
-                                    px: 1
-                                  }
-                                }}
-                              />
-                            </Box>
-                          </Grid>
-                        </Grid>
-
-                        {user?.isAdmin && (
-                          <Box 
-                            sx={{ 
-                              display: 'flex', 
-                              justifyContent: 'flex-end',
-                              mt: 2,
-                              gap: 1
-                            }}
-                          >
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleRenew(individual)}
-                              sx={{ 
-                                color: 'primary.main',
-                                bgcolor: 'primary.lighter',
-                                '&:hover': { bgcolor: 'primary.light' }
-                              }}
-                            >
-                              <RenewIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleEdit(individual)}
-                              sx={{ 
-                                color: 'info.main',
-                                bgcolor: 'info.lighter',
-                                '&:hover': { bgcolor: 'info.light' }
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleDelete(individual)}
-                              sx={{ 
-                                color: 'error.main',
-                                bgcolor: 'error.lighter',
-                                '&:hover': { bgcolor: 'error.light' }
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Card>
+                      <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                        <PersonIcon sx={{ fontSize: 64, color: 'text.disabled' }} />
+                        <Typography color="textSecondary" variant="h6">
+                          No individuals found
+                        </Typography>
+                        <Typography color="textSecondary" variant="body2">
+                          Try adjusting your search or filters
+                        </Typography>
+                      </Box>
+                    </Paper>
                   </Grid>
-                );
-              })
-            ) : (
-              <Grid item xs={12}>
-                <Paper 
-                  sx={{ 
-                    p: 4, 
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    bgcolor: 'background.paper'
-                  }}
-                >
-                  <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-                    <PersonIcon sx={{ fontSize: 64, color: 'text.disabled' }} />
-                    <Typography color="textSecondary" variant="h6">
-                      No individuals found
-                    </Typography>
-                    <Typography color="textSecondary" variant="body2">
-                      Try adjusting your search or filters
-                    </Typography>
-                  </Box>
-                </Paper>
+                )}
               </Grid>
             )}
-          </Grid>
+          </Box>
         </Fade>
 
         {user?.isAdmin && (
