@@ -254,8 +254,7 @@ function CompanyList() {
               elevation={0}
               sx={{ 
                 p: 3,
-                mb: 4,
-                borderRadius: 3,
+                borderRadius: '24px 24px 0 0',
                 bgcolor: 'primary.light',
                 color: 'primary.dark'
               }}
@@ -454,7 +453,7 @@ function CompanyList() {
             flexDirection: { xs: 'column', sm: 'row' },
             backgroundColor: 'white',
             p: 2,
-            borderRadius: 2,
+            borderRadius: '0 0 8px 8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             '@media print': {
               display: 'none'
