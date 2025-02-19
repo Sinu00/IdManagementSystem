@@ -1,5 +1,5 @@
 import express from 'express';
-import { adminProtect } from '../middleware/auth.middleware.js';
+import { adminProtect, protect } from '../middleware/auth.middleware.js';
 import Individual from '../models/individual.model.js';
 import Company from '../models/company.model.js';
 import mongoose from 'mongoose';
@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 const router = express.Router();
 
 // Get individuals by company (Public)
-router.get('/', async (req, res, next) => {
+router.get('/', protect, async (req, res, next) => {
   try {
     const { companyId, search, sort, filter } = req.query;
     
@@ -66,12 +66,17 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.get('/company/:companyId', async (req, res) => {
+router.get('/company/:companyId', protect, async (req, res) => {
   try {
     const { companyId } = req.params;
     
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({ message: 'Invalid company ID' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(companyId)) {
+      return res.status(403).json({ message: 'Not authorized to access this company' });
     }
 
     const individuals = await Individual.find({ company: companyId })
@@ -164,12 +169,17 @@ router.delete('/:id', adminProtect, async (req, res) => {
 });
 
 // Add this new route to get expired IDs by main person
-router.get('/expired/:mainPersonId', async (req, res) => {
+router.get('/expired/:mainPersonId', protect, async (req, res) => {
   try {
     const { mainPersonId } = req.params;
     
     if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
       return res.status(400).json({ message: 'Invalid main person ID' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(mainPersonId)) {
+      return res.status(403).json({ message: 'Not authorized to access this data' });
     }
 
     // Get all companies belonging to the main person
@@ -198,13 +208,18 @@ router.get('/expired/:mainPersonId', async (req, res) => {
 });
 
 // Add this new route to get expiring IDs by main person
-router.get('/expiring-soon/:mainPersonId', async (req, res) => {
+router.get('/expiring-soon/:mainPersonId', protect, async (req, res) => {
   try {
     const { mainPersonId } = req.params;
     const days = parseInt(req.query.days) || 30; // Default to 30 days if not specified
     
     if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
       return res.status(400).json({ message: 'Invalid main person ID' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(mainPersonId)) {
+      return res.status(403).json({ message: 'Not authorized to access this data' });
     }
 
     // Get all companies belonging to the main person
@@ -250,11 +265,21 @@ router.get('/expiring-soon/:mainPersonId', async (req, res) => {
 });
 
 // Update the get routes to populate lastRenewedBy
-router.get('/:id', async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const individual = await Individual.findById(req.params.id)
       .populate('company')
       .populate('lastRenewedBy', 'username');
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(individual.company.mainPerson.toString())) {
+      return res.status(403).json({ message: 'Not authorized to access this individual' });
+    }
+
     res.json(individual);
   } catch (error) {
     res.status(404).json({ message: error.message });
