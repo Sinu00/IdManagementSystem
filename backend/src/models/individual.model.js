@@ -55,6 +55,15 @@ const individualSchema = new mongoose.Schema(
     amount: {
       type: Number,
       default: 0
+    },
+    lastRenewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    lastRenewalDate: {
+      type: Date,
+      default: null
     }
   },
   { 

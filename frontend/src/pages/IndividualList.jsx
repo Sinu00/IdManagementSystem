@@ -482,6 +482,15 @@ function IndividualList() {
                               </Typography>
                             </Box>
                           </Grid>
+
+                          <Grid item xs={12}>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Last Renewed By: {individual.lastRenewedBy?.username || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Grid>
                           
                           <Grid item xs={12}>
                             <Box display="flex" alignItems="center" gap={1}>

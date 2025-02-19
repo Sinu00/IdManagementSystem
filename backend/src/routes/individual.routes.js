@@ -26,7 +26,6 @@ router.get('/', async (req, res, next) => {
 
     // Count individuals before filtering
     const totalCount = await Individual.countDocuments({ company: companyId });
-    console.log('Total individuals for company:', totalCount);
 
     if (search) {
       query.$or = [
@@ -60,15 +59,6 @@ router.get('/', async (req, res, next) => {
         }
       });
 
-    console.log('Query results:', {
-      count: individuals.length,
-      sampleIds: individuals.slice(0, 2).map(i => i._id),
-      sampleData: individuals.slice(0, 1).map(i => ({
-        name: i.name,
-        company: i.company?.name,
-        mainPerson: i.company?.mainPerson?.name
-      }))
-    });
 
     res.json(individuals);
   } catch (error) {
@@ -88,7 +78,9 @@ router.get('/company/:companyId', async (req, res) => {
       .populate({
         path: 'company',
         select: 'name crNumber'
-      });
+      })
+      .populate('lastRenewedBy', 'username')
+      .sort({ name: 1 });
 
     res.json(individuals);
   } catch (error) {
@@ -96,53 +88,26 @@ router.get('/company/:companyId', async (req, res) => {
   }
 });
 
-// Create new individual (Admin only)
+// Create individual (Admin only)
 router.post('/', adminProtect, async (req, res) => {
   try {
-    const { 
-      name, 
-      nationality, 
-      phoneNumber, 
-      iqamaNumber, 
-      expiryDate, 
-      notes, 
-      company,
-      referredBy,
-      amount
-    } = req.body;
+    const individualData = {
+      ...req.body,
+      lastRenewedBy: req.user.id,     // Using req.user.id instead of _id
+      lastRenewalDate: new Date()
+    };
 
-    if (!mongoose.Types.ObjectId.isValid(company)) {
-      return res.status(400).json({ message: 'Invalid company ID' });
-    }
+    const individual = await Individual.create(individualData);
+    
+    // Populate before sending response
+    const populatedIndividual = await Individual.findById(individual._id)
+      .populate('company')
+      .populate('lastRenewedBy', 'username');  
 
-    // Check if company exists
-    const companyExists = await Company.findById(company);
-    if (!companyExists) {
-      return res.status(404).json({ message: 'Company not found' });
-    }
-
-    // Check if iqamaNumber is unique
-    const existingIndividual = await Individual.findOne({ iqamaNumber });
-    if (existingIndividual) {
-      return res.status(400).json({ message: 'Iqama number already exists' });
-    }
-
-    const individual = new Individual({
-      name,
-      nationality,
-      phoneNumber,
-      iqamaNumber,
-      expiryDate,
-      notes,
-      company,
-      referredBy,
-      amount: parseFloat(amount) || 0
-    });
-
-    await individual.save();
-    res.status(201).json(individual);
+    res.status(201).json(populatedIndividual);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating individual:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -151,35 +116,29 @@ router.put('/:id', adminProtect, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    
+    // Only update lastRenewedBy and lastRenewalDate if it's a renewal operation
+    // We can check this by seeing if expiryDate is the only field being updated (along with amount)
+    const isRenewalOperation = Object.keys(updates).every(key => 
+      ['expiryDate', 'amount'].includes(key)
+    );
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid individual ID' });
-    }
-
-    // If iqamaNumber is being updated, check for uniqueness
-    if (updates.iqamaNumber) {
-      const existingIndividual = await Individual.findOne({
-        iqamaNumber: updates.iqamaNumber,
-        _id: { $ne: id }
-      });
-      if (existingIndividual) {
-        return res.status(400).json({ message: 'Iqama number already exists' });
-      }
+    if (isRenewalOperation) {
+      updates.lastRenewedBy = req.user.id;
+      updates.lastRenewalDate = new Date();
     }
 
     const individual = await Individual.findByIdAndUpdate(
       id,
-      { ...updates },
-      { new: true, runValidators: true }
-    );
-
-    if (!individual) {
-      return res.status(404).json({ message: 'Individual not found' });
-    }
+      updates,
+      { new: true }
+    )
+      .populate('company')
+      .populate('lastRenewedBy', 'username');
 
     res.json(individual);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -287,6 +246,18 @@ router.get('/expiring-soon/:mainPersonId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching expiring IDs:', error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Update the get routes to populate lastRenewedBy
+router.get('/:id', async (req, res) => {
+  try {
+    const individual = await Individual.findById(req.params.id)
+      .populate('company')
+      .populate('lastRenewedBy', 'username');
+    res.json(individual);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
   }
 });
 
