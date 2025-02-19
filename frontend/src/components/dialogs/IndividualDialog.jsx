@@ -24,7 +24,6 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     expiryDate: null,
     referredBy: '',
     amount: '0',
-    notes: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -39,7 +38,6 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         phoneNumber: individual.phoneNumber || '',
         iqamaNumber: individual.iqamaNumber || '',
         expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
-        notes: individual.notes || '',
         referredBy: individual.referredBy || '',
         amount: individual.amount ? individual.amount.toString() : '0'
       });
@@ -57,6 +55,8 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   };
 
   const isRenewMode = mode === 'renew';
+  const isEditMode = mode === 'edit';
+  const isAddMode = mode === 'add';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -139,31 +139,37 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                   onChange={handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label="Expiry Date"
-                    value={formData.expiryDate}
-                    onChange={(newValue) => {
-                      setFormData(prev => ({ ...prev, expiryDate: newValue }));
-                    }}
-                    renderInput={(params) => (
-                      <TextField {...params} fullWidth required />
-                    )}
-                  />
-                </LocalizationProvider>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Amount (SAR)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
+
+              {/* Show these fields only in Add mode */}
+              {isAddMode && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DatePicker
+                        label="Expiry Date"
+                        value={formData.expiryDate}
+                        onChange={(newValue) => {
+                          setFormData(prev => ({ ...prev, expiryDate: newValue }));
+                        }}
+                        renderInput={(params) => (
+                          <TextField {...params} fullWidth required />
+                        )}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Amount (SAR)"
+                      name="amount"
+                      type="number"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Grid>
+                </>
+              )}
             </Grid>
           )}
 

@@ -23,7 +23,8 @@ import {
   Avatar,
   Button,
   Fab,
-  Stack
+  Stack,
+  Tooltip
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -41,7 +42,8 @@ import {
   Add as AddIcon,
   Warning as WarningIcon,
   Notifications as NotificationsIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -288,67 +290,111 @@ function CompanyList() {
                   spacing={2} 
                   alignItems="center"
                 >
-                  <Paper 
-                    elevation={0}
-                    onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
-                    sx={{ 
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'error.main',
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      minWidth: 100,
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s ease-in-out',
-                      '&:hover': {
-                        transform: 'scale(1.05)',
-                        boxShadow: theme.shadows[4]
-                      }
-                    }}
-                  >
-                    <WarningIcon sx={{ color: 'white', fontSize: 20 }} />
-                    <Box>
-                      <Typography variant="h6" color="white" fontWeight="bold">
-                        {calculateTotalCounts(companies).expired}
-                      </Typography>
-                      <Typography variant="caption" color="white">
-                        Expired
-                      </Typography>
+                  <Tooltip title="View Expired IDs">
+                    <Box sx={{ position: 'relative' }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
+                        sx={{ 
+                          bgcolor: 'error.main',
+                          color: 'white',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            bgcolor: 'error.dark',
+                            transform: 'scale(1.1)',
+                            boxShadow: theme.shadows[4]
+                          }
+                        }}
+                      >
+                        <Avatar sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}>
+                          <ErrorIcon sx={{ fontSize: 20 }} />
+                        </Avatar>
+                      </IconButton>
+                      {calculateTotalCounts(companies).expired > 0 && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -5,
+                            right: -5,
+                            bgcolor: 'white',
+                            color: 'error.main',
+                            borderRadius: '50%',
+                            width: 20,
+                            height: 20,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            boxShadow: theme.shadows[2],
+                            border: '2px solid',
+                            borderColor: 'error.main',
+                            zIndex: 1
+                          }}
+                        >
+                          {calculateTotalCounts(companies).expired}
+                        </Box>
+                      )}
                     </Box>
-                  </Paper>
+                  </Tooltip>
 
-                  <Paper 
-                    elevation={0}
-                    onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
-                    sx={{ 
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'warning.main',
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      minWidth: 100,
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s ease-in-out',
-                      '&:hover': {
-                        transform: 'scale(1.05)',
-                        boxShadow: theme.shadows[4]
-                      }
-                    }}
-                  >
-                    <NotificationsIcon sx={{ color: 'white', fontSize: 20 }} />
-                    <Box>
-                      <Typography variant="h6" color="white" fontWeight="bold">
-                        {calculateTotalCounts(companies).expiringSoon}
-                      </Typography>
-                      <Typography variant="caption" color="white">
-                        Expiring
-                      </Typography>
+                  <Tooltip title="View Expiring Soon IDs">
+                    <Box sx={{ position: 'relative' }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
+                        sx={{ 
+                          bgcolor: 'warning.main',
+                          color: 'white',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            bgcolor: 'warning.dark',
+                            transform: 'scale(1.1)',
+                            boxShadow: theme.shadows[4]
+                          }
+                        }}
+                      >
+                        <Avatar sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}>
+                          <WarningIcon sx={{ fontSize: 20 }} />
+                        </Avatar>
+                      </IconButton>
+                      {calculateTotalCounts(companies).expiringSoon > 0 && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: -5,
+                            right: -5,
+                            bgcolor: 'white',
+                            color: 'warning.main',
+                            borderRadius: '50%',
+                            width: 20,
+                            height: 20,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            boxShadow: theme.shadows[2],
+                            border: '2px solid',
+                            borderColor: 'warning.main',
+                            zIndex: 1
+                          }}
+                        >
+                          {calculateTotalCounts(companies).expiringSoon}
+                        </Box>
+                      )}
                     </Box>
-                  </Paper>
+                  </Tooltip>
 
                   <ProfileMenu 
                     username={user?.username}
