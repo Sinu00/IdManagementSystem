@@ -11,7 +11,7 @@ const theme = createTheme({
       main: '#9c27b0',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#fcfcfc',
     },
     warning: {
       main: '#ff9800', // Orange for 10-day warning

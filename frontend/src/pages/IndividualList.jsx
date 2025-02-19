@@ -18,12 +18,6 @@ import {
   Select,
   MenuItem,
   Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Fab,
   Alert,
   Button,
@@ -31,6 +25,7 @@ import {
   CardContent,
   Divider,
   Stack,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,7 +34,6 @@ import {
   Delete as DeleteIcon,
   Business as BusinessIcon,
   Sort as SortIcon,
-  Login as LoginIcon,
   Person as PersonIcon,
   Badge as BadgeIcon,
   CalendarToday as CalendarIcon,
@@ -358,11 +352,42 @@ function IndividualList() {
                       MOI: {company.makthabNumber || company.molNumber || 'N/A'}
                     </Typography>
                   </Paper>
-
-                  <ProfileMenu 
-                    username={user?.username}
-                    onLogout={handleLogout}
-                  />
+                  <Stack 
+                    direction="row" 
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Tooltip title="Print PDF">
+                      <IconButton
+                        onClick={() => window.print()}
+                        size="small"
+                        sx={{ 
+                          ml: 2,
+                          bgcolor: 'secondary.main',
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'secondary.dark',
+                          }
+                        }}
+                      >
+                        <Avatar 
+                          sx={{ 
+                            width: 32, 
+                            height: 32,
+                            bgcolor: 'inherit',
+                            color: 'inherit'
+                          }}
+                        >
+                          <PdfIcon />
+                        </Avatar>
+                      </IconButton>
+                    </Tooltip>
+                    <ProfileMenu 
+                      username={user?.username} 
+                      onLogout={handleLogout}
+                    />
+                  </Stack>
                 </Stack>
               </Box>
             </Paper>
@@ -378,7 +403,10 @@ function IndividualList() {
             backgroundColor: 'white',
             p: 2,
             borderRadius: 2,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            '@media print': {
+              display: 'none'
+            }
           }}
         >
           <TextField
@@ -401,7 +429,7 @@ function IndividualList() {
             }}
           />
           
-          <FormControl sx={{ minWidth: 150 }}>
+          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
             <InputLabel>Status</InputLabel>
             <Select
               value={filter}
@@ -415,7 +443,7 @@ function IndividualList() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 150 }}>
+          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sort}
@@ -628,16 +656,15 @@ function IndividualList() {
         {user?.isAdmin && (
           <Fab
             color="primary"
-            onClick={handleAdd}
-            sx={{ 
-              position: 'fixed', 
-              bottom: 24, 
+            sx={{
+              position: 'fixed',
+              bottom: 24,
               right: 24,
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                transform: 'scale(1.1) rotate(90deg)'
+              '@media print': {
+                display: 'none'
               }
             }}
+            onClick={handleAdd}
           >
             <AddIcon />
           </Fab>

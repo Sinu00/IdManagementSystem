@@ -69,27 +69,27 @@ router.get('/', protect, async (req, res, next) => {
 router.get('/company/:companyId', protect, async (req, res) => {
   try {
     const { companyId } = req.params;
+    const user = req.user;
+
+    // Get the company to check main person
+    const company = await Company.findById(companyId)
+      .populate('mainPerson');
     
-    if (!mongoose.Types.ObjectId.isValid(companyId)) {
-      return res.status(400).json({ message: 'Invalid company ID' });
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
     }
 
-    // Add authorization check
-    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(companyId)) {
-      return res.status(403).json({ message: 'Not authorized to access this company' });
+    // Allow access if:
+    // 1. User is admin OR
+    // 2. User has access to this company's main person
+    if (!user.isAdmin && !user.allowedMainPersons.includes(company.mainPerson._id.toString())) {
+      return res.status(403).json({ message: 'Access denied' });
     }
 
-    const individuals = await Individual.find({ company: companyId })
-      .populate({
-        path: 'company',
-        select: 'name crNumber'
-      })
-      .populate('lastRenewedBy', 'username')
-      .sort({ name: 1 });
-
+    const individuals = await Individual.find({ company: companyId });
     res.json(individuals);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

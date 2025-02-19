@@ -10,16 +10,16 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/main-persons', mainPersonRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/individuals', individualRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/auth', authRoutes);
 
 export default app; 

@@ -9,7 +9,8 @@ import {
   Tooltip,
   Divider,
   Box,
-  Typography
+  Typography,
+  Stack
 } from '@mui/material';
 import {
   Logout as LogoutIcon,
@@ -36,7 +37,17 @@ function ProfileMenu({ username, onLogout }) {
   };
 
   return (
-    <>
+    <Stack 
+      direction="row" 
+      spacing={2}
+      alignItems="center"
+      justifyContent="center"
+      sx={{
+        '@media print': {
+          display: 'none'
+        }
+      }}
+    >
       <Tooltip title="Account settings">
         <IconButton
           onClick={handleClick}
@@ -145,7 +156,7 @@ function ProfileMenu({ username, onLogout }) {
           <ListItemText>Logout</ListItemText>
         </MenuItem>
       </Menu>
-    </>
+    </Stack>
   );
 }
 

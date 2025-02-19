@@ -43,7 +43,8 @@ import {
   Warning as WarningIcon,
   Notifications as NotificationsIcon,
   CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -289,117 +290,156 @@ function CompanyList() {
                   direction="row" 
                   spacing={2} 
                   alignItems="center"
+                  sx={{
+                    width: { xs: '100%', sm: 'auto' },  // Full width on mobile
+                    justifyContent: { xs: 'space-between', sm: 'flex-start' }  // Space between on mobile
+                  }}
                 >
-                  <Tooltip title="View Expired IDs">
-                    <Box sx={{ position: 'relative' }}>
+                  {/* Left side buttons wrapper */}
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Tooltip title="View Expired IDs">
+                      <Box sx={{ position: 'relative' }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
+                          sx={{ 
+                            bgcolor: 'error.main',
+                            color: 'white',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              bgcolor: 'error.dark',
+                              transform: 'scale(1.1)',
+                              boxShadow: theme.shadows[4]
+                            }
+                          }}
+                        >
+                          <Avatar sx={{ 
+                            width: 32, 
+                            height: 32,
+                            bgcolor: 'inherit',
+                            color: 'inherit'
+                          }}>
+                            <ErrorIcon sx={{ fontSize: 20 }} />
+                          </Avatar>
+                        </IconButton>
+                        {calculateTotalCounts(companies).expired > 0 && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: -5,
+                              right: -5,
+                              bgcolor: 'white',
+                              color: 'error.main',
+                              borderRadius: '50%',
+                              width: 20,
+                              height: 20,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              boxShadow: theme.shadows[2],
+                              border: '2px solid',
+                              borderColor: 'error.main',
+                              zIndex: 1
+                            }}
+                          >
+                            {calculateTotalCounts(companies).expired}
+                          </Box>
+                        )}
+                      </Box>
+                    </Tooltip>
+
+                    <Tooltip title="View Expiring Soon IDs">
+                      <Box sx={{ position: 'relative' }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
+                          sx={{ 
+                            bgcolor: 'warning.main',
+                            color: 'white',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              bgcolor: 'warning.dark',
+                              transform: 'scale(1.1)',
+                              boxShadow: theme.shadows[4]
+                            }
+                          }}
+                        >
+                          <Avatar sx={{ 
+                            width: 32, 
+                            height: 32,
+                            bgcolor: 'inherit',
+                            color: 'inherit'
+                          }}>
+                            <WarningIcon sx={{ fontSize: 20 }} />
+                          </Avatar>
+                        </IconButton>
+                        {calculateTotalCounts(companies).expiringSoon > 0 && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: -5,
+                              right: -5,
+                              bgcolor: 'white',
+                              color: 'warning.main',
+                              borderRadius: '50%',
+                              width: 20,
+                              height: 20,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              boxShadow: theme.shadows[2],
+                              border: '2px solid',
+                              borderColor: 'warning.main',
+                              zIndex: 1
+                            }}
+                          >
+                            {calculateTotalCounts(companies).expiringSoon}
+                          </Box>
+                        )}
+                      </Box>
+                    </Tooltip>
+                  </Box>
+
+                  <Stack 
+                    direction="row" 
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Tooltip title="Print PDF">
                       <IconButton
+                        onClick={() => window.print()}
                         size="small"
-                        onClick={() => navigate(`/expired-ids/${mainPerson._id}`)}
                         sx={{ 
-                          bgcolor: 'error.main',
+                          ml: 2,
+                          bgcolor: 'secondary.main',
                           color: 'white',
-                          transition: 'all 0.2s ease-in-out',
                           '&:hover': {
-                            bgcolor: 'error.dark',
-                            transform: 'scale(1.1)',
-                            boxShadow: theme.shadows[4]
+                            bgcolor: 'secondary.dark',
                           }
                         }}
                       >
-                        <Avatar sx={{ 
-                          width: 32, 
-                          height: 32,
-                          bgcolor: 'inherit',
-                          color: 'inherit'
-                        }}>
-                          <ErrorIcon sx={{ fontSize: 20 }} />
-                        </Avatar>
-                      </IconButton>
-                      {calculateTotalCounts(companies).expired > 0 && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: -5,
-                            right: -5,
-                            bgcolor: 'white',
-                            color: 'error.main',
-                            borderRadius: '50%',
-                            width: 20,
-                            height: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            boxShadow: theme.shadows[2],
-                            border: '2px solid',
-                            borderColor: 'error.main',
-                            zIndex: 1
+                        <Avatar 
+                          sx={{ 
+                            width: 32, 
+                            height: 32,
+                            bgcolor: 'inherit',
+                            color: 'inherit'
                           }}
                         >
-                          {calculateTotalCounts(companies).expired}
-                        </Box>
-                      )}
-                    </Box>
-                  </Tooltip>
-
-                  <Tooltip title="View Expiring Soon IDs">
-                    <Box sx={{ position: 'relative' }}>
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/expiring-soon/${mainPerson._id}`)}
-                        sx={{ 
-                          bgcolor: 'warning.main',
-                          color: 'white',
-                          transition: 'all 0.2s ease-in-out',
-                          '&:hover': {
-                            bgcolor: 'warning.dark',
-                            transform: 'scale(1.1)',
-                            boxShadow: theme.shadows[4]
-                          }
-                        }}
-                      >
-                        <Avatar sx={{ 
-                          width: 32, 
-                          height: 32,
-                          bgcolor: 'inherit',
-                          color: 'inherit'
-                        }}>
-                          <WarningIcon sx={{ fontSize: 20 }} />
+                          <PdfIcon />
                         </Avatar>
                       </IconButton>
-                      {calculateTotalCounts(companies).expiringSoon > 0 && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: -5,
-                            right: -5,
-                            bgcolor: 'white',
-                            color: 'warning.main',
-                            borderRadius: '50%',
-                            width: 20,
-                            height: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            boxShadow: theme.shadows[2],
-                            border: '2px solid',
-                            borderColor: 'warning.main',
-                            zIndex: 1
-                          }}
-                        >
-                          {calculateTotalCounts(companies).expiringSoon}
-                        </Box>
-                      )}
-                    </Box>
-                  </Tooltip>
-
-                  <ProfileMenu 
-                    username={user?.username}
-                    onLogout={handleLogout}
-                  />
+                    </Tooltip>
+                    <ProfileMenu 
+                      username={user?.username} 
+                      onLogout={handleLogout}
+                    />
+                  </Stack>
                 </Stack>
               </Box>
             </Paper>
@@ -415,7 +455,10 @@ function CompanyList() {
             backgroundColor: 'white',
             p: 2,
             borderRadius: 2,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            '@media print': {
+              display: 'none'
+            }
           }}
         >
           <TextField
@@ -442,7 +485,7 @@ function CompanyList() {
             }}
           />
           
-          <FormControl sx={{ minWidth: 180 }}>
+          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
             <InputLabel>Filter Status</InputLabel>
             <Select
               value={filter}
@@ -456,7 +499,7 @@ function CompanyList() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ minWidth: 180 }}>
+          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sort}

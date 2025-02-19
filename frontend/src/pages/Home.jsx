@@ -53,7 +53,6 @@ function Home() {
           notificationApi.getExpiring(30),
           companyApi.getStats()
         ]);
-        console.log(expiringRes.data);
         
         setMainPersons(mainPersonsRes.data);
         setStats({
@@ -137,16 +136,22 @@ function Home() {
 
         {stats && (
           <Fade in timeout={800}>
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={4}>
+            <Grid 
+              container 
+              spacing={2}
+              sx={{ 
+                mb: 4,
+              }}
+            >
+              <Grid item xs={4} sm={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
-                    p: 3,
+                    p: { xs: 1.5, sm: 3 }, 
                     bgcolor: 'primary.light',
-                    borderRadius: 4,
+                    borderRadius: 3,
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
                   }}
                 >
                   <Box 
@@ -154,32 +159,45 @@ function Home() {
                       position: 'absolute',
                       top: 0,
                       right: 0,
-                      p: 2,
+                      p: { xs: 1, sm: 2 },
                       opacity: 0.2
                     }}
                   >
-                    <PersonIcon sx={{ fontSize: 80 }} />
+                    <PersonIcon sx={{ fontSize: { xs: 40, sm: 80 } }} />
                   </Box>
-                  <Box display="flex" flexDirection="column" gap={1}>
-                    <Typography variant="h3" fontWeight="bold" color="primary.dark">
+                  <Box display="flex" flexDirection="column" gap={0.5}>
+                    <Typography 
+                      variant="h3" 
+                      fontWeight="bold" 
+                      color="primary.dark"
+                      sx={{ 
+                        fontSize: { xs: '1.5rem', sm: '2.5rem' }
+                      }}
+                    >
                       {stats.totalMainPersons}
                     </Typography>
-                    <Typography variant="subtitle1" color="primary.dark">
+                    <Typography 
+                      variant="subtitle2" 
+                      color="primary.dark"
+                      sx={{ 
+                        fontSize: { xs: '0.75rem', sm: '1rem' }
+                      }}
+                    >
                       Main Persons
                     </Typography>
                   </Box>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid item xs={4} sm={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
-                    p: { xs: 2, sm: 3 }, 
+                    p: { xs: 1.5, sm: 3 }, 
                     bgcolor: 'warning.light',
                     borderRadius: 3,
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
                   }}
                 >
                   <Box 
@@ -187,32 +205,45 @@ function Home() {
                       position: 'absolute',
                       top: 0,
                       right: 0,
-                      p: 2,
+                      p: { xs: 1, sm: 2 },
                       opacity: 0.2
                     }}
                   >
-                    <BadgeIcon sx={{ fontSize: 80 }} />
+                    <BadgeIcon sx={{ fontSize: { xs: 40, sm: 80 } }} />
                   </Box>
-                  <Box display="flex" flexDirection="column" gap={1}>
-                    <Typography variant="h3" fontWeight="bold" color="warning.dark">
+                  <Box display="flex" flexDirection="column" gap={0.5}>
+                    <Typography 
+                      variant="h3" 
+                      fontWeight="bold" 
+                      color="warning.dark"
+                      sx={{ 
+                        fontSize: { xs: '1.5rem', sm: '2.5rem' }
+                      }}
+                    >
                       {stats.totalIndividuals}
                     </Typography>
-                    <Typography variant="subtitle1" color="warning.dark">
+                    <Typography 
+                      variant="subtitle2" 
+                      color="warning.dark"
+                      sx={{ 
+                        fontSize: { xs: '0.75rem', sm: '1rem' }
+                      }}
+                    >
                       Total IDs
                     </Typography>
                   </Box>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid item xs={4} sm={4}>
                 <Paper 
                   elevation={0}
                   sx={{ 
-                    p: { xs: 2, sm: 3 }, 
+                    p: { xs: 1.5, sm: 3 }, 
                     bgcolor: 'error.light',
                     borderRadius: 3,
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
                   }}
                 >
                   <Box 
@@ -220,18 +251,31 @@ function Home() {
                       position: 'absolute',
                       top: 0,
                       right: 0,
-                      p: 2,
+                      p: { xs: 1, sm: 2 },
                       opacity: 0.2
                     }}
                   >
-                    <WarningIcon sx={{ fontSize: 80 }} />
+                    <WarningIcon sx={{ fontSize: { xs: 40, sm: 80 } }} />
                   </Box>
-                  <Box display="flex" flexDirection="column" gap={1}>
-                    <Typography variant="h3" fontWeight="bold" color="error.dark">
+                  <Box display="flex" flexDirection="column" gap={0.5}>
+                    <Typography 
+                      variant="h3" 
+                      fontWeight="bold" 
+                      color="error.dark"
+                      sx={{ 
+                        fontSize: { xs: '1.5rem', sm: '2.5rem' }
+                      }}
+                    >
                       {stats.urgentExpiring}
                     </Typography>
-                    <Typography variant="subtitle1" color="error.dark">
-                      Urgent Renewals
+                    <Typography 
+                      variant="subtitle2" 
+                      color="error.dark"
+                      sx={{ 
+                        fontSize: { xs: '0.75rem', sm: '1rem' }
+                      }}
+                    >
+                      Urgent
                     </Typography>
                   </Box>
                 </Paper>
@@ -241,10 +285,21 @@ function Home() {
         )}
 
         <Grid container spacing={3}>
-          {mainPersons.map((person) => {
+          {mainPersons.map((person, index) => {
             const isAllowed = isMainPersonAllowed(person);
+            const isLastItem = index === mainPersons.length - 1;
+
             return (
-              <Grid item xs={12} sm={6} lg={4} key={person._id}>
+              <Grid 
+                item 
+                xs={12} 
+                sm={6} 
+                md={4} 
+                key={person._id}
+                sx={{
+                  mb: { xs: isLastItem ? 15 : 0, sm: 0 }
+                }}
+              >
                 <Card 
                   onClick={() => isAllowed && navigate(`/main-person/${person._id}/companies`)}
                   sx={{ 

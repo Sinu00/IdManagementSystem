@@ -24,7 +24,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     iqamaNumber: '',
     expiryDate: null,
     referredBy: '',
-    amount: '0',
+    amount: '',
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -90,7 +90,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
             </Alert>
           )}
 
-          {(mode === 'edit' || mode === 'renew') && individual?.lastRenewedBy && (
+          { mode === 'renew' && individual?.lastRenewedBy && (
             <Box 
               sx={{ 
                 mb: 3, 
