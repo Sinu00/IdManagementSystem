@@ -50,18 +50,17 @@ function Home() {
         setLoading(true);
         const [mainPersonsRes, expiringRes, companiesRes] = await Promise.all([
           mainPersonApi.getAll(),
-          notificationApi.getExpiring(10),
+          notificationApi.getExpiring(30),
           companyApi.getStats()
         ]);
+        console.log(expiringRes.data);
         
         setMainPersons(mainPersonsRes.data);
         setStats({
           totalMainPersons: mainPersonsRes.data.length,
           expiringIds: expiringRes.data.length,
           totalIndividuals: companiesRes.data.totalIndividuals,
-          urgentExpiring: expiringRes.data.filter(id => 
-            Math.ceil((new Date(id.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 5
-          ).length
+          urgentExpiring: expiringRes.data.length
         });
       } catch (error) {
         console.error('Error fetching data:', error);
