@@ -9,10 +9,20 @@ router.get('/filter/date', protect, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const incomes = await Income.find({
-      createdAt: {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      }
+      $or: [
+        {
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
+        },
+        {
+          dateAndTime: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
+        }
+      ]
     }).sort({ createdAt: -1 });
     res.json(incomes);
   } catch (error) {
@@ -25,6 +35,21 @@ router.get('/', protect, async (req, res) => {
   try {
     const incomes = await Income.find().sort({ createdAt: -1 });
     res.json(incomes);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get unique referred by list
+router.get('/referred-by', protect, async (req, res) => {
+  try {
+    const uniqueReferredBy = await Income.distinct('referredBy', { 
+      referredBy: { 
+        $ne: null, 
+        $ne: '' 
+      } 
+    });
+    res.json(uniqueReferredBy);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -47,8 +72,7 @@ router.get('/:id', protect, async (req, res) => {
 router.post('/', protect, async (req, res) => {
   try {
     const income = new Income({
-      ...req.body,
-      addedBy: req.user.username
+      ...req.body
     });
     const savedIncome = await income.save();
     res.status(201).json(savedIncome);
@@ -62,7 +86,7 @@ router.put('/:id', protect, async (req, res) => {
   try {
     const income = await Income.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, addedBy: req.user.username },
+      req.body,
       { new: true, runValidators: true }
     );
     if (!income) {
@@ -82,6 +106,28 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({ message: 'Income not found' });
     }
     res.json({ message: 'Income deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get filtered income
+router.post('/filter', protect, async (req, res) => {
+  try {
+    const { startDate, endDate, referredBy } = req.body;
+    const query = {
+      createdAt: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    };
+
+    if (referredBy) {
+      query.referredBy = referredBy;
+    }
+
+    const incomes = await Income.find(query).sort({ createdAt: -1 });
+    res.json(incomes);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

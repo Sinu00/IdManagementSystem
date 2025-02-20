@@ -60,7 +60,10 @@ export const incomeApi = {
   update: (id, data) => api.put(`/income/${id}`, data),
   delete: (id) => api.delete(`/income/${id}`),
   getByDateRange: (startDate, endDate) => 
-    api.get(`/income/filter/date?startDate=${startDate}&endDate=${endDate}`)
+    api.get(`/income/filter/date?startDate=${startDate}&endDate=${endDate}`),
+  getFilteredIncome: (filters) => 
+    api.post('/income/filter', filters),
+  getReferredByList: () => api.get('/income/referred-by')
 };
 
 export const expenseApi = {
@@ -70,7 +73,9 @@ export const expenseApi = {
   update: (id, data) => api.put(`/expense/${id}`, data),
   delete: (id) => api.delete(`/expense/${id}`),
   getByDateRange: (startDate, endDate) => 
-    api.get(`/expense/filter/date?startDate=${startDate}&endDate=${endDate}`)
+    api.get(`/expense/filter/date?startDate=${startDate}&endDate=${endDate}`),
+  getFilteredExpense: (filters) =>
+    api.post('/expense/filter', filters)
 };
 
 export default api; 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -28,6 +28,14 @@ import {
   TableHead,
   TableRow,
   Skeleton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  TablePagination
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -37,14 +45,97 @@ import {
   TrendingDown as ExpenseIcon,
   AttachMoney as MoneyIcon,
   Receipt as ReceiptIcon,
-  DateRange as DateIcon
+  DateRange as DateIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  FilterAlt as FilterIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { incomeApi, expenseApi } from '../services/api';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { saveAs } from 'file-saver';
+import { jsPDF } from "jspdf";
+import autoTable from 'jspdf-autotable';
+
+// Create a memoized FilterSection component outside the main component
+const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [] }) => (
+  <Box sx={{ 
+    mb: 3,
+    display: visible ? 'block' : 'none'
+  }}>
+    <Paper sx={{ p: 2 }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Search by name"
+            value={filters.nameSearch}
+            onChange={(e) => onFilterChange(type, 'nameSearch', e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="From Date"
+              value={filters.dateRange.start}
+              onChange={(newValue) => onFilterChange(type, 'dateRange', { 
+                ...filters.dateRange, 
+                start: newValue 
+              })}
+              slotProps={{ 
+                textField: { 
+                  size: 'small', 
+                  fullWidth: true
+                }
+              }}
+              format="dd/MM/yyyy"
+            />
+          </LocalizationProvider>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="To Date"
+              value={filters.dateRange.end}
+              onChange={(newValue) => onFilterChange(type, 'dateRange', { 
+                ...filters.dateRange, 
+                end: newValue 
+              })}
+              slotProps={{ 
+                textField: { 
+                  size: 'small', 
+                  fullWidth: true
+                }
+              }}
+              format="dd/MM/yyyy"
+            />
+          </LocalizationProvider>
+        </Grid>
+        {type === 'income' && (
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Referred By</InputLabel>
+              <Select
+                value={filters.referredBy}
+                label="Referred By"
+                onChange={(e) => onFilterChange(type, 'referredBy', e.target.value)}
+              >
+                <MenuItem value="all">All</MenuItem>
+                {referredByList.map((ref) => (
+                  <MenuItem key={ref} value={ref}>{ref}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+      </Grid>
+    </Paper>
+  </Box>
+));
 
 function IncomeExpense() {
   const navigate = useNavigate();
@@ -62,14 +153,46 @@ function IncomeExpense() {
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
-
-    iqamaNumber: '' // only for income
+    iqamaNumber: '', // only for income
+    referredBy: ''
   });
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [expenseSortField, setExpenseSortField] = useState('createdAt');
   const [expenseSortOrder, setExpenseSortOrder] = useState('desc');
+  const [editData, setEditData] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportType, setExportType] = useState('income');
+  const [dateFilterType, setDateFilterType] = useState('range');
+  const [exportStartDate, setExportStartDate] = useState(startOfMonth(new Date()));
+  const [exportEndDate, setExportEndDate] = useState(endOfMonth(new Date()));
+  const [exportSpecificDate, setExportSpecificDate] = useState(new Date());
+  const [referredByList, setReferredByList] = useState([]);
+  const [selectedReferredBy, setSelectedReferredBy] = useState('all');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage] = useState(10);
+  const [expensePage, setExpensePage] = useState(0);
+  const [expenseRowsPerPage] = useState(10);
+  const [incomeFilters, setIncomeFilters] = useState({
+    dateRange: {
+      start: startOfMonth(new Date()),
+      end: endOfMonth(new Date())
+    },
+    nameSearch: '',
+    referredBy: 'all'
+  });
+  const [expenseFilters, setExpenseFilters] = useState({
+    dateRange: {
+      start: startOfMonth(new Date()),
+      end: endOfMonth(new Date())
+    },
+    nameSearch: ''
+  });
+  const [showIncomeFilters, setShowIncomeFilters] = useState(false);
+  const [showExpenseFilters, setShowExpenseFilters] = useState(false);
 
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -78,6 +201,7 @@ function IncomeExpense() {
 
   useEffect(() => {
     fetchData();
+    fetchReferredByList();
   }, []);
 
   const fetchData = async () => {
@@ -125,14 +249,47 @@ function IncomeExpense() {
     setFormData({
       name: '',
       amount: '',
-      iqamaNumber: ''
+      iqamaNumber: '',
+      referredBy: ''
     });
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
+    setEditData(null);
     setError('');
+  };
+
+  const handleEdit = (item, type) => {
+    setDialogType(type);
+    setEditData(item);
+    setFormData({
+      name: item.name,
+      amount: item.amount.toString(),
+      iqamaNumber: item.iqamaNumber || '',
+      referredBy: item.referredBy || ''
+    });
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (item, type) => {
+    setItemToDelete({ ...item, type });
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (itemToDelete.type === 'income') {
+        await incomeApi.delete(itemToDelete._id);
+      } else {
+        await expenseApi.delete(itemToDelete._id);
+      }
+      setDeleteConfirmOpen(false);
+      fetchData();
+    } catch (error) {
+      setError(error.response?.data?.message || 'An error occurred');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -144,9 +301,17 @@ function IncomeExpense() {
       };
 
       if (dialogType === 'income') {
-        await incomeApi.create(data);
+        if (editData) {
+          await incomeApi.update(editData._id, data);
+        } else {
+          await incomeApi.create(data);
+        }
       } else {
-        await expenseApi.create(data);
+        if (editData) {
+          await expenseApi.update(editData._id, data);
+        } else {
+          await expenseApi.create(data);
+        }
       }
 
       handleCloseDialog();
@@ -161,8 +326,24 @@ function IncomeExpense() {
     setSortOrder(currentOrder => currentOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  const applyFilters = (data, type) => {
+    const filters = type === 'income' ? incomeFilters : expenseFilters;
+    return data.filter(item => {
+      const dateMatch = new Date(item.createdAt) >= startOfDay(filters.dateRange.start) &&
+                       new Date(item.createdAt) <= endOfDay(filters.dateRange.end);
+      
+      const nameMatch = item.name.toLowerCase().includes(filters.nameSearch.toLowerCase());
+      
+      const referredByMatch = type === 'income' ? 
+        (filters.referredBy === 'all' || item.referredBy === filters.referredBy) : true;
+      
+      return dateMatch && nameMatch && referredByMatch;
+    });
+  };
+
   const sortedIncomes = useMemo(() => {
-    return [...incomes].sort((a, b) => {
+    const filtered = applyFilters(incomes, 'income');
+    return [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
         case 'createdAt':
@@ -176,7 +357,7 @@ function IncomeExpense() {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [incomes, sortField, sortOrder]);
+  }, [incomes, sortField, sortOrder, incomeFilters]);
 
   const handleExpenseSort = (field) => {
     setExpenseSortField(field);
@@ -184,7 +365,8 @@ function IncomeExpense() {
   };
 
   const sortedExpenses = useMemo(() => {
-    return [...expenses].sort((a, b) => {
+    const filtered = applyFilters(expenses, 'expense');
+    return [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (expenseSortField) {
         case 'createdAt':
@@ -198,7 +380,358 @@ function IncomeExpense() {
       }
       return expenseSortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [expenses, expenseSortField, expenseSortOrder]);
+  }, [expenses, expenseSortField, expenseSortOrder, expenseFilters]);
+
+  const formatDate = (dateString) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy');
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid Date';
+    }
+  };
+
+  const fetchReferredByList = async () => {
+    try {
+      console.log('Fetching referred by list...');
+      const response = await incomeApi.getReferredByList();
+      console.log('Referred by list:', response.data);
+      setReferredByList(response.data);
+    } catch (error) {
+      console.error('Error fetching referred by list:', error);
+      setError('Error fetching referred by options');
+    }
+  };
+
+  const generatePDF = async () => {
+    try {
+      console.log('Starting PDF generation...');
+      setError('');
+      let data;
+      const dateFilter = dateFilterType === 'range' 
+        ? { 
+            startDate: exportStartDate.toISOString(), 
+            endDate: exportEndDate.toISOString() 
+          }
+        : { 
+            startDate: startOfDay(exportSpecificDate).toISOString(), 
+            endDate: endOfDay(exportSpecificDate).toISOString() 
+          };
+
+      if (exportType === 'income') {
+        const response = await incomeApi.getFilteredIncome({
+          ...dateFilter,
+          referredBy: selectedReferredBy === 'all' ? null : selectedReferredBy
+        });
+        data = response.data;
+      } else {
+        const response = await expenseApi.getFilteredExpense(dateFilter);
+        data = response.data;
+      }
+
+      // Create PDF document with slightly larger margins
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        margins: { top: 20, right: 20, bottom: 20, left: 20 }
+      });
+      
+      // Add decorative header bar
+      doc.setFillColor(0, 102, 204);
+      doc.rect(0, 0, doc.internal.pageSize.width, 15, 'F');
+      
+      // Add company logo or name at the top with better spacing
+      doc.setFontSize(28);
+      doc.setTextColor(0, 102, 204);
+      doc.text("NAMORA CONTRACTING", doc.internal.pageSize.width/2, 30, { align: 'center' });
+      
+      // Add subtle divider
+      doc.setDrawColor(0, 102, 204);
+      doc.setLineWidth(0.5);
+      doc.line(20, 35, doc.internal.pageSize.width - 20, 35);
+      
+      // Add report title with better styling
+      doc.setFontSize(22);
+      doc.setTextColor(51, 51, 51);
+      doc.text(
+        `${exportType.charAt(0).toUpperCase() + exportType.slice(1)} Report`,
+        doc.internal.pageSize.width/2,
+        45,
+        { align: 'center' }
+      );
+
+      // Add report metadata with improved layout
+      doc.setFontSize(11);
+      doc.setTextColor(102, 102, 102);
+      const reportMetadata = [
+        `Period: ${dateFilterType === 'range' 
+          ? `${format(exportStartDate, 'dd MMMM yyyy')} - ${format(exportEndDate, 'dd MMMM yyyy')}`
+          : format(exportSpecificDate, 'dd MMMM yyyy')}`,
+        exportType === 'income' && selectedReferredBy !== 'all' ? `Referred By: ${selectedReferredBy}` : null
+      ].filter(Boolean);
+
+      reportMetadata.forEach((text, index) => {
+        doc.text(text, doc.internal.pageSize.width/2, 55 + (index * 6), { align: 'center' });
+      });
+
+      if (!data || data.length === 0) {
+        // Styled "No Data Available" message
+        doc.setFillColor(245, 245, 245);
+        doc.roundedRect(20, 70, doc.internal.pageSize.width - 40, 30, 3, 3, 'F');
+        doc.setFontSize(16);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          "No data available for the selected period",
+          doc.internal.pageSize.width/2,
+          88,
+          { align: 'center' }
+        );
+      } else {
+        // Add summary section with improved styling
+        const total = data.reduce((sum, item) => sum + item.amount, 0);
+        doc.setFillColor(240, 245, 255); // Light blue background
+        doc.roundedRect(20, 70, doc.internal.pageSize.width - 40, 25, 3, 3, 'F');
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(12);
+        doc.text(`Total ${exportType}: `, 30, 85);
+        doc.setFontSize(14);
+        doc.text(`SAR ${total.toFixed(2)}`, 65, 85);
+        doc.setFontSize(12);
+        doc.text(`Number of Entries: ${data.length}`, doc.internal.pageSize.width - 30, 85, { align: 'right' });
+
+        // Configure and add table with improved styling
+        const tableColumns = exportType === 'income' 
+          ? [
+              { header: 'Date', dataKey: 'date' },
+              { header: 'Name', dataKey: 'name' },
+              { header: 'Iqama Number', dataKey: 'iqama' },
+              { header: 'Referred By', dataKey: 'referredBy' },
+              { header: 'Amount (SR)', dataKey: 'amount' }
+            ]
+          : [
+              { header: 'Date', dataKey: 'date' },
+              { header: 'Name', dataKey: 'name' },
+              { header: 'Amount (SR)', dataKey: 'amount' }
+            ];
+
+        const tableRows = data.map(item => ({
+          date: format(new Date(item.createdAt), 'dd MMMM yyyy'),
+          name: item.name,
+          iqama: item.iqamaNumber || '-',
+          referredBy: item.referredBy || '-',
+          amount: item.amount.toFixed(2)
+        }));
+
+        doc.autoTable({
+          columns: tableColumns,
+          body: tableRows,
+          startY: 100,
+          styles: {
+            fontSize: 10,
+            cellPadding: 4,
+            lineColor: [240, 240, 240],
+            lineWidth: 0.1,
+          },
+          headStyles: {
+            fillColor: [0, 102, 204],
+            textColor: 255,
+            fontSize: 11,
+            fontStyle: 'bold',
+            halign: 'center',
+            cellPadding: 5
+          },
+          columnStyles: {
+            date: { halign: 'center' },
+            amount: { halign: 'right', fontStyle: 'bold' },
+            iqama: { halign: 'center' }
+          },
+          alternateRowStyles: {
+            fillColor: [249, 250, 251]
+          },
+          showHead: 'everyPage',
+          didDrawPage: function(data) {
+            // Header on every page
+            doc.setFillColor(0, 102, 204);
+            doc.rect(0, 0, doc.internal.pageSize.width, 15, 'F');
+            
+            // Company name in header
+            doc.setFontSize(10);
+            doc.setTextColor(255, 255, 255);
+            doc.text(
+              'NAMORA CONTRACTING',
+              doc.internal.pageSize.width - 20,
+              10,
+              { align: 'right' }
+            );
+            
+            // Generation date in header
+            doc.text(
+              `Generated: ${format(new Date(), 'dd MMMM yyyy hh:mm a')}`,
+              20,
+              10
+            );
+            
+            // Footer with page numbers
+            doc.setFontSize(9);
+            doc.setTextColor(128, 128, 128);
+            doc.text(
+              `Page ${doc.internal.getCurrentPageInfo().pageNumber} of ${doc.internal.getNumberOfPages()}`,
+              doc.internal.pageSize.width/2,
+              doc.internal.pageSize.height - 10,
+              { align: 'center' }
+            );
+          },
+          margin: { top: 30, bottom: 30, left: 20, right: 20 }
+        });
+
+        // Add footer with total
+        const finalY = doc.autoTable.previous.finalY;
+        doc.setFillColor(0, 102, 204);
+        doc.roundedRect(20, finalY + 5, doc.internal.pageSize.width - 40, 20, 2, 2, 'F');
+        doc.setFontSize(12);
+        doc.setTextColor(255, 255, 255);
+        doc.text(
+          `Total Amount: SAR ${total.toFixed(2)}`,
+          doc.internal.pageSize.width - 30,
+          finalY + 17,
+          { align: 'right' }
+        );
+      }
+
+      // Save the PDF
+      doc.save(`${exportType}_report_${format(new Date(), 'dd_MM_yyyy')}.pdf`);
+      setExportDialogOpen(false);
+      setError('');
+
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      setError('Error generating PDF: ' + (error.message || 'Unknown error'));
+    }
+  };
+
+  useEffect(() => {
+    if (exportDialogOpen && exportType === 'income') {
+      fetchReferredByList();
+    }
+  }, [exportDialogOpen, exportType]);
+
+  const handleExportClick = (type) => {
+    setExportType(type);
+    setExportDialogOpen(true);
+  };
+
+  const ExportDialog = () => (
+    <Dialog
+      open={exportDialogOpen}
+      onClose={() => setExportDialogOpen(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>
+        Export {exportType === 'income' ? 'Income' : 'Expense'} Report
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          <FormControl component="fieldset" sx={{ mb: 2 }}>
+            <RadioGroup
+              value={dateFilterType}
+              onChange={(e) => setDateFilterType(e.target.value)}
+            >
+              <FormControlLabel value="range" control={<Radio />} label="Date Range" />
+              <FormControlLabel value="specific" control={<Radio />} label="Specific Date" />
+            </RadioGroup>
+          </FormControl>
+
+          {dateFilterType === 'range' ? (
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Start Date"
+                    value={exportStartDate}
+                    onChange={setExportStartDate}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid item xs={6}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="End Date"
+                    value={exportEndDate}
+                    onChange={setExportEndDate}
+                  />
+                </LocalizationProvider>
+              </Grid>
+            </Grid>
+          ) : (
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Select Date"
+                value={exportSpecificDate}
+                onChange={setExportSpecificDate}
+              />
+            </LocalizationProvider>
+          )}
+
+          {exportType === 'income' && (
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Referred By</InputLabel>
+              <Select
+                value={selectedReferredBy}
+                onChange={(e) => setSelectedReferredBy(e.target.value)}
+                label="Referred By"
+              >
+                <MenuItem value="all">All</MenuItem>
+                {referredByList.map((referredBy) => (
+                  <MenuItem key={referredBy} value={referredBy}>
+                    {referredBy}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+        <Button 
+          onClick={() => {
+            console.log('Generate PDF button clicked');
+            generatePDF();
+          }} 
+          variant="contained" 
+          color="primary"
+        >
+          Generate PDF
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeExpensePage = (event, newPage) => {
+    setExpensePage(newPage);
+  };
+
+  const handleFilterChange = (type, field, value) => {
+    if (type === 'income') {
+      setIncomeFilters(prev => 
+        field === 'dateRange' 
+          ? { ...prev, dateRange: value }
+          : { ...prev, [field]: value }
+      );
+    } else {
+      setExpenseFilters(prev => 
+        field === 'dateRange' 
+          ? { ...prev, dateRange: value }
+          : { ...prev, [field]: value }
+      );
+    }
+  };
 
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 4, pb: 6 }}>
@@ -234,26 +767,6 @@ function IncomeExpense() {
               </Typography>
             </Box>
           </Box>
-          
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 1.5,
-              bgcolor: 'success.main',
-              '&:hover': {
-                bgcolor: 'success.dark',
-                transform: 'translateY(-2px)',
-                boxShadow: theme.shadows[4]
-              },
-              transition: 'all 0.2s'
-            }}
-            onClick={() => handleOpenDialog('income')}
-          >
-            New Transaction
-          </Button>
         </Box>
 
         {/* Summary Cards */}
@@ -294,7 +807,7 @@ function IncomeExpense() {
                   Total Income
                 </Typography>
                 <Typography variant="h3" fontWeight="bold" color="white">
-                  SAR {totalIncome.toFixed(2)}
+                  SR {totalIncome}
                 </Typography>
                 <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
                   {lastMonthIncome === 0 && totalIncome === 0 ? (
@@ -346,7 +859,7 @@ function IncomeExpense() {
                   Total Expense
                 </Typography>
                 <Typography variant="h3" fontWeight="bold" color="white">
-                  SAR {totalExpense.toFixed(2)}
+                  SR {totalExpense}
                 </Typography>
                 <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
                   {lastMonthExpense === 0 && totalExpense === 0 ? (
@@ -398,7 +911,7 @@ function IncomeExpense() {
                   Net Balance
                 </Typography>
                 <Typography variant="h3" fontWeight="bold" color="white">
-                  SAR 0.00
+                  SR {totalIncome - totalExpense}
                 </Typography>
                 <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
                   Current month
@@ -447,6 +960,15 @@ function IncomeExpense() {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
+                <IconButton 
+                    onClick={() => setShowIncomeFilters(!showIncomeFilters)}
+                    sx={{ 
+                      color: showIncomeFilters ? 'primary.main' : 'text.secondary',
+                      bgcolor: showIncomeFilters ? 'primary.lighter' : 'transparent'
+                    }}
+                  >
+                    <FilterIcon />
+                  </IconButton>
                   <Button 
                     startIcon={<AddIcon />}
                     variant="contained"
@@ -462,26 +984,12 @@ function IncomeExpense() {
                   >
                     Add
                   </Button>
-                  <Button 
-                    startIcon={<DateIcon />}
-                    variant="outlined"
-                    size="small"
-                    sx={{ 
-                      borderRadius: 2,
-                      borderColor: 'success.main',
-                      color: 'success.main',
-                      '&:hover': {
-                        borderColor: 'success.dark',
-                        bgcolor: 'success.lighter'
-                      }
-                    }}
-                  >
-                    Filter
-                  </Button>
+
                   <Button 
                     startIcon={<ReceiptIcon />}
                     variant="outlined"
                     size="small"
+                    onClick={() => handleExportClick('income')}
                     sx={{ 
                       borderRadius: 2,
                       borderColor: 'success.main',
@@ -522,57 +1030,119 @@ function IncomeExpense() {
                   <Skeleton height={50} />
                 </Box>
               ) : incomes.length > 0 ? (
-                <TableContainer>
-                  <Table sx={{ minWidth: 650 }} aria-label="income table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell 
-                          onClick={() => handleSort('dateAndTime')}
-                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                        >
-                          Date {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableCell>
-                        <TableCell 
-                          onClick={() => handleSort('name')}
-                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                        >
-                          Name {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableCell>
-                        <TableCell>Iqama Number</TableCell>
-                        <TableCell 
-                          onClick={() => handleSort('amount')}
-                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                        >
-                          Amount (SAR) {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
-                        </TableCell>
-                        <TableCell>Added By</TableCell>
-                        <TableCell>Referred By</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sortedIncomes.map((income) => (
-                        <TableRow
-                          key={income._id}
-                          sx={{
-                            '&:last-child td, &:last-child th': { border: 0 },
-                            '&:hover': { bgcolor: 'action.hover' }
-                          }}
-                        >
-                          <TableCell>
-                            {format(new Date(income.dateAndTime), 'dd/MM/yyyy')}
+                <>
+                  <FilterSection 
+                    type="income" 
+                    visible={showIncomeFilters}
+                    filters={incomeFilters}
+                    onFilterChange={handleFilterChange}
+                    referredByList={referredByList}
+                  />
+                  <TableContainer>
+                    <Table size="small" aria-label="income table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell 
+                            onClick={() => handleSort('dateAndTime')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '15%'
+                            }}
+                          >
+                            Date {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
-                          <TableCell>{income.name}</TableCell>
-                          <TableCell>{income.iqamaNumber}</TableCell>
-                          <TableCell sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                            {income.amount.toFixed(2)}
+                          <TableCell 
+                            onClick={() => handleSort('name')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '35%'
+                            }}
+                          >
+                            Name & Referred By {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
-                          <TableCell>{income.addedBy}</TableCell>
-                          <TableCell>{income.referredBy || '-'}</TableCell>
+                          <TableCell sx={{ width: '25%' }}>
+                            Iqama Number
+                          </TableCell>
+                          <TableCell 
+                            onClick={() => handleSort('amount')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '25%'
+                            }}
+                          >
+                            Amount (SAR) {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              width: '15%',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Actions
+                          </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHead>
+                      <TableBody>
+                        {sortedIncomes
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((income) => (
+                            <TableRow
+                              key={income._id}
+                              sx={{
+                                '&:last-child td, &:last-child th': { border: 0 },
+                                '&:hover': { bgcolor: 'action.hover' }
+                              }}
+                            >
+                              <TableCell>{formatDate(income.createdAt)}</TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{income.name}</Typography>
+                                {income.referredBy && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    Referred by: {income.referredBy}
+                                  </Typography>
+                                )}
+                              </TableCell>
+                              <TableCell>{income.iqamaNumber}</TableCell>
+                              <TableCell sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                                {income.amount.toFixed(2)}
+                              </TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEdit(income, 'income')}
+                                  sx={{ color: 'primary.main', mr: 1 }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteClick(income, 'income')}
+                                  sx={{ color: 'error.main' }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    component="div"
+                    count={sortedIncomes.length}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
+                    rowsPerPageOptions={[10]}
+                    sx={{
+                      borderTop: '1px solid',
+                      borderColor: 'divider'
+                    }}
+                  />
+                </>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <IncomeIcon sx={{ fontSize: 48, color: 'success.light', mb: 2 }} />
@@ -624,6 +1194,15 @@ function IncomeExpense() {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
+                <IconButton 
+                    onClick={() => setShowExpenseFilters(!showExpenseFilters)}
+                    sx={{ 
+                      color: showExpenseFilters ? 'primary.main' : 'text.secondary',
+                      bgcolor: showExpenseFilters ? 'primary.lighter' : 'transparent'
+                    }}
+                  >
+                    <FilterIcon />
+                  </IconButton>
                   <Button 
                     startIcon={<AddIcon />}
                     variant="contained"
@@ -640,25 +1219,10 @@ function IncomeExpense() {
                     Add
                   </Button>
                   <Button 
-                    startIcon={<DateIcon />}
-                    variant="outlined"
-                    size="small"
-                    sx={{ 
-                      borderRadius: 2,
-                      borderColor: 'error.main',
-                      color: 'error.main',
-                      '&:hover': {
-                        borderColor: 'error.dark',
-                        bgcolor: 'error.lighter'
-                      }
-                    }}
-                  >
-                    Filter
-                  </Button>
-                  <Button 
                     startIcon={<ReceiptIcon />}
                     variant="outlined"
                     size="small"
+                    onClick={() => handleExportClick('expense')}
                     sx={{ 
                       borderRadius: 2,
                       borderColor: 'error.main',
@@ -700,53 +1264,110 @@ function IncomeExpense() {
                   <Skeleton height={50} />
                 </Box>
               ) : expenses.length > 0 ? (
-                <TableContainer>
-                  <Table sx={{ minWidth: 650 }} aria-label="expense table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell 
-                          onClick={() => handleExpenseSort('createdAt')}
-                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                        >
-                          Date {expenseSortField === 'createdAt' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
-                        </TableCell>
-                        <TableCell 
-                          onClick={() => handleExpenseSort('name')}
-                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                        >
-                          Name {expenseSortField === 'name' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
-                        </TableCell>
-                        <TableCell 
-                          onClick={() => handleExpenseSort('amount')}
-                          sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                        >
-                          Amount (SAR) {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
-                        </TableCell>
-                        <TableCell>Added By</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sortedExpenses.map((expense) => (
-                        <TableRow
-                          key={expense._id}
-                          sx={{
-                            '&:last-child td, &:last-child th': { border: 0 },
-                            '&:hover': { bgcolor: 'action.hover' }
-                          }}
-                        >
-                          <TableCell>
-                            {format(new Date(expense.createdAt), 'dd/MM/yyyy')}
+                <>
+                  <FilterSection 
+                    type="expense" 
+                    visible={showExpenseFilters}
+                    filters={expenseFilters}
+                    onFilterChange={handleFilterChange}
+                    referredByList={referredByList}
+                  />
+                  <TableContainer>
+                    <Table size="small" aria-label="expense table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell 
+                            onClick={() => handleExpenseSort('createdAt')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '25%'
+                            }}
+                          >
+                            Date {expenseSortField === 'createdAt' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
-                          <TableCell>{expense.name}</TableCell>
-                          <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                            {expense.amount.toFixed(2)}
+                          <TableCell 
+                            onClick={() => handleExpenseSort('name')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '45%'
+                            }}
+                          >
+                            Name {expenseSortField === 'name' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
-                          <TableCell>{expense.addedBy || '-'}</TableCell>
+                          <TableCell 
+                            onClick={() => handleExpenseSort('amount')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '30%'
+                            }}
+                          >
+                            Amount (SAR) {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              width: '15%',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Actions
+                          </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHead>
+                      <TableBody>
+                        {sortedExpenses
+                          .slice(expensePage * expenseRowsPerPage, expensePage * expenseRowsPerPage + expenseRowsPerPage)
+                          .map((expense) => (
+                            <TableRow
+                              key={expense._id}
+                              sx={{
+                                '&:last-child td, &:last-child th': { border: 0 },
+                                '&:hover': { bgcolor: 'action.hover' }
+                              }}
+                            >
+                              <TableCell>{formatDate(expense.createdAt)}</TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{expense.name}</Typography>
+                              </TableCell>
+                              <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                                {expense.amount.toFixed(2)}
+                              </TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEdit(expense, 'expense')}
+                                  sx={{ color: 'primary.main', mr: 1 }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteClick(expense, 'expense')}
+                                  sx={{ color: 'error.main' }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    component="div"
+                    count={sortedExpenses.length}
+                    page={expensePage}
+                    onPageChange={handleChangeExpensePage}
+                    rowsPerPage={expenseRowsPerPage}
+                    rowsPerPageOptions={[10]}
+                    sx={{
+                      borderTop: '1px solid',
+                      borderColor: 'divider'
+                    }}
+                  />
+                </>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <ExpenseIcon sx={{ fontSize: 48, color: 'error.light', mb: 2 }} />
@@ -765,7 +1386,7 @@ function IncomeExpense() {
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog}>
         <DialogTitle>
-          Add New {dialogType === 'income' ? 'Income' : 'Expense'}
+          {editData ? 'Edit' : 'Add New'} {dialogType === 'income' ? 'Income' : 'Expense'}
         </DialogTitle>
         <DialogContent>
           {error && (
@@ -801,7 +1422,15 @@ function IncomeExpense() {
               required
               margin="normal"
             />
-
+            {dialogType === 'income' && (
+              <TextField
+                fullWidth
+                label="Referred By"
+                value={formData.referredBy}
+                onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
+                margin="normal"
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -811,6 +1440,26 @@ function IncomeExpense() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this {itemToDelete?.type}?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {ExportDialog()}
     </Box>
   );
 }
