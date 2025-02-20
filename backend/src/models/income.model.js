@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const companyIncomeSchema = new mongoose.Schema(
+const incomeSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -25,20 +25,11 @@ const companyIncomeSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
-    dateAndTime: {
-      type: Date,
-      required: [true, 'Date and time is required'],
-      default: Date.now
-    },
-    company: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Company',
-      required: [true, 'Company is required']
-    }
+
   },
   { timestamps: true }
 );
 
-const CompanyIncome = mongoose.model("CompanyIncome", companyIncomeSchema);
+const Income = mongoose.model("Income", incomeSchema);
 
-export default CompanyIncome; 
+export default Income;

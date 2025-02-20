@@ -53,4 +53,24 @@ export const notificationApi = {
   getExpiring: (days = 10) => api.get(`/notifications?days=${days}`),
 };
 
+export const incomeApi = {
+  getAll: () => api.get('/income'),
+  getById: (id) => api.get(`/income/${id}`),
+  create: (data) => api.post('/income', data),
+  update: (id, data) => api.put(`/income/${id}`, data),
+  delete: (id) => api.delete(`/income/${id}`),
+  getByDateRange: (startDate, endDate) => 
+    api.get(`/income/filter/date?startDate=${startDate}&endDate=${endDate}`)
+};
+
+export const expenseApi = {
+  getAll: () => api.get('/expense'),
+  getById: (id) => api.get(`/expense/${id}`),
+  create: (data) => api.post('/expense', data),
+  update: (id, data) => api.put(`/expense/${id}`, data),
+  delete: (id) => api.delete(`/expense/${id}`),
+  getByDateRange: (startDate, endDate) => 
+    api.get(`/expense/filter/date?startDate=${startDate}&endDate=${endDate}`)
+};
+
 export default api; 

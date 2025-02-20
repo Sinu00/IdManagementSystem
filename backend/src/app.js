@@ -5,8 +5,8 @@ import mainPersonRoutes from './routes/mainPerson.routes.js';
 import companyRoutes from './routes/company.routes.js';
 import individualRoutes from './routes/individual.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
-import companyExpenseRoutes from './routes/companyExpense.routes.js';
-import companyIncomeRoutes from './routes/companyIncome.routes.js';
+import incomeRoutes from './routes/income.routes.js';
+import expenseRoutes from './routes/expense.routes.js';
 
 const app = express();
 
@@ -23,7 +23,7 @@ app.use('/api/main-persons', mainPersonRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/individuals', individualRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/expenses', companyExpenseRoutes);
-app.use('/api/incomes', companyIncomeRoutes);
+app.use('/api/income', incomeRoutes);
+app.use('/api/expense', expenseRoutes);
 
 export default app; 

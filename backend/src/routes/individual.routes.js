@@ -2,7 +2,7 @@ import express from 'express';
 import { adminProtect, protect } from '../middleware/auth.middleware.js';
 import Individual from '../models/individual.model.js';
 import Company from '../models/company.model.js';
-import CompanyIncome from '../models/companyIncome.model.js';
+import Income from '../models/income.model.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -104,7 +104,7 @@ router.post('/', protect, async (req, res) => {
 
     // Create income record ONLY for new individuals with amount > 0
     if (req.body.amount && req.body.amount > 0) {
-      await CompanyIncome.create({
+      await Income.create({
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
         amount: req.body.amount,
@@ -144,7 +144,7 @@ router.put('/:id', protect, async (req, res) => {
       // Calculate the difference between previous and new amount
       const amountDifference = existingIndividual.amount - req.body.amount;
       
-      await CompanyIncome.create({
+      await Income.create({
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
         amount: Math.abs(amountDifference), // Store the absolute difference
