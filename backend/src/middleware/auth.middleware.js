@@ -11,7 +11,13 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -39,4 +45,4 @@ export const adminProtect = async (req, res, next) => {
     console.error('Auth middleware error:', error);
     return res.status(401).json({ message: 'Invalid token' });
   }
-}; 
+};

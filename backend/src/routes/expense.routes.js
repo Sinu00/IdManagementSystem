@@ -9,6 +9,7 @@ router.get('/filter/date', protect, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const expenses = await Expense.find({
+      addedBy: req.user.username,
       createdAt: {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
@@ -23,7 +24,7 @@ router.get('/filter/date', protect, async (req, res) => {
 // Get all expenses
 router.get('/', protect, async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ createdAt: -1 });
+    const expenses = await Expense.find().populate('addedBy', 'name').sort({ createdAt: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -47,7 +48,8 @@ router.get('/:id', protect, async (req, res) => {
 router.post('/', protect, async (req, res) => {
   try {
     const expense = new Expense({
-      ...req.body
+      ...req.body,
+      addedBy: req.user.username
     });
     const savedExpense = await expense.save();
     res.status(201).json(savedExpense);
