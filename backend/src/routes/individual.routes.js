@@ -2,6 +2,7 @@ import express from 'express';
 import { adminProtect, protect } from '../middleware/auth.middleware.js';
 import Individual from '../models/individual.model.js';
 import Company from '../models/company.model.js';
+import CompanyIncome from '../models/companyIncome.model.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -93,56 +94,70 @@ router.get('/company/:companyId', protect, async (req, res) => {
   }
 });
 
-// Create individual (Admin only)
-router.post('/', adminProtect, async (req, res) => {
+// Create new individual with income record if amount > 0
+router.post('/', protect, async (req, res) => {
   try {
-    const individualData = {
+    const individual = await Individual.create({
       ...req.body,
-      lastRenewedBy: req.user.username,     // Using req.user.username instead of _id
-      lastRenewalDate: new Date()
-    };
+      lastRenewedBy: req.user.username
+    });
 
-    const individual = await Individual.create(individualData);
-    
-    // Populate before sending response
-    const populatedIndividual = await Individual.findById(individual._id)
-      .populate('company')
-      .populate('lastRenewedBy', 'username');  
+    // Create income record ONLY for new individuals with amount > 0
+    if (req.body.amount && req.body.amount > 0) {
+      await CompanyIncome.create({
+        name: individual.name,
+        iqamaNumber: individual.iqamaNumber,
+        amount: req.body.amount,
+        referredBy: req.body.referredBy || '',
+        addedBy: req.user.username,
+        company: individual.company,
+        dateAndTime: new Date()
+      });
+    }
 
-    res.status(201).json(populatedIndividual);
+    res.status(201).json(individual);
   } catch (error) {
     console.error('Error creating individual:', error);
     res.status(400).json({ message: error.message });
   }
 });
 
-// Update individual (Admin only)
-router.put('/:id', adminProtect, async (req, res) => {
+// Update individual (including renewal)
+router.put('/:id', protect, async (req, res) => {
   try {
-    const { id } = req.params;
-    const updates = req.body;
+    // Get the existing individual first
+    const existingIndividual = await Individual.findById(req.params.id);
     
-    // Only update lastRenewedBy and lastRenewalDate if it's a renewal operation
-    // We can check this by seeing if expiryDate is the only field being updated (along with amount)
-    const isRenewalOperation = Object.keys(updates).every(key => 
-      ['expiryDate', 'amount'].includes(key)
+    // Update the individual with the last renewed by info
+    const individual = await Individual.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        lastRenewedBy: req.user.username,
+        lastRenewalDate: req.body.expiryDate ? new Date() : existingIndividual.lastRenewalDate
+      },
+      { new: true }
     );
 
-    if (isRenewalOperation) {
-      updates.lastRenewedBy = req.user.username;
-      updates.lastRenewalDate = new Date();
+    // Create income record ONLY if it's a renewal (expiryDate is being updated) AND amount > 0
+    if (req.body.expiryDate && req.body.amount && req.body.amount > 0) {
+      // Calculate the difference between previous and new amount
+      const amountDifference = existingIndividual.amount - req.body.amount;
+      
+      await CompanyIncome.create({
+        name: individual.name,
+        iqamaNumber: individual.iqamaNumber,
+        amount: Math.abs(amountDifference), // Store the absolute difference
+        referredBy: req.body.referredBy || '',
+        addedBy: req.user.username,
+        company: individual.company,
+        dateAndTime: new Date()
+      });
     }
-
-    const individual = await Individual.findByIdAndUpdate(
-      id,
-      updates,
-      { new: true }
-    )
-      .populate('company')
-      .populate('lastRenewedBy', 'username');
 
     res.json(individual);
   } catch (error) {
+    console.error('Error updating individual:', error);
     res.status(400).json({ message: error.message });
   }
 });
