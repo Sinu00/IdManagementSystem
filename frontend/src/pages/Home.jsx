@@ -30,7 +30,8 @@ import {
   LocationOn as LocationIcon,
   Login as LoginIcon,
   PictureAsPdf as PdfIcon,
-  Lock as LockIcon
+  Lock as LockIcon,
+  AccountBalanceWallet as WalletIcon
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -470,6 +471,26 @@ function Home() {
               }}
             >
               Print PDF
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<WalletIcon />}
+              onClick={() => navigate('/income-expense')}
+              sx={{
+                bgcolor: 'success.main',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                borderRadius: 3,
+                fontWeight: 600,
+                '&:hover': {
+                  bgcolor: 'success.dark',
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme.shadows[4]
+                }
+              }}
+            >
+              Income & Expense
             </Button>
           </Stack>
         </Container>

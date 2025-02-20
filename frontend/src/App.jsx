@@ -13,6 +13,7 @@ const IndividualList = lazy(() => import('./pages/IndividualList'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const ExpiredIds = lazy(() => import('./pages/ExpiredIds'));
 const ExpiringSoonIds = lazy(() => import('./pages/ExpiringSoonIds'));
+const IncomeExpense = lazy(() => import('./pages/IncomeExpense'));
 
 function App() {
   return (
@@ -59,6 +60,8 @@ function App() {
                   <ExpiringSoonIds />
                 </ProtectedRoute>
               } />
+
+              <Route path="/income-expense" element={<IncomeExpense />} />
 
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
