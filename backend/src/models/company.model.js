@@ -25,10 +25,6 @@ const companySchema = new mongoose.Schema(
       type: String,
       trim: true
     },
-    makthabNumber: {
-      type: String,
-      trim: true
-    },
     mainPerson: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MainPerson',

@@ -416,7 +416,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
           startIcon={isRenewMode ? <MonetizationIcon /> : undefined}
           disabled={!!paymentError}
         >
-          {isRenewMode ? 'Renew & Reset Payment' : isAddMode ? 'Add' : 'Save Changes'}
+          {isRenewMode ? 'Renew' : isAddMode ? 'Add' : 'Save Changes'}
         </Button>
       </DialogActions>
     </Dialog>
