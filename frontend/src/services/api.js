@@ -1,12 +1,14 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://namoraidmanagementsystembackend.onrender.com';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true,
+  credentials: 'include'
 });
 
 // Add request interceptor to add auth token
@@ -28,9 +30,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', error);
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
+    }
+    // Add better error messages for CORS issues
+    if (error.message === 'Network Error') {
+      console.error('CORS or Network Error:', error);
+      // You might want to show a user-friendly error message
     }
     return Promise.reject(error);
   }

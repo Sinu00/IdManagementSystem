@@ -10,6 +10,9 @@
     "seed": "node src/scripts/seedData.js",
     "seed-finance": "node src/scripts/seedIncomeExpense.js"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
