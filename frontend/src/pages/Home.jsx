@@ -309,14 +309,16 @@ function Home() {
                             opacity: isAllowed ? 1 : 0.5,
                             filter: isAllowed ? 'none' : 'grayscale(100%)',
                             position: 'relative',
-                            '&:hover': isAllowed ? {
-                              transform: 'translateY(-4px)',
-                              boxShadow: theme.shadows[8],
-                              '& .arrow-icon': {
-                                opacity: 1,
-                                transform: 'translateX(0)'
-                              }
-                            } : {},
+                            '@media (hover: hover)': {
+                              '&:hover': isAllowed ? {
+                                transform: 'translateY(-4px)',
+                                boxShadow: theme.shadows[8],
+                                '& .arrow-icon': {
+                                  opacity: 1,
+                                  transform: 'translateX(0)'
+                                }
+                              } : {}
+                            },
                             '&::after': !isAllowed ? {
                               content: '""',
                               position: 'absolute',

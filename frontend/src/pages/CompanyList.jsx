@@ -564,9 +564,11 @@ function CompanyList() {
                         transition: 'all 0.3s ease-in-out',
                         borderRadius: 3,
                         position: 'relative',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: theme.shadows[8]
+                        '@media (hover: hover)': {
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: theme.shadows[8]
+                          }
                         }
                       }}
                     >

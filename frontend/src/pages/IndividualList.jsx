@@ -765,9 +765,11 @@ function IndividualList() {
                             borderRadius: 3,
                             transition: 'all 0.3s ease',
                             position: 'relative',
-                            '&:hover': {
-                              transform: 'translateY(-4px)',
-                              boxShadow: theme.shadows[8]
+                            '@media (hover: hover)': {
+                              '&:hover': {
+                                transform: 'translateY(-4px)',
+                                boxShadow: theme.shadows[8]
+                              }
                             }
                           }}
                         >
