@@ -148,82 +148,137 @@ function ExpiringSoonIds() {
         sx={{
           background: 'linear-gradient(135deg, #ff9800 0%, #ffd54f 100%)',
           color: 'white',
-          pt: 2,
-          pb: 8,
+          pt: { xs: 1, sm: 2 },
+          pb: { xs: 8, sm: 10 },
           position: 'relative',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         <Container maxWidth="lg">
-          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 0 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
             <IconButton onClick={() => navigate(-1)} sx={{ color: 'white' }}>
               <ArrowBackIcon />
             </IconButton>
             <Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography 
+                variant="h4" 
+                fontWeight="bold"
+                sx={{ 
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                }}
+              >
                 Upcoming ID Expiry Center
-              </Typography>
-              <Typography variant="subtitle1" sx={{ opacity: 0.9, mt: 0.5 }}>
-                Click to view detailed information and take action
               </Typography>
             </Box>
           </Stack>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  opacity: 0.9, 
+                  mt: 0.5,
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}
+              >
+              All the ID's that are going to expire in 30 days are listed here. Click to view detailed information and take action
+              </Typography>
 
-          {/* Stats Card */}
+          {/* Stats Card - Position it to overlap */}
           <Card
             sx={{
-              bgcolor: 'rgba(255,255,255,0.9)',
+              bgcolor: 'rgba(255,255,255,0.95)',
               backdropFilter: 'blur(20px)',
-              mt: 0,
-              borderRadius: 4,
-              position: 'relative',
-              transform: 'translateY(50%)',
+              borderRadius: { xs: 2, sm: 4 },
+              position: 'absolute',
+              left: { xs: 16, sm: 24, md: 24 },
+              right: { xs: 16, sm: 24, md: 24 },
+              bottom: { xs: -80, sm: -60 },
+              zIndex: 1,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={4}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar sx={{ bgcolor: 'warning.light', width: 56, height: 56 }}>
-                      <HourglassIcon />
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Grid container spacing={{ xs: 2, sm: 4 }}>
+                <Grid item xs={6} md={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar sx={{ 
+                      bgcolor: 'warning.light', 
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 }
+                    }}>
+                      <HourglassIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
+                      <Typography 
+                        variant="h4" 
+                        color="warning.main" 
+                        fontWeight="bold"
+                        sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                      >
                         {loading ? <LinearProgress color="warning" /> : expiringIds.length}
                       </Typography>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                      >
                         IDs Expiring Soon
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar sx={{ bgcolor: 'warning.light', width: 56, height: 56 }}>
-                      <TimelineIcon />
+                <Grid item xs={6} md={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar sx={{ 
+                      bgcolor: 'warning.light', 
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 }
+                    }}>
+                      <TimelineIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
+                      <Typography 
+                        variant="h4" 
+                        color="warning.main" 
+                        fontWeight="bold"
+                        sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                      >
                         {loading ? <LinearProgress color="warning" /> : 
                           Math.min(...expiringIds.map(id => id.daysUntilExpiry)) || 0}
                       </Typography>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                      >
                         Days Until Next Expiry
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar sx={{ bgcolor: 'warning.light', width: 56, height: 56 }}>
-                      <AssignmentIcon />
+                <Grid item xs={6} md={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar sx={{ 
+                      bgcolor: 'warning.light', 
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 }
+                    }}>
+                      <AssignmentIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
+                      <Typography 
+                        variant="h4" 
+                        color="warning.main" 
+                        fontWeight="bold"
+                        sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                      >
                         {loading ? <LinearProgress color="warning" /> : 
                           new Set(expiringIds.map(id => id.company._id)).size}
                       </Typography>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                      >
                         Companies Affected
                       </Typography>
                     </Box>
@@ -236,66 +291,107 @@ function ExpiringSoonIds() {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth="lg" sx={{ mt: 3, pb: 6 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: { xs: 11, sm: 12 },
+          pb: 6,
+          position: 'relative',
+          zIndex: 0
+        }}
+      >
         <Fade in timeout={800}>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             {loading ? (
               [...Array(6)].map((_, index) => (
-                <Grid item xs={12} md={6} lg={4} key={index}>
-                  <StyledCard sx={{ p: 3 }}>
+                <Grid item xs={12} sm={6} lg={4} key={index}>
+                  <StyledCard sx={{ 
+                    p: { xs: 2, sm: 3 },
+                    mt: { xs: 3, sm: 0 }
+                  }}>
                     <LinearProgress color="warning" />
                   </StyledCard>
                 </Grid>
               ))
             ) : (
               expiringIds.map((individual) => (
-                <Grid item xs={12} md={6} lg={4} key={individual._id}>
+                <Grid item xs={12} sm={6} lg={4} key={individual._id}>
                   <StyledCard
                     onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+                    sx={{ 
+                      '&:hover': {
+                        transform: { xs: 'none', sm: 'translateY(-8px)' }
+                      },
+                      mx: { xs: 2, sm: 0 },
+                      mt: { xs: 3, sm: 0 }
+                    }}
                   >
-                    <StatusBadge>
+                    <StatusBadge sx={{ 
+                      top: { xs: 8, sm: 16 },
+                      right: { xs: 8, sm: 16 },
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                    }}>
                       <AccessTimeIcon sx={{ fontSize: 16 }} />
                       {individual.daysUntilExpiry} days until expiry
                     </StatusBadge>
                     
-                    <Box sx={{ p: 3 }}>
-                      <Stack spacing={3}>
-                        <Stack direction="row" spacing={2} alignItems="center">
+                    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                      <Stack spacing={2}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
                           <Avatar
                             sx={{
-                              width: 60,
-                              height: 60,
+                              width: { xs: 40, sm: 60 },
+                              height: { xs: 40, sm: 60 },
                               bgcolor: 'grey.100',
                               border: '2px solid',
                               borderColor: 'warning.light'
                             }}
                           >
-                            <PersonIcon color="warning" />
+                            <PersonIcon color="warning" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                           </Avatar>
                           <Box>
-                            <Typography variant="h6" fontWeight="bold">
+                            <Typography 
+                              variant="h6" 
+                              fontWeight="bold"
+                              sx={{ fontSize: { xs: '0.9rem', sm: '1.25rem' } }}
+                            >
                               {individual.name}
                             </Typography>
                             <Chip
                               size="small"
                               label={individual.iqamaNumber}
-                              sx={{ mt: 0.5 }}
+                              sx={{ 
+                                mt: 0.5,
+                                height: { xs: 20, sm: 24 },
+                                '& .MuiChip-label': {
+                                  fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                                }
+                              }}
                             />
                           </Box>
                         </Stack>
 
                         <Divider />
 
-                        <Stack spacing={2}>
+                        <Stack spacing={1.5}>
                           <Stack direction="row" alignItems="center" spacing={1}>
-                            <BusinessIcon color="action" />
-                            <Typography variant="body1" color="text.primary">
+                            <BusinessIcon sx={{ fontSize: { xs: 18, sm: 24 } }} color="action" />
+                            <Typography 
+                              variant="body1" 
+                              color="text.primary"
+                              sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                            >
                               {individual.company.name}
                             </Typography>
                           </Stack>
                           <Stack direction="row" alignItems="center" spacing={1}>
-                            <CalendarIcon color="warning" />
-                            <Typography variant="body1" color="warning.main" fontWeight="medium">
+                            <CalendarIcon sx={{ fontSize: { xs: 18, sm: 24 } }} color="warning" />
+                            <Typography 
+                              variant="body1" 
+                              color="warning.main" 
+                              fontWeight="medium"
+                              sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                            >
                               Expires on {format(new Date(individual.expiryDate), 'dd MMM yyyy')}
                             </Typography>
                           </Stack>
@@ -310,9 +406,22 @@ function ExpiringSoonIds() {
         </Fade>
 
         {/* Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-          <DialogTitle>Modify Expiry Date</DialogTitle>
-          <DialogContent>
+        <Dialog 
+          open={dialogOpen} 
+          onClose={() => setDialogOpen(false)}
+          fullWidth
+          maxWidth="sm"
+          sx={{
+            '& .MuiDialog-paper': {
+              margin: { xs: 2, sm: 4 },
+              width: { xs: 'calc(100% - 32px)', sm: '600px' }
+            }
+          }}
+        >
+          <DialogTitle sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+            Modify Expiry Date
+          </DialogTitle>
+          <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Box sx={{ mt: 2 }}>
               {dialogError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -343,7 +452,7 @@ function ExpiringSoonIds() {
               </Typography>
             </Box>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSave} variant="contained" color="primary">
               Save

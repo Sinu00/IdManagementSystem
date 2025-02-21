@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Box, Fade, Paper, IconButton, Alert,
   TextField, Badge, Stack, Avatar, LinearProgress, Tooltip,
-  Divider, Grid, Chip, Card, CardContent
+  Divider, Grid, Chip, Card, CardContent, Dialog
 } from '@mui/material';
 import { format } from 'date-fns';
 import { individualApi } from '../services/api';
@@ -27,19 +27,17 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { styled } from '@mui/material/styles';
 
 const StyledCard = styled(Paper)(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius * 3,
+  borderRadius: theme.shape.borderRadius * 2,
   backgroundColor: theme.palette.background.paper,
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   height: '100%',
   cursor: 'pointer',
   overflow: 'hidden',
-  '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
-    '& .hover-reveal': {
-      opacity: 1,
-      transform: 'translateY(0)',
+  [theme.breakpoints.up('sm')]: {
+    '&:hover': {
+      transform: 'translateY(-8px)',
+      boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
     }
   },
   '&::after': {
@@ -55,18 +53,24 @@ const StyledCard = styled(Paper)(({ theme }) => ({
 
 const StatusBadge = styled(Box)(({ theme }) => ({
   position: 'absolute',
-  top: 16,
-  right: 16,
-  padding: '4px 12px',
-  borderRadius: 20,
+  top: theme.spacing(1),
+  right: theme.spacing(1),
+  padding: '4px 8px',
+  borderRadius: 16,
   backgroundColor: theme.palette.error.lighter,
   color: theme.palette.error.main,
-  fontSize: '0.75rem',
+  fontSize: '0.7rem',
   fontWeight: 600,
   display: 'flex',
   alignItems: 'center',
   gap: 4,
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  [theme.breakpoints.up('sm')]: {
+    top: theme.spacing(2),
+    right: theme.spacing(2),
+    padding: '4px 12px',
+    fontSize: '0.75rem',
+  }
 }));
 
 function ExpiredIds() {
@@ -132,84 +136,139 @@ function ExpiredIds() {
         sx={{
           background: 'linear-gradient(135deg, #ff4d4d 0%, #ff8080 100%)',
           color: 'white',
-          pt: 2,
-          pb: 8,
+          pt: { xs: 1, sm: 2 },
+          pb: { xs: 8, sm: 10 },
           position: 'relative',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         <Container maxWidth="lg">
-          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 0 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
             <IconButton onClick={() => navigate(-1)} sx={{ color: 'white' }}>
               <ArrowBackIcon />
             </IconButton>
             <Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography 
+                variant="h4" 
+                fontWeight="bold"
+                sx={{ 
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+                }}
+              >
                 ID Expiry Alert Center
-              </Typography>
-              <Typography variant="subtitle1" sx={{ opacity: 0.9, mt: 0.5 }}>
-              Click on any ID to view detailed information and take action
               </Typography>
             </Box>
           </Stack>
-
-          {/* Stats Card */}
-          <Card
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.9)',
-              backdropFilter: 'blur(20px)',
-              mt: 0,
-              borderRadius: 4,
-              position: 'relative',
-              transform: 'translateY(50%)',
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              opacity: 0.9, 
+              mt: 0.5,
+              fontSize: { xs: '0.875rem', sm: '1rem' }
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={4}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar sx={{ bgcolor: 'error.light', width: 56, height: 56 }}>
-                      <WarningIcon />
+            All the ID's that have already expired are listed here. Click to view detailed information and take action
+          </Typography>
+
+          {/* Stats Card - Position it to overlap */}
+          <Card
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: { xs: 2, sm: 4 },
+              position: 'absolute',
+              left: { xs: 16, sm: 24, md: 24 },
+              right: { xs: 16, sm: 24, md: 24 },
+              bottom: { xs: -80, sm: -60 },
+              zIndex: 1,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Grid container spacing={{ xs: 2, sm: 4 }}>
+                <Grid item xs={6} md={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar sx={{ 
+                      bgcolor: 'error.light', 
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 }
+                    }}>
+                      <WarningIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" color="error.main" fontWeight="bold">
+                      <Typography 
+                        variant="h4" 
+                        color="error.main" 
+                        fontWeight="bold"
+                        sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                      >
                         {loading ? <LinearProgress color="error" /> : expiredIds.length}
                       </Typography>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                      >
                         Total Expired IDs
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar sx={{ bgcolor: 'warning.light', width: 56, height: 56 }}>
-                      <TimelineIcon />
+                <Grid item xs={6} md={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar sx={{ 
+                      bgcolor: 'warning.light', 
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 }
+                    }}>
+                      <TimelineIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" color="warning.main" fontWeight="bold">
+                      <Typography 
+                        variant="h4" 
+                        color="warning.main" 
+                        fontWeight="bold"
+                        sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                      >
                         {loading ? <LinearProgress color="warning" /> : 
                           Math.max(...expiredIds.map(id => 
                             Math.ceil((new Date() - new Date(id.expiryDate)) / (1000 * 60 * 60 * 24))
                           )) || 0}
                       </Typography>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                      >
                         Max Days Expired
                       </Typography>
                     </Box>
                   </Stack>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar sx={{ bgcolor: 'info.light', width: 56, height: 56 }}>
-                      <AssignmentIcon />
+                <Grid item xs={6} md={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar sx={{ 
+                      bgcolor: 'info.light', 
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 }
+                    }}>
+                      <AssignmentIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" color="info.main" fontWeight="bold">
+                      <Typography 
+                        variant="h4" 
+                        color="info.main" 
+                        fontWeight="bold"
+                        sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                      >
                         {loading ? <LinearProgress color="info" /> : 
                           new Set(expiredIds.map(id => id.company._id)).size}
                       </Typography>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                      >
                         Companies Affected
                       </Typography>
                     </Box>
@@ -222,41 +281,63 @@ function ExpiredIds() {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth="lg" sx={{ mt: 3, pb: 6 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: { xs: 11, sm: 12 },
+          pb: 6,
+          position: 'relative',
+          zIndex: 0
+        }}
+      >
         <Fade in timeout={800}>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             {loading ? (
               [...Array(6)].map((_, index) => (
-                <Grid item xs={12} md={6} lg={4} key={index}>
-                  <StyledCard sx={{ p: 3 }}>
+                <Grid item xs={12} sm={6} lg={4} key={index}>
+                  <StyledCard sx={{ 
+                    p: { xs: 2, sm: 3 },
+                    mt: { xs: 3, sm: 0 }
+                  }}>
                     <LinearProgress color="error" />
                   </StyledCard>
                 </Grid>
               ))
             ) : (
               expiredIds.map((individual) => (
-                <Grid item xs={12} md={6} lg={4} key={individual._id}>
+                <Grid item xs={12} sm={6} lg={4} key={individual._id}>
                   <StyledCard
                     onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+                    sx={{ 
+                      '&:hover': {
+                        transform: { xs: 'none', sm: 'translateY(-8px)' }
+                      },
+                      mx: { xs: 2, sm: 0 },
+                      mt: { xs: 3, sm: 0 }
+                    }}
                   >
-                    <StatusBadge>
+                    <StatusBadge sx={{ 
+                      top: { xs: 8, sm: 16 },
+                      right: { xs: 8, sm: 16 },
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                    }}>
                       <AccessTimeIcon sx={{ fontSize: 16 }} />
                       {Math.abs(Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)))} days overdue
                     </StatusBadge>
                     
-                    <Box sx={{ p: 3 }}>
-                      <Stack spacing={3}>
-                        <Stack direction="row" spacing={2} alignItems="center">
+                    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                      <Stack spacing={2}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
                           <Avatar
                             sx={{
-                              width: 60,
-                              height: 60,
+                              width: { xs: 40, sm: 60 },
+                              height: { xs: 40, sm: 60 },
                               bgcolor: 'grey.100',
                               border: '2px solid',
                               borderColor: 'error.light'
                             }}
                           >
-                            <PersonIcon color="error" />
+                            <PersonIcon color="error" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                           </Avatar>
                           <Box>
                             <Typography variant="h6" fontWeight="bold">
@@ -295,45 +376,56 @@ function ExpiredIds() {
           </Grid>
         </Fade>
 
-        {/* Keep existing CustomDialog */}
-        <CustomDialog
-          open={dialogOpen}
+        {/* Update Dialog with same responsive styling */}
+        <Dialog 
+          open={dialogOpen} 
           onClose={() => setDialogOpen(false)}
-          title="Modify Expiry Date"
-          onSubmit={handleSave}
-          error={dialogError}
+          fullWidth
+          maxWidth="sm"
+          sx={{
+            '& .MuiDialog-paper': {
+              margin: { xs: 2, sm: 4 },
+              width: { xs: 'calc(100% - 32px)', sm: '600px' }
+            }
+          }}
         >
-          <Box sx={{ mt: 1 }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="New Expiry Date"
-                value={newExpiryDate}
-                onChange={(newValue) => setNewExpiryDate(newValue)}
-                renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    fullWidth
-                    variant="outlined"
-                  />
-                )}
-              />
-            </LocalizationProvider>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mt: 3,
-                color: 'text.secondary',
-                bgcolor: 'grey.50',
-                p: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'grey.200'
-              }}
-            >
-              Updating expiry date for <b>{selectedIndividual?.name}</b>'s ID
-            </Typography>
-          </Box>
-        </CustomDialog>
+          <CustomDialog
+            title="Modify Expiry Date"
+            onSubmit={handleSave}
+            error={dialogError}
+          >
+            <Box sx={{ mt: 1 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="New Expiry Date"
+                  value={newExpiryDate}
+                  onChange={(newValue) => setNewExpiryDate(newValue)}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      fullWidth
+                      variant="outlined"
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  mt: 3,
+                  color: 'text.secondary',
+                  bgcolor: 'grey.50',
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'grey.200'
+                }}
+              >
+                Updating expiry date for <b>{selectedIndividual?.name}</b>'s ID
+              </Typography>
+            </Box>
+          </CustomDialog>
+        </Dialog>
       </Container>
     </Box>
   );
