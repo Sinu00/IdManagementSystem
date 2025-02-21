@@ -88,3 +88,11 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Add these styles to prevent number auto-linking on mobile */
+a[href^="tel"],
+.no-link {
+  text-decoration: none;
+  color: inherit;
+  pointer-events: none;
+}

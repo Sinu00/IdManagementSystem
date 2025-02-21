@@ -803,7 +803,7 @@ function IndividualList() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
-                                    Iqama: {individual.iqamaNumber}
+                                    Iqama: <span className="no-link">{individual.iqamaNumber}</span>
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -823,7 +823,7 @@ function IndividualList() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <PhoneIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
-                                    Phone: {individual.phoneNumber || 'N/A'}
+                                    Phone: <span className={individual.phoneNumber ? '' : 'no-link'}>{individual.phoneNumber || 'N/A'}</span>
                                   </Typography>
                                 </Box>
                               </Grid>

@@ -406,7 +406,7 @@ function Home() {
                                   variant="body2" 
                                   color={isAllowed ? 'text.secondary' : 'text.disabled'}
                                 >
-                                  {person.contactNumber}
+                                  <span className={person.contactNumber ? '' : 'no-link'}>{person.contactNumber}</span>
                                 </Typography>
                               </Box>
                             </Box>

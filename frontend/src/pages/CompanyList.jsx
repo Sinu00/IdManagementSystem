@@ -601,7 +601,7 @@ function CompanyList() {
                           <Grid item xs={6}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
                               <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              CR: {company.crNumber || 'N/A'}
+                              CR: <span className="no-link">{company.crNumber || 'N/A'}</span>
                             </Typography>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
                               <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
@@ -611,7 +611,7 @@ function CompanyList() {
                           <Grid item xs={6}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
                               <ErrorIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              GOSI: {company.gosiNumber || 'N/A'}
+                              GOSI: <span className="no-link">{company.gosiNumber || 'N/A'}</span>
                             </Typography>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
                               <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
