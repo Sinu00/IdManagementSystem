@@ -18,16 +18,18 @@ const createUsers = async () => {
     // Create regular users
     const users = [
       {
-        username: "user1",
+        username: "user3",
         password: "user123",
         isAdmin: false,
         allowedMainPersons: [
           "67b22c3748dc9b1348b1d635", // Mosa
-          "67b22c3748dc9b1348b1d636"  // Nasar
-        ]
+          "67b22c3748dc9b1348b1d636",  // Nasar
+          "67b22c3748dc9b1348b1d637"  // Munif
+        ],
+        hasIncomeAccess: true
       },
       {
-        username: "user2",
+        username: "user4",
         password: "user123",
         isAdmin: false,
         allowedMainPersons: [
