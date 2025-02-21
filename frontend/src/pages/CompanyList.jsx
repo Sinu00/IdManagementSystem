@@ -36,16 +36,14 @@ import {
   Sort as SortIcon,
   FilterList as FilterListIcon,
   Person as PersonIcon,
-  Login as LoginIcon,
-  Badge as BadgeIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
   Warning as WarningIcon,
   Notifications as NotificationsIcon,
   CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
   PictureAsPdf as PdfIcon,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -67,8 +65,8 @@ function calculateTotalCounts(companies) {
 }
 
 function CompanyList() {
-  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [companies, setCompanies] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('name');
   const [filter, setFilter] = useState('all');
@@ -562,7 +560,7 @@ function CompanyList() {
                           </Grid>
                           <Grid item xs={6}>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
-                              <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                              <ErrorIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
                               GOSI: {company.gosiNumber || 'N/A'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" gutterBottom>

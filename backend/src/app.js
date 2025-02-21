@@ -7,6 +7,7 @@ import individualRoutes from './routes/individual.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import incomeRoutes from './routes/income.routes.js';
 import expenseRoutes from './routes/expense.routes.js';
+import iqamaPriceRoutes from './routes/iqamaPrice.routes.js';
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use('/api/individuals', individualRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/income', incomeRoutes);
 app.use('/api/expense', expenseRoutes);
+app.use('/api/iqama-price', iqamaPriceRoutes);
 
 export default app; 

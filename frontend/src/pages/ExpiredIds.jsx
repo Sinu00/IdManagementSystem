@@ -1,23 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  CircularProgress,
-  Fade,
-  Chip,
-  Paper,
-  Button,
-  IconButton,
-  Alert,
-  TextField,
-  Avatar,
-  Divider,
-  Skeleton
+  Container, Typography, Box, Fade, Paper, IconButton, Alert,
+  TextField, Badge, Stack, Avatar, LinearProgress, Tooltip,
+  Divider, Grid, Chip, Card, CardContent
 } from '@mui/material';
 import { format } from 'date-fns';
 import { individualApi } from '../services/api';
@@ -26,9 +12,12 @@ import {
   ArrowBack as ArrowBackIcon,
   Business as BusinessIcon,
   Person as PersonIcon,
-  Event as EventIcon,
-  Badge as BadgeIcon,
-  Edit as EditIcon
+  CalendarToday as CalendarIcon,
+  NotificationsActive as NotificationsActiveIcon,
+  ErrorOutline as ErrorIcon,
+  AccessTime as AccessTimeIcon,
+  Timeline as TimelineIcon,
+  Assignment as AssignmentIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import CustomDialog from '../components/dialogs/CustomDialog';
@@ -36,34 +25,48 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { styled } from '@mui/material/styles';
-import { ExpiredCardSkeletonList } from '../components/skeletons/ExpiredCardSkeleton';
 
-const StyledDatePicker = styled(DatePicker)(({ theme }) => ({
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    borderRadius: theme.shape.borderRadius * 2,
-    backgroundColor: theme.palette.background.paper,
-    transition: 'all 0.2s',
-    '&:hover': {
-      backgroundColor: theme.palette.grey[50],
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: 2
-      }
-    },
-    '&.Mui-focused': {
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.primary.main,
-        borderWidth: 2
-      },
-      backgroundColor: theme.palette.background.paper
+const StyledCard = styled(Paper)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius * 3,
+  backgroundColor: theme.palette.background.paper,
+  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
+  height: '100%',
+  cursor: 'pointer',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-8px)',
+    boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
+    '& .hover-reveal': {
+      opacity: 1,
+      transform: 'translateY(0)',
     }
   },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: theme.palette.primary.main
-    }
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '4px',
+    background: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.light})`,
   }
+}));
+
+const StatusBadge = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: 16,
+  right: 16,
+  padding: '4px 12px',
+  borderRadius: 20,
+  backgroundColor: theme.palette.error.lighter,
+  color: theme.palette.error.main,
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 }));
 
 function ExpiredIds() {
@@ -123,144 +126,216 @@ function ExpiredIds() {
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box display="flex" alignItems="center" gap={2} mb={4}>
-        <IconButton onClick={() => navigate(-1)} sx={{ color: 'primary.main' }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h4" fontWeight="bold">
-          Expired IDs
-        </Typography>
-      </Box>
-
-      <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'error.lighter', borderRadius: 3 }}>
-        <Box display="flex" alignItems="center" gap={2}>
-          <WarningIcon sx={{ fontSize: 40, color: 'error.main' }} />
-          <Box>
-            <Typography variant="h5" color="error.main" fontWeight="bold">
-              {loading ? <Skeleton width={200} /> : 'Attention Required'}
-            </Typography>
-            <Typography variant="subtitle1" color="error.main">
-              {loading ? (
-                <Skeleton width={300} />
-              ) : (
-                `${expiredIds.length} IDs have expired and need immediate attention`
-              )}
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      <Fade in timeout={1000}>
-        <Box>
-          {loading ? (
-            <ExpiredCardSkeletonList count={6} />
-          ) : (
-            <Grid container spacing={3}>
-              {expiredIds.map((individual) => (
-                <Grid item xs={12} sm={6} md={4} key={individual._id}>
-                  <Card 
-                    sx={{ 
-                      borderColor: 'error.main',
-                      borderWidth: 1,
-                      borderStyle: 'solid',
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: (theme) => theme.shadows[4]
-                      }
-                    }}
-                    onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
-                  >
-                    <CardContent>
-                      <Box display="flex" flexDirection="column" gap={2}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <PersonIcon color="error" />
-                          <Typography variant="h6">
-                            {individual.name}
-                          </Typography>
-                        </Box>
-                        
-                        <Box display="flex" flexDirection="column" gap={1}>
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <BadgeIcon fontSize="small" color="action" />
-                            <Typography variant="body2" color="text.secondary">
-                              Iqama: {individual.iqamaNumber}
-                            </Typography>
-                          </Box>
-                          
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <BusinessIcon fontSize="small" color="action" />
-                            <Typography variant="body2" color="text.secondary">
-                              {individual.company.name}
-                            </Typography>
-                          </Box>
-                          
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <EventIcon fontSize="small" color="action" />
-                            <Typography variant="body2" color="text.secondary">
-                              Expired on: {format(new Date(individual.expiryDate), 'dd/MM/yyyy')}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Box display="flex" alignItems="center" justifyContent="space-between">
-                          <Chip 
-                            label="Expired"
-                            color="error"
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
-      </Fade>
-
-      <CustomDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        title="Modify Expiry Date"
-        onSubmit={handleSave}
-        error={dialogError}
+    <Box sx={{ bgcolor: '#f8fafc', minHeight: '100vh' }}>
+      {/* Header Section */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #ff4d4d 0%, #ff8080 100%)',
+          color: 'white',
+          pt: 2,
+          pb: 8,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
       >
-        <Box sx={{ mt: 1 }}>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <StyledDatePicker
-              label="New Expiry Date"
-              value={newExpiryDate}
-              onChange={(newValue) => setNewExpiryDate(newValue)}
-              renderInput={(params) => (
-                <TextField 
-                  {...params} 
-                  fullWidth
-                  variant="outlined"
-                />
-              )}
-            />
-          </LocalizationProvider>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              mt: 3,
-              color: 'text.secondary',
-              bgcolor: 'grey.50',
-              p: 2,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'grey.200'
+        <Container maxWidth="lg">
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 0 }}>
+            <IconButton onClick={() => navigate(-1)} sx={{ color: 'white' }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box>
+              <Typography variant="h4" fontWeight="bold">
+                ID Expiry Alert Center
+              </Typography>
+              <Typography variant="subtitle1" sx={{ opacity: 0.9, mt: 0.5 }}>
+              Click on any ID to view detailed information and take action
+              </Typography>
+            </Box>
+          </Stack>
+
+          {/* Stats Card */}
+          <Card
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.9)',
+              backdropFilter: 'blur(20px)',
+              mt: 0,
+              borderRadius: 4,
+              position: 'relative',
+              transform: 'translateY(50%)',
             }}
           >
-            Updating expiry date for <b>{selectedIndividual?.name}</b>'s ID
-          </Typography>
-        </Box>
-      </CustomDialog>
-    </Container>
+            <CardContent sx={{ p: 3 }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={4}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: 'error.light', width: 56, height: 56 }}>
+                      <WarningIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h4" color="error.main" fontWeight="bold">
+                        {loading ? <LinearProgress color="error" /> : expiredIds.length}
+                      </Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Total Expired IDs
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: 'warning.light', width: 56, height: 56 }}>
+                      <TimelineIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h4" color="warning.main" fontWeight="bold">
+                        {loading ? <LinearProgress color="warning" /> : 
+                          Math.max(...expiredIds.map(id => 
+                            Math.ceil((new Date() - new Date(id.expiryDate)) / (1000 * 60 * 60 * 24))
+                          )) || 0}
+                      </Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Max Days Expired
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: 'info.light', width: 56, height: 56 }}>
+                      <AssignmentIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h4" color="info.main" fontWeight="bold">
+                        {loading ? <LinearProgress color="info" /> : 
+                          new Set(expiredIds.map(id => id.company._id)).size}
+                      </Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Companies Affected
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Container>
+      </Box>
+
+      {/* Main Content */}
+      <Container maxWidth="lg" sx={{ mt: 3, pb: 6 }}>
+        <Fade in timeout={800}>
+          <Grid container spacing={3}>
+            {loading ? (
+              [...Array(6)].map((_, index) => (
+                <Grid item xs={12} md={6} lg={4} key={index}>
+                  <StyledCard sx={{ p: 3 }}>
+                    <LinearProgress color="error" />
+                  </StyledCard>
+                </Grid>
+              ))
+            ) : (
+              expiredIds.map((individual) => (
+                <Grid item xs={12} md={6} lg={4} key={individual._id}>
+                  <StyledCard
+                    onClick={() => navigate(`/company/${individual.company._id}/individuals`)}
+                  >
+                    <StatusBadge>
+                      <AccessTimeIcon sx={{ fontSize: 16 }} />
+                      {Math.abs(Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)))} days overdue
+                    </StatusBadge>
+                    
+                    <Box sx={{ p: 3 }}>
+                      <Stack spacing={3}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 60,
+                              height: 60,
+                              bgcolor: 'grey.100',
+                              border: '2px solid',
+                              borderColor: 'error.light'
+                            }}
+                          >
+                            <PersonIcon color="error" />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="h6" fontWeight="bold">
+                              {individual.name}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              label={individual.iqamaNumber}
+                              sx={{ mt: 0.5 }}
+                            />
+                          </Box>
+                        </Stack>
+
+                        <Divider />
+
+                        <Stack spacing={2}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <BusinessIcon color="action" />
+                            <Typography variant="body1" color="text.primary">
+                              {individual.company.name}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <CalendarIcon color="error" />
+                            <Typography variant="body1" color="error.main" fontWeight="medium">
+                              Expired on {format(new Date(individual.expiryDate), 'dd MMM yyyy')}
+                            </Typography>
+                          </Stack>
+                        </Stack>
+                      </Stack>
+                    </Box>
+                  </StyledCard>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        </Fade>
+
+        {/* Keep existing CustomDialog */}
+        <CustomDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          title="Modify Expiry Date"
+          onSubmit={handleSave}
+          error={dialogError}
+        >
+          <Box sx={{ mt: 1 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="New Expiry Date"
+                value={newExpiryDate}
+                onChange={(newValue) => setNewExpiryDate(newValue)}
+                renderInput={(params) => (
+                  <TextField 
+                    {...params} 
+                    fullWidth
+                    variant="outlined"
+                  />
+                )}
+              />
+            </LocalizationProvider>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mt: 3,
+                color: 'text.secondary',
+                bgcolor: 'grey.50',
+                p: 2,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'grey.200'
+              }}
+            >
+              Updating expiry date for <b>{selectedIndividual?.name}</b>'s ID
+            </Typography>
+          </Box>
+        </CustomDialog>
+      </Container>
+    </Box>
   );
 }
 

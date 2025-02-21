@@ -27,6 +27,10 @@ import {
   Stack,
   Tooltip,
   Skeleton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -52,6 +56,7 @@ import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import ProfileMenu from '../components/ProfileMenu';
 import { IndividualCardSkeletonList } from '../components/skeletons/IndividualCardSkeleton';
+import PaymentDialog from '../components/dialogs/PaymentDialog';
 
 const calculateStatus = (expiryDate) => {
   const daysUntilExpiry = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -89,6 +94,10 @@ function IndividualList() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [dialogError, setDialogError] = useState('');
   const theme = useTheme();
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentError, setPaymentError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,6 +184,10 @@ function IndividualList() {
   };
 
   const handleRenew = (individual) => {
+    if (!individual.isFullyPaid) {
+      setError('Please complete all payments before renewing');
+      return;
+    }
     setSelectedIndividual(individual);
     setDialogMode('renew');
     setDialogOpen(true);
@@ -264,6 +277,28 @@ function IndividualList() {
         return 'warning.main';
       default:
         return 'grey.400';
+    }
+  };
+
+  const handlePayPending = (individual) => {
+    setSelectedIndividual(individual);
+    setPaymentAmount('');
+    setPaymentDialogOpen(true);
+  };
+
+  const handlePaymentSubmit = async (amount) => {
+    try {
+      const response = await individualApi.payPending(selectedIndividual._id, {
+        amount: amount
+      });
+      
+      // Refresh the list
+      const updatedList = await individualApi.getByCompany(companyId);
+      setAllIndividuals(updatedList.data);
+      
+      setPaymentDialogOpen(false);
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to process payment');
     }
   };
 
@@ -518,8 +553,8 @@ function IndividualList() {
                                   <CalendarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
                                     Expiry: {individual.expiryDate ? 
-                                      format(new Date(individual.expiryDate), 'dd/MM/yyyy') : 
-                                      'N/A'}
+                                      format(new Date(individual.expiryDate), 'dd MMM yyyy') : 
+                                      'Not set'}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -544,9 +579,13 @@ function IndividualList() {
 
                               <Grid item xs={12}>
                                 <Box display="flex" alignItems="center" gap={1}>
-                                  <MonetizationIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <MonetizationIcon fontSize="small" color="action" />
                                   <Typography variant="body2" color="text.secondary">
-                                    Amount: {individual.amount ? `SAR ${individual.amount}` : 'N/A'}
+                                    {individual.isFullyPaid ? (
+                                      'Fully Paid'
+                                    ) : (
+                                      `Pending: SAR ${individual.pendingAmount}`
+                                    )}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -579,52 +618,74 @@ function IndividualList() {
                                   />
                                 </Box>
                               </Grid>
+
+                              <Grid item xs={12}>
+                                {/* <Typography variant="caption" color="text.secondary">
+                                  Last updated by {individual.lastUpdatedBy}
+                                  {individual.lastUpdateDate && (
+                                    <>
+                                      {' '}on{' '}
+                                      {format(new Date(individual.lastUpdateDate), 'dd MMM yyyy')}
+                                    </>
+                                  )}
+                                </Typography> */}
+                              </Grid>
                             </Grid>
 
-                            {user?.isAdmin && (
-                              <Box 
-                                sx={{ 
-                                  display: 'flex', 
-                                  justifyContent: 'flex-end',
-                                  mt: 2,
-                                  gap: 1
-                                }}
-                              >
-                                <IconButton 
-                                  size="small" 
-                                  onClick={() => handleRenew(individual)}
-                                  sx={{ 
-                                    color: 'primary.main',
-                                    bgcolor: 'primary.lighter',
-                                    '&:hover': { bgcolor: 'primary.light' }
-                                  }}
-                                >
-                                  <RenewIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton 
-                                  size="small" 
-                                  onClick={() => handleEdit(individual)}
-                                  sx={{ 
-                                    color: 'info.main',
-                                    bgcolor: 'info.lighter',
-                                    '&:hover': { bgcolor: 'info.light' }
-                                  }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton 
-                                  size="small" 
-                                  onClick={() => handleDelete(individual)}
-                                  sx={{ 
-                                    color: 'error.main',
-                                    bgcolor: 'error.lighter',
-                                    '&:hover': { bgcolor: 'error.light' }
-                                  }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </Box>
-                            )}
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              {user?.isAdmin && (
+                                <>
+                                  {!individual.isFullyPaid && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handlePayPending(individual)}
+                                      sx={{
+                                        color: 'warning.main',
+                                        bgcolor: 'warning.lighter',
+                                        '&:hover': { bgcolor: 'warning.light' }
+                                      }}
+                                    >
+                                      <MonetizationIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                  {individual.isFullyPaid && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleRenew(individual)}
+                                      sx={{
+                                        color: 'primary.main',
+                                        bgcolor: 'primary.lighter',
+                                        '&:hover': { bgcolor: 'primary.light' }
+                                      }}
+                                    >
+                                      <RenewIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleEdit(individual)}
+                                    sx={{
+                                      color: 'info.main',
+                                      bgcolor: 'info.lighter',
+                                      '&:hover': { bgcolor: 'info.light' }
+                                    }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDelete(individual)}
+                                    sx={{
+                                      color: 'error.main',
+                                      bgcolor: 'error.lighter',
+                                      '&:hover': { bgcolor: 'error.light' }
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </>
+                              )}
+                            </Box>
                           </CardContent>
                         </Card>
                       </Grid>
@@ -693,6 +754,17 @@ function IndividualList() {
         onConfirm={confirmAction}
         title="Confirm Action"
         message={confirmMessage}
+      />
+
+      <PaymentDialog
+        open={paymentDialogOpen && selectedIndividual !== null}
+        onClose={() => {
+          setPaymentDialogOpen(false);
+          setSelectedIndividual(null);
+        }}
+        individual={selectedIndividual}
+        onSubmit={handlePaymentSubmit}
+        error={error}
       />
 
       {error && (

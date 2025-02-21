@@ -19,6 +19,19 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
@@ -47,6 +60,7 @@ export const individualApi = {
   delete: (id) => api.delete(`/individuals/${id}`),
   getExpired: (mainPersonId) => api.get(`/individuals/expired/${mainPersonId}`),
   getExpiringSoon: (mainPersonId) => api.get(`/individuals/expiring-soon/${mainPersonId}`),
+  payPending: (id, data) => api.post(`/individuals/${id}/pay-pending`, data),
 };
 
 export const notificationApi = {
@@ -76,6 +90,11 @@ export const expenseApi = {
     api.get(`/expense/filter/date?startDate=${startDate}&endDate=${endDate}`),
   getFilteredExpense: (filters) =>
     api.post('/expense/filter', filters)
+};
+
+export const iqamaPriceApi = {
+  getCurrent: () => api.get('/iqama-price/current'),
+  update: (price) => api.post('/iqama-price', { price }),
 };
 
 export default api; 

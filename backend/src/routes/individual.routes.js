@@ -4,6 +4,7 @@ import Individual from '../models/individual.model.js';
 import Company from '../models/company.model.js';
 import Income from '../models/income.model.js';
 import mongoose from 'mongoose';
+import IqamaPrice from '../models/iqamaPrice.model.js';
 
 const router = express.Router();
 
@@ -25,13 +26,10 @@ router.get('/', protect, async (req, res, next) => {
       return res.status(404).json({ message: 'Company not found' });
     }
 
-    // Count individuals before filtering
-    const totalCount = await Individual.countDocuments({ company: companyId });
-
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { idNumber: { $regex: search, $options: 'i' } }
+        { iqamaNumber: { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -94,24 +92,33 @@ router.get('/company/:companyId', protect, async (req, res) => {
   }
 });
 
-// Create new individual with income record if amount > 0
+// Create new individual
 router.post('/', protect, async (req, res) => {
   try {
+    const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
+    const iqamaPrice = currentPrice?.price || 5000;
+    const initialAmount = parseFloat(req.body.amount) || 0;
+    
     const individual = await Individual.create({
       ...req.body,
-      lastRenewedBy: req.user.username
+      iqamaPrice,
+      totalPaidAmount: initialAmount,
+      pendingAmount: iqamaPrice - initialAmount,
+      isFullyPaid: initialAmount >= iqamaPrice,
+      lastUpdatedBy: req.user.username,
+      lastUpdateDate: new Date()
     });
 
-    // Create income record ONLY for new individuals with amount > 0
-    if (req.body.amount && req.body.amount > 0) {
+    // Create income record if initial payment is made
+    if (initialAmount > 0) {
       await Income.create({
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
-        amount: req.body.amount,
+        amount: initialAmount,
         referredBy: req.body.referredBy || '',
         addedBy: req.user.username,
-        company: individual.company,
-        dateAndTime: new Date()
+        dateAndTime: new Date(),
+        notes: 'Initial payment for new individual'
       });
     }
 
@@ -122,38 +129,74 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// Handle pending payment
+router.post('/:id/pay-pending', protect, async (req, res) => {
+  try {
+    const individual = await Individual.findById(req.params.id);
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    const paymentAmount = parseFloat(req.body.amount);
+    if (paymentAmount > individual.pendingAmount) {
+      return res.status(400).json({ message: 'Payment amount exceeds pending balance' });
+    }
+
+    // Update individual payment details
+    individual.totalPaidAmount += paymentAmount;
+    individual.pendingAmount -= paymentAmount;
+    individual.isFullyPaid = individual.pendingAmount <= 0;
+    individual.lastUpdatedBy = req.user.username;
+    individual.lastUpdateDate = new Date();
+    individual.paymentHistory.push({
+      amount: paymentAmount,
+      paidBy: req.user.username,
+      paidAt: new Date()
+    });
+
+    await individual.save();
+
+    // Create income record for the payment
+    await Income.create({
+      name: individual.name,
+      iqamaNumber: individual.iqamaNumber,
+      amount: paymentAmount,
+      referredBy: individual.referredBy || '',
+      addedBy: req.user.username,
+      dateAndTime: new Date(),
+      notes: 'Pending payment'
+    });
+
+    res.json(individual);
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // Update individual (including renewal)
 router.put('/:id', protect, async (req, res) => {
   try {
-    // Get the existing individual first
-    const existingIndividual = await Individual.findById(req.params.id);
-    
-    // Update the individual with the last renewed by info
+    if (req.body.expiryDate) { // Renewal
+      const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
+      const iqamaPrice = currentPrice?.price || 5000;
+      const initialPayment = parseFloat(req.body.amount) || 0;
+      
+      req.body.iqamaPrice = iqamaPrice; // Use new price for renewal
+      req.body.totalPaidAmount = initialPayment;
+      req.body.pendingAmount = iqamaPrice - initialPayment;
+      req.body.isFullyPaid = initialPayment >= iqamaPrice;
+    }
+
     const individual = await Individual.findByIdAndUpdate(
       req.params.id,
       {
         ...req.body,
-        lastRenewedBy: req.user.username,
-        lastRenewalDate: req.body.expiryDate ? new Date() : existingIndividual.lastRenewalDate
+        lastUpdatedBy: req.user.username,
+        lastUpdateDate: new Date()
       },
       { new: true }
     );
-
-    // Create income record ONLY if it's a renewal (expiryDate is being updated) AND amount > 0
-    if (req.body.expiryDate && req.body.amount && req.body.amount > 0) {
-      // Calculate the difference between previous and new amount
-      const amountDifference = existingIndividual.amount - req.body.amount;
-      
-      await Income.create({
-        name: individual.name,
-        iqamaNumber: individual.iqamaNumber,
-        amount: Math.abs(amountDifference), // Store the absolute difference
-        referredBy: req.body.referredBy || '',
-        addedBy: req.user.username,
-        company: individual.company,
-        dateAndTime: new Date()
-      });
-    }
 
     res.json(individual);
   } catch (error) {
@@ -172,13 +215,13 @@ router.delete('/:id', adminProtect, async (req, res) => {
     }
 
     const individual = await Individual.findByIdAndDelete(id);
-
     if (!individual) {
       return res.status(404).json({ message: 'Individual not found' });
     }
 
     res.json({ message: 'Individual deleted successfully' });
   } catch (error) {
+    console.error('Error deleting individual:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -284,7 +327,7 @@ router.get('/:id', protect, async (req, res) => {
   try {
     const individual = await Individual.findById(req.params.id)
       .populate('company')
-      .populate('lastRenewedBy', 'username');
+      .populate('lastUpdatedBy', 'username');
 
     if (!individual) {
       return res.status(404).json({ message: 'Individual not found' });

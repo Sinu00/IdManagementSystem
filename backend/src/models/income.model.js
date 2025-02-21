@@ -20,12 +20,7 @@ const incomeSchema = new mongoose.Schema(
     referredBy: {
       type: String,
       trim: true
-    },
-    addedBy: {
-      type: String,
-      trim: true
-    },
-
+    }
   },
   { timestamps: true }
 );

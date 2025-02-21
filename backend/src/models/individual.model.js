@@ -26,10 +26,6 @@ const individualSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Expiry date is required']
     },
-    notes: {
-      type: String,
-      trim: true
-    },
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
@@ -40,14 +36,6 @@ const individualSchema = new mongoose.Schema(
       ref: "MainPerson",
       required: false
     },
-    reference: {
-      type: String,
-      trim: true
-    },
-    document: {
-      type: String,
-      trim: true
-    },
     referredBy: {
       type: String,
       trim: true
@@ -56,14 +44,41 @@ const individualSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    lastRenewedBy: {
+    totalPaidAmount: {
+      type: Number,
+      default: 0
+    },
+    iqamaPrice: {
+      type: Number,
+      required: true,
+      default: 5000
+    },
+    pendingAmount: {
+      type: Number,
+      default: function() {
+        return this.iqamaPrice - this.totalPaidAmount;
+      }
+    },
+    isFullyPaid: {
+      type: Boolean,
+      default: false
+    },
+    lastUpdatedBy: {
       type: String,
       trim: true
     },
-    lastRenewalDate: {
+    lastUpdateDate: {
       type: Date,
-      default: null
-    }
+      default: Date.now
+    },
+    paymentHistory: [{
+      amount: Number,
+      paidBy: String,
+      paidAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   },
   { 
     timestamps: true,
@@ -87,6 +102,13 @@ individualSchema.virtual('status').get(function() {
   if (daysUntilExpiry <= 10) return 'Warning';
   return 'Active';
 });
+
+// Update the payment status method
+individualSchema.methods.updatePaymentStatus = function() {
+  this.pendingAmount = this.iqamaPrice - this.totalPaidAmount;
+  this.isFullyPaid = this.pendingAmount <= 0;
+  return this.isFullyPaid;
+};
 
 const Individual = mongoose.model("Individual", individualSchema);
 

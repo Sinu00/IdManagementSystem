@@ -67,28 +67,45 @@ companySchema.pre('save', async function(next) {
 
 // Virtual for card counts
 companySchema.virtual('cardCounts').get(async function() {
-  const individuals = await mongoose.model('Individual').find({ company: this._id });
+  const today = new Date();
+  const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
   
-  const counts = {
-    redCards: 0,    // Expired
-    orangeCards: 0, // 30 days or less until expiry
-    greenCards: 0,  // More than 30 days until expiry
-    totalIndividuals: individuals.length
-  };
-
-  individuals.forEach(individual => {
-    const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilExpiry <= 0) {
-      counts.redCards++;
-    } else if (daysUntilExpiry <= 30) {
-      counts.orangeCards++;
-    } else {
-      counts.greenCards++;
+  const individuals = await mongoose.model('Individual').aggregate([
+    { $match: { company: this._id } },
+    {
+      $group: {
+        _id: null,
+        redCards: {
+          $sum: { $cond: [{ $lt: ["$expiryDate", today] }, 1, 0] }
+        },
+        orangeCards: {
+          $sum: {
+            $cond: [
+              { 
+                $and: [
+                  { $gte: ["$expiryDate", today] },
+                  { $lte: ["$expiryDate", thirtyDaysFromNow] }
+                ]
+              },
+              1,
+              0
+            ]
+          }
+        },
+        greenCards: {
+          $sum: { $cond: [{ $gt: ["$expiryDate", thirtyDaysFromNow] }, 1, 0] }
+        },
+        totalIndividuals: { $sum: 1 }
+      }
     }
-  });
+  ]);
 
-  return counts;
+  return individuals[0] || {
+    redCards: 0,
+    orangeCards: 0,
+    greenCards: 0,
+    totalIndividuals: 0
+  };
 });
 
 const Company = mongoose.model("Company", companySchema);

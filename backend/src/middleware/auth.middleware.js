@@ -35,11 +35,17 @@ export const adminProtect = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded.isAdmin) {
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    if (!user.isAdmin) {
       return res.status(403).json({ message: 'Not authorized as admin' });
     }
 
-    req.user = decoded;
+    req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

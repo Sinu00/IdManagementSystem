@@ -48,10 +48,11 @@ import {
   DateRange as DateIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  FilterAlt as FilterIcon
+  FilterAlt as FilterIcon,
+  MonetizationOn as MonetizationIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { incomeApi, expenseApi } from '../services/api';
+import { incomeApi, expenseApi, iqamaPriceApi } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -59,6 +60,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { saveAs } from 'file-saver';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
+import IqamaPriceDialog from '../components/dialogs/IqamaPriceDialog';
 
 // Create a memoized FilterSection component outside the main component
 const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [] }) => (
@@ -193,6 +195,8 @@ function IncomeExpense() {
   });
   const [showIncomeFilters, setShowIncomeFilters] = useState(false);
   const [showExpenseFilters, setShowExpenseFilters] = useState(false);
+  const [iqamaPrice, setIqamaPrice] = useState(5000);
+  const [isIqamaPriceDialogOpen, setIsIqamaPriceDialogOpen] = useState(false);
 
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -202,6 +206,7 @@ function IncomeExpense() {
   useEffect(() => {
     fetchData();
     fetchReferredByList();
+    loadIqamaPrice();
   }, []);
 
   const fetchData = async () => {
@@ -733,6 +738,26 @@ function IncomeExpense() {
     }
   };
 
+  const loadIqamaPrice = async () => {
+    try {
+      const response = await iqamaPriceApi.getCurrent();
+      setIqamaPrice(response.data.price);
+    } catch (error) {
+      console.error('Error loading IQAMA price:', error);
+      setIqamaPrice(5000);
+    }
+  };
+
+  const handleUpdatePrice = async (newPrice) => {
+    try {
+      await iqamaPriceApi.update(newPrice);
+      await loadIqamaPrice();
+    } catch (error) {
+      console.error('Error updating IQAMA price:', error);
+      throw new Error('Failed to update IQAMA price. Please try again.');
+    }
+  };
+
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 4, pb: 6 }}>
       <Container maxWidth="lg">
@@ -767,6 +792,27 @@ function IncomeExpense() {
               </Typography>
             </Box>
           </Box>
+
+          {/* Add IQAMA Price Update Button here */}
+          {user?.isAdmin && (
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<MonetizationIcon />}
+              onClick={() => setIsIqamaPriceDialogOpen(true)}
+              sx={{
+                borderRadius: 2,
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                '&:hover': {
+                  borderColor: 'primary.dark',
+                  bgcolor: 'primary.lighter'
+                }
+              }}
+            >
+              IQAMA Price: SAR {iqamaPrice}
+            </Button>
+          )}
         </Box>
 
         {/* Summary Cards */}
@@ -1460,6 +1506,13 @@ function IncomeExpense() {
       </Dialog>
 
       {ExportDialog()}
+
+      <IqamaPriceDialog
+        open={isIqamaPriceDialogOpen}
+        onClose={() => setIsIqamaPriceDialogOpen(false)}
+        currentPrice={iqamaPrice}
+        onSubmit={handleUpdatePrice}
+      />
     </Box>
   );
 }
