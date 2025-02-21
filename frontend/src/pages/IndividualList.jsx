@@ -376,28 +376,81 @@ function IndividualList() {
             <Box sx={{ 
               display: 'flex', 
               justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
+              alignItems: 'flex-start',
+              flexDirection: { xs: 'column', sm: 'row' },
               gap: 2
             }}>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                  <BusinessIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" fontWeight="bold">
-                    {company?.name || <Skeleton width={200} />}
-                  </Typography>
-                  <Typography variant="body2">
-                    {loading ? <Skeleton width={150} /> : `Managing ${filteredData.length} Individuals`}
-                  </Typography>
+              <Box 
+                sx={{ 
+                  display: 'flex',
+                  width: '100%',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                    <BusinessIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      {company?.name || <Skeleton width={200} />}
+                    </Typography>
+                    <Typography variant="body2">
+                      {loading ? <Skeleton width={150} /> : `Managing ${filteredData.length} Individuals`}
+                    </Typography>
+                  </Box>
                 </Box>
+
+                <Stack 
+                  direction="row" 
+                  spacing={1}
+                  alignItems="center"
+                  sx={{ 
+                    display: { xs: 'flex', sm: 'none' }
+                  }}
+                >
+                  <Tooltip title="Print PDF">
+                    <IconButton
+                      onClick={() => window.print()}
+                      size="small"
+                      sx={{ 
+                        bgcolor: 'secondary.main',
+                        color: 'white',
+                        '&:hover': {
+                          bgcolor: 'secondary.dark',
+                        }
+                      }}
+                    >
+                      <Avatar 
+                        sx={{ 
+                          width: 32, 
+                          height: 32,
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}
+                      >
+                        <PdfIcon />
+                      </Avatar>
+                    </IconButton>
+                  </Tooltip>
+                  <ProfileMenu 
+                    username={user?.username} 
+                    onLogout={handleLogout}
+                  />
+                </Stack>
               </Box>
 
               <Stack 
-                direction="row" 
+                direction={{ xs: 'row', sm: 'row' }} 
                 spacing={2} 
                 alignItems="center"
+                sx={{
+                  width: { xs: '100%', sm: 'auto' },
+                  justifyContent: { xs: 'space-between', sm: 'flex-end' },
+                  mt: { xs: 2, sm: 0 },
+                  display: { xs: 'flex', sm: 'flex' }
+                }}
               >
                 <Paper
                   elevation={0}
@@ -408,144 +461,174 @@ function IndividualList() {
                     borderRadius: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 1
+                    gap: { xs: 1, sm: 2 },
+                    width: '100%'
                   }}
                 >
-                  <Typography 
-                    variant="body2" 
-                    color="primary.dark" 
-                    gutterBottom
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  >
-                    <BusinessIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
-                    CR: {company?.crNumber || 'N/A'}
-                    {company?.crNumber && (
-                      <Tooltip 
-                        open={copyFeedback.open && copyFeedback.text === 'CR Number copied!'}
-                        title="Copied!"
-                        placement="top"
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(company.crNumber, 'CR Number');
-                          }}
-                          sx={{ p: 0.5 }}
+                  {/* First row: CR and GOSI */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 1, sm: 4 },
+                    width: '100%',
+                    alignItems: { xs: 'flex-start', sm: 'center' }
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      color="primary.dark" 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        whiteSpace: 'nowrap',
+                        minWidth: { sm: '200px' }
+                      }}
+                    >
+                      <BusinessIcon sx={{ fontSize: 16 }} />
+                      CR: {company?.crNumber || 'N/A'}
+                      {company?.crNumber && (
+                        <Tooltip 
+                          open={copyFeedback.open && copyFeedback.text === 'CR Number copied!'}
+                          title="Copied!"
+                          placement="top"
                         >
-                          <ContentCopyIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="primary.dark" 
-                    gutterBottom
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  >
-                    <BadgeIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
-                    GOSI: {company?.gosiNumber || 'N/A'}
-                    {company?.gosiNumber && (
-                      <Tooltip 
-                        open={copyFeedback.open && copyFeedback.text === 'GOSI Number copied!'}
-                        title="Copied!"
-                        placement="top"
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(company.gosiNumber, 'GOSI Number');
-                          }}
-                          sx={{ p: 0.5 }}
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(company.crNumber, 'CR Number');
+                            }}
+                            sx={{ p: 0.5 }}
+                          >
+                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Typography>
+
+                    <Typography 
+                      variant="body2" 
+                      color="primary.dark" 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        whiteSpace: 'nowrap',
+                        minWidth: { sm: '200px' }
+                      }}
+                    >
+                      <BadgeIcon sx={{ fontSize: 16 }} />
+                      GOSI: {company?.gosiNumber || 'N/A'}
+                      {company?.gosiNumber && (
+                        <Tooltip 
+                          open={copyFeedback.open && copyFeedback.text === 'GOSI Number copied!'}
+                          title="Copied!"
+                          placement="top"
                         >
-                          <ContentCopyIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(company.gosiNumber, 'GOSI Number');
+                            }}
+                            sx={{ p: 0.5 }}
+                          >
+                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Typography>
+                  </Box>
+
+                  {/* Second row: Sponsor and MOI */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 1, sm: 4 },
+                    width: '100%',
+                    alignItems: { xs: 'flex-start', sm: 'center' }
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      color="primary.dark" 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        whiteSpace: 'nowrap',
+                        minWidth: { sm: '200px' }
+                      }}
+                    >
+                      <PersonIcon sx={{ fontSize: 16 }} />
+                      Sponsor: {company?.sponserId || 'N/A'}
+                      {company?.sponserId && (
+                        <Tooltip 
+                          open={copyFeedback.open && copyFeedback.text === 'Sponsor copied!'}
+                          title="Copied!"
+                          placement="top"
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(company.sponserId, 'Sponsor');
+                            }}
+                            sx={{ p: 0.5 }}
+                          >
+                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Typography>
+
+                    <Typography 
+                      variant="body2" 
+                      color="primary.dark" 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        whiteSpace: 'nowrap',
+                        minWidth: { sm: '200px' }
+                      }}
+                    >
+                      <LocationIcon sx={{ fontSize: 16 }} />
+                      MOI: {company?.makthabNumber || company?.molNumber || 'N/A'}
+                      {(company?.makthabNumber || company?.molNumber) && (
+                        <Tooltip 
+                          open={copyFeedback.open && copyFeedback.text === 'MOI copied!'}
+                          title="Copied!"
+                          placement="top"
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(company?.makthabNumber || company?.molNumber, 'MOI');
+                            }}
+                            sx={{ p: 0.5 }}
+                          >
+                            <ContentCopyIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Typography>
+                  </Box>
                 </Paper>
                 
-                <Paper
-                  elevation={0}
-                  sx={{ 
-                    px: 2,
-                    py: 1,
-                    bgcolor: 'transparent',
-                    borderRadius: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1
-                  }}
-                >
-                  <Typography 
-                    variant="body2" 
-                    color="primary.dark" 
-                    gutterBottom
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  >
-                    <PersonIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
-                    Sponsor: {company?.sponserId || 'N/A'}
-                    {company?.sponserId && (
-                      <Tooltip 
-                        open={copyFeedback.open && copyFeedback.text === 'Sponsor copied!'}
-                        title="Copied!"
-                        placement="top"
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(company.sponserId, 'Sponsor');
-                          }}
-                          sx={{ p: 0.5 }}
-                        >
-                          <ContentCopyIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="primary.dark" 
-                    gutterBottom
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  >
-                    <LocationIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
-                    MOI: {company?.makthabNumber || company?.molNumber || 'N/A'}
-                    {(company?.makthabNumber || company?.molNumber) && (
-                      <Tooltip 
-                        open={copyFeedback.open && copyFeedback.text === 'MOI copied!'}
-                        title="Copied!"
-                        placement="top"
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(company?.makthabNumber || company?.molNumber, 'MOI');
-                          }}
-                          sx={{ p: 0.5 }}
-                        >
-                          <ContentCopyIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Typography>
-                </Paper>
                 <Stack 
                   direction="row" 
                   spacing={2}
                   alignItems="center"
-                  justifyContent="center"
+                  sx={{ 
+                    display: { xs: 'none', sm: 'flex' }
+                  }}
                 >
                   <Tooltip title="Print PDF">
                     <IconButton
                       onClick={() => window.print()}
                       size="small"
                       sx={{ 
-                        ml: 2,
                         bgcolor: 'secondary.main',
                         color: 'white',
                         '&:hover': {
