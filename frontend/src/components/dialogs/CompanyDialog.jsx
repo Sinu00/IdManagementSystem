@@ -43,6 +43,19 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
     }
   }, [company, mode]);
 
+  // Focus first input when dialog opens
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        const nameInput = document.querySelector('input[name="name"]');
+        if (nameInput) {
+          nameInput.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -56,6 +69,15 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
     onSubmit(formData);
   };
 
+  // Handle Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSubmit(e);
+    }
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -65,7 +87,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
       PaperProps={{
         sx: {
           borderRadius: 2
-        }
+        },
+        onKeyPress: handleKeyPress
       }}
     >
       <DialogTitle>
@@ -88,6 +111,7 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
                 value={formData.name}
                 onChange={handleChange}
                 required
+                autoFocus
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -131,7 +155,12 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          color="primary"
+          data-confirm-action="true"
+        >
           {mode === 'add' ? 'Add' : 'Save Changes'}
         </Button>
       </DialogActions>

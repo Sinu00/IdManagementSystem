@@ -33,23 +33,221 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   const [dateError, setDateError] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [currentIqamaPrice, setCurrentIqamaPrice] = useState(5000);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const isRenewMode = mode === 'renew';
   const isAddMode = mode === 'add';
 
+  // Validation functions
+  const validateIqamaNumber = (value) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (numericValue.length !== 10) {
+      return 'Iqama number must be exactly 10 digits';
+    }
+    if (!/^\d+$/.test(numericValue)) {
+      return 'Iqama number must contain only numbers';
+    }
+    return '';
+  };
+
+  const validatePhoneNumber = (value) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (numericValue.length !== 10) {
+      return 'Phone number must be exactly 10 digits';
+    }
+    if (!/^\d+$/.test(numericValue)) {
+      return 'Phone number must contain only numbers';
+    }
+    return '';
+  };
+
+  const validateName = (value) => {
+    if (!value) return 'Name is required';
+    return '';
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+    let error = '';
+
+    switch (name) {
+      case 'name':
+        error = validateName(value);
+        break;
+      
+      case 'iqamaNumber':
+        // Only allow numbers and limit to 10 digits
+        formattedValue = value.replace(/\D/g, '').slice(0, 10);
+        error = validateIqamaNumber(formattedValue);
+        break;
+      
+      case 'phoneNumber':
+        // Only allow numbers and limit to 10 digits
+        formattedValue = value.replace(/\D/g, '').slice(0, 10);
+        error = validatePhoneNumber(formattedValue);
+        break;
+      
+      default:
+        break;
+    }
+
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: formattedValue
+    }));
+  };
+
+  const isFormValid = () => {
+    const errors = {
+      name: validateName(formData.name),
+      iqamaNumber: validateIqamaNumber(formData.iqamaNumber),
+      phoneNumber: validatePhoneNumber(formData.phoneNumber)
+    };
+
+    setValidationErrors(errors);
+
+    return !Object.values(errors).some(error => error !== '');
+  };
+
+  const handlePaymentChange = (e) => {
+    const value = parseFloat(e.target.value);
+    if (value > currentIqamaPrice) {
+      setPaymentError(`Amount cannot exceed ${currentIqamaPrice} SAR`);
+    } else if (value < 0) {
+      setPaymentError('Please enter a valid amount');
+    } else {
+      setPaymentError('');
+    }
+    setFormData(prev => ({
+      ...prev,
+      amount: e.target.value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    let errors = {};
+    
+    if (isRenewMode) {
+      if (!formData.expiryDate) {
+        errors.expiryDate = 'Expiry date is required';
+      }
+      if (!formData.amount) {
+        errors.amount = 'Payment amount is required';
+      }
+    } else {
+      // Validation for add/edit mode
+      if (!formData.name) {
+        errors.name = 'Name is required';
+      }
+      if (!formData.nationality) {
+        errors.nationality = 'Nationality is required';
+      }
+      if (!formData.iqamaNumber) {
+        errors.iqamaNumber = 'Iqama number is required';
+      } else {
+        const iqamaError = validateIqamaNumber(formData.iqamaNumber);
+        if (iqamaError) errors.iqamaNumber = iqamaError;
+      }
+      if (formData.phoneNumber) {
+        const phoneError = validatePhoneNumber(formData.phoneNumber);
+        if (phoneError) errors.phoneNumber = phoneError;
+      }
+      if (isAddMode && !formData.expiryDate) {
+        errors.expiryDate = 'Expiry date is required';
+      }
+    }
+
+    setValidationErrors(errors);
+
+    // Only proceed if there are no errors
+    if (Object.keys(errors).length === 0) {
+      let submitData = { ...formData };
+      
+      if (!isRenewMode) {
+        // For add/edit mode
+        submitData = {
+          ...submitData,
+          name: formData.name?.charAt(0).toUpperCase() + formData.name?.slice(1),
+          amount: isAddMode ? (parseFloat(formData.amount) || 0) : undefined
+        };
+      } else {
+        // For renew mode
+        submitData = {
+          expiryDate: formData.expiryDate,
+          amount: parseFloat(formData.amount) || 0
+        };
+      }
+
+      onSubmit(submitData);
+    }
+  };
+
+  // Focus first input when dialog opens (modified to work for renew mode)
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        if (mode === 'renew') {
+          // For renew mode, focus the expiry date input
+          const expiryInput = document.querySelector('input[name="expiryDate"]');
+          if (expiryInput) {
+            expiryInput.focus();
+          }
+        } else if (mode === 'add' || mode === 'edit') {
+          // For add/edit mode, focus the name input
+          const nameInput = document.querySelector('input[name="name"]');
+          if (nameInput) {
+            nameInput.focus();
+          }
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open, mode]);
+
+  // Modified keyPress handler to work for all modes
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSubmit();
+    }
+  };
+
   useEffect(() => {
     if (mode === 'add') {
       setFormData(initialFormData);
+      setValidationErrors({});
     } else if (individual) {
-      setFormData({
-        name: individual.name || '',
-        nationality: individual.nationality || '',
-        phoneNumber: individual.phoneNumber || '',
-        iqamaNumber: individual.iqamaNumber || '',
-        expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
-        referredBy: individual.referredBy || '',
-        amount: individual.amount || '',
-      });
+      if (mode === 'renew') {
+        // For renew mode, only set expiryDate and amount
+        setFormData({
+          ...initialFormData,
+          expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
+          amount: ''
+        });
+      } else {
+        // For edit mode, set all fields
+        setFormData({
+          name: individual.name || '',
+          nationality: individual.nationality || '',
+          phoneNumber: individual.phoneNumber || '',
+          iqamaNumber: individual.iqamaNumber || '',
+          expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
+          referredBy: individual.referredBy || '',
+          amount: individual.amount || '',
+        });
+      }
     }
   }, [individual, mode]);
 
@@ -64,37 +262,6 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     };
     loadIqamaPrice();
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (paymentError) {
-      return;
-    }
-
-    onSubmit({ ...formData, referredBy: formData.referredBy || '' });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handlePaymentChange = (e) => {
-    const value = parseFloat(e.target.value);
-    if (value > currentIqamaPrice) {
-      setPaymentError(`Amount cannot exceed ${currentIqamaPrice} SAR`);
-    } else if (value < 0) {
-      setPaymentError('Please enter a valid amount');
-    } else {
-      setPaymentError('');
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      amount: e.target.value
-    }));
-  };
 
   const renderRenewalInfo = () => (
     <Paper sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
@@ -125,7 +292,10 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
       onClose={onClose} 
       maxWidth="sm" 
       fullWidth
-      PaperProps={{ sx: { borderRadius: 2 } }}
+      PaperProps={{ 
+        sx: { borderRadius: 2 },
+        onKeyPress: handleKeyPress
+      }}
     >
       <DialogTitle>
         {isAddMode ? 'Add Individual' : isRenewMode ? 'Renew ID' : 'Edit Individual'}
@@ -147,6 +317,8 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                       value={formData[field]}
                       onChange={handleChange}
                       required={['name', 'nationality', 'iqamaNumber'].includes(field)}
+                      error={!!validationErrors[field]}
+                      helperText={validationErrors[field]}
                     />
                   </Grid>
                 ))}
@@ -158,7 +330,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                           label="Expiry Date"
                           value={formData.expiryDate}
                           onChange={(newValue) => setFormData(prev => ({ ...prev, expiryDate: newValue }))}
-                          renderInput={(params) => <TextField {...params} fullWidth required />}
+                          renderInput={(params) => <TextField {...params} fullWidth required error={!!dateError} helperText={dateError} />}
                           minDate={new Date()}
                           disablePast
                         />
@@ -201,8 +373,10 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                         <TextField 
                           {...params} 
                           fullWidth 
-                          required 
-                          helperText={`Current expiry: ${format(new Date(individual?.expiryDate), 'dd MMM yyyy')}`}
+                          required
+                          name="expiryDate"
+                          error={!!validationErrors.expiryDate}
+                          helperText={validationErrors.expiryDate || `Current expiry: ${format(new Date(individual?.expiryDate), 'dd MMM yyyy')}`}
                         />
                       )}
                       minDate={new Date()}

@@ -47,8 +47,10 @@ import {
   Phone as PhoneIcon,
   MonetizationOn as MonetizationIcon,
   PictureAsPdf as PdfIcon,
+  ContentCopy as ContentCopyIcon,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
-import { individualApi, companyApi } from '../services/api';
+import { individualApi, companyApi, incomeApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import LoadingScreen from '../components/common/LoadingScreen';
@@ -241,6 +243,13 @@ function IndividualList() {
               expiryDate: formData.expiryDate,
               amount: parseFloat(formData.amount) || 0
             });
+
+            await incomeApi.create({
+              name: `${selectedIndividual.name}`,
+              amount: parseFloat(formData.amount) || 0,
+              iqamaNumber: selectedIndividual.iqamaNumber,
+              referredBy: selectedIndividual.referredBy || ''
+            });
           }
           
           const response = await individualApi.getByCompany(companyId);
@@ -254,12 +263,45 @@ function IndividualList() {
           setConfirmDialogOpen(false);
         }
       });
+      
+      // Clear any existing keypress handlers before showing confirm dialog
+      window.removeEventListener('keypress', handleConfirmKeyPress);
       setConfirmDialogOpen(true);
+      
+      // Focus the confirm button in the confirmation dialog
+      setTimeout(() => {
+        const confirmButton = document.querySelector('[data-confirm-action="true"]');
+        if (confirmButton) {
+          confirmButton.focus();
+        }
+      }, 100);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       setDialogError(error.message || 'An error occurred');
     }
   };
+
+  // Modified keyPress handler for confirmation dialog to work with all modes
+  const handleConfirmKeyPress = useCallback((e) => {
+    if (e.key === 'Enter' && confirmDialogOpen && confirmAction) {
+      e.preventDefault();
+      e.stopPropagation();
+      confirmAction();
+    }
+  }, [confirmDialogOpen, confirmAction]);
+
+  useEffect(() => {
+    if (confirmDialogOpen) {
+      const timer = setTimeout(() => {
+        window.addEventListener('keypress', handleConfirmKeyPress);
+      }, 300);
+      
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('keypress', handleConfirmKeyPress);
+      };
+    }
+  }, [confirmDialogOpen, handleConfirmKeyPress]);
 
   const handleLogout = () => {
     logout();
@@ -300,6 +342,12 @@ function IndividualList() {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to process payment');
     }
+  };
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      // Optional: You can add a snackbar/toast notification here
+    });
   };
 
   if (error) return <Alert severity="error">{error}</Alert>;
@@ -355,13 +403,47 @@ function IndividualList() {
                     gap: 1
                   }}
                 >
-                  <Typography variant="body2" color="primary.dark" gutterBottom>
-                    <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                  <Typography 
+                    variant="body2" 
+                    color="primary.dark" 
+                    gutterBottom
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                  >
+                    <BusinessIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     CR: {company?.crNumber || 'N/A'}
+                    {company?.crNumber && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(company.crNumber);
+                        }}
+                        sx={{ p: 0.5 }}
+                      >
+                        <ContentCopyIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    )}
                   </Typography>
-                  <Typography variant="body2" color="primary.dark" gutterBottom>
-                    <BadgeIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                  <Typography 
+                    variant="body2" 
+                    color="primary.dark" 
+                    gutterBottom
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                  >
+                    <BadgeIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     GOSI: {company?.gosiNumber || 'N/A'}
+                    {company?.gosiNumber && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(company.gosiNumber);
+                        }}
+                        sx={{ p: 0.5 }}
+                      >
+                        <ContentCopyIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    )}
                   </Typography>
                 </Paper>
                 
@@ -377,13 +459,47 @@ function IndividualList() {
                     gap: 1
                   }}
                 >
-                  <Typography variant="body2" color="primary.dark" gutterBottom>
-                    <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                  <Typography 
+                    variant="body2" 
+                    color="primary.dark" 
+                    gutterBottom
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                  >
+                    <PersonIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     Sponsor: {company?.sponserId || 'N/A'}
+                    {company?.sponserId && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(company.sponserId);
+                        }}
+                        sx={{ p: 0.5 }}
+                      >
+                        <ContentCopyIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    )}
                   </Typography>
-                  <Typography variant="body2" color="primary.dark" gutterBottom>
-                    <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                  <Typography 
+                    variant="body2" 
+                    color="primary.dark" 
+                    gutterBottom
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                  >
+                    <LocationIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     MOI: {company?.makthabNumber || company?.molNumber || 'N/A'}
+                    {(company?.makthabNumber || company?.molNumber) && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(company?.makthabNumber || company?.molNumber);
+                        }}
+                        sx={{ p: 0.5 }}
+                      >
+                        <ContentCopyIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    )}
                   </Typography>
                 </Paper>
                 <Stack 

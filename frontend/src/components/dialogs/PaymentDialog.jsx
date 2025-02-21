@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -20,6 +20,26 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        const paymentInput = document.querySelector('input[name="paymentAmount"]');
+        if (paymentInput) {
+          paymentInput.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && paymentAmount && !paymentError && !isSubmitting) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSubmit();
+    }
+  };
 
   if (!individual) {
     return null;
@@ -61,6 +81,10 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
+      PaperProps={{ 
+        sx: { borderRadius: 2 },
+        onKeyPress: handleKeyPress
+      }}
     >
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
@@ -78,17 +102,12 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Total IQAMA Amount: SAR {individual.iqamaPrice || 0}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" color="text.primary" gutterBottom>
                   Paid Amount: SAR {individual.totalPaidAmount || 0}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.primary" gutterBottom>
                   Pending Amount: SAR {individual.pendingAmount || 0}
                 </Typography>
               </Grid>
@@ -110,6 +129,7 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
             fullWidth
             label="Payment Amount"
             type="number"
+            name="paymentAmount"
             value={paymentAmount}
             onChange={handlePaymentChange}
             margin="normal"
