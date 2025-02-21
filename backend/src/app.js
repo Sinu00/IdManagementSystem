@@ -16,7 +16,8 @@ const app = express();
 app.use(cors({
   origin: [
     'https://namoraidmanagementsystem.vercel.app',
-    'http://localhost:5173' // Keep local development URL
+    'https://namoraidmanagementsystem.vercel.app/',
+    'http://localhost:5173'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -26,8 +27,16 @@ app.use(express.json());
 
 // Add these lines before your routes
 app.use((req, res, next) => {
+  const allowedOrigins = [
+    'https://namoraidmanagementsystem.vercel.app',
+    'https://namoraidmanagementsystem.vercel.app/',
+    'http://localhost:5173'
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header(
     'Access-Control-Allow-Headers',

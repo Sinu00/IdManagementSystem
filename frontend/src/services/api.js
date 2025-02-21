@@ -45,7 +45,10 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  login: (credentials) => api.post('/auth/login', credentials),
+  login: (credentials) => {
+    console.log('Login URL:', `${API_URL}/api/auth/login`);
+    return api.post('/api/auth/login', credentials);
+  },
 };
 
 export const mainPersonApi = {
