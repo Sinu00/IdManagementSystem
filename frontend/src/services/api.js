@@ -59,7 +59,7 @@ export const authApi = {
 };
 
 export const mainPersonApi = {
-  getAll: () => api.get('/main-persons'),
+  getAll: () => api.get('/api/main-persons'),
 };
 
 export const companyApi = {
