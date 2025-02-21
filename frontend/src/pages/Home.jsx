@@ -126,7 +126,7 @@ function Home() {
                         p: { xs: 1.5, sm: 3 }, 
                         bgcolor: 'primary.light',
                         borderRadius: { 
-                          xs: '24px 0 0 24px',
+                          xs: '10px 0 0 10px',
                           sm: 3 
                         },
                         position: 'relative',
@@ -226,7 +226,7 @@ function Home() {
                         p: { xs: 1.5, sm: 3 }, 
                         bgcolor: 'error.light',
                         borderRadius: { 
-                          xs: '0 24px 24px 0',
+                          xs: '0 10px 10px 0',
                           sm: 3 
                         },
                         position: 'relative',
