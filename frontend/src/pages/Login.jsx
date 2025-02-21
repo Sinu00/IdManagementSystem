@@ -50,11 +50,12 @@ function Login() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.default'
+        bgcolor: 'background.default',
+        p: { xs: 2, sm: 3 }
       }}
     >
       <Container maxWidth="sm">
@@ -62,19 +63,20 @@ function Login() {
           <Paper 
             elevation={3} 
             sx={{ 
-              p: 4,
+              p: { xs: 3, sm: 4 },
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              borderRadius: 3
+              borderRadius: 3,
+              width: '100%'
             }}
           >
             <Avatar
               sx={{
-                width: 48,
-                height: 48,
+                width: { xs: 40, sm: 48 },
+                height: { xs: 40, sm: 48 },
                 bgcolor: 'primary.main',
-                mb: 2
+                mb: { xs: 1, sm: 2 }
               }}
             >
               <PersonIcon />
@@ -86,6 +88,9 @@ function Login() {
               gutterBottom 
               fontWeight="bold"
               color="primary"
+              sx={{
+                fontSize: { xs: '1.5rem', sm: '1.8rem' }
+              }}
             >
               Welcome Back
             </Typography>
@@ -93,13 +98,22 @@ function Login() {
             <Typography 
               variant="body2" 
               color="text.secondary" 
-              sx={{ mb: 3 }}
+              sx={{ mb: { xs: 2, sm: 3 } }}
             >
               Please sign in to continue
             </Typography>
 
             {error && (
-              <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: { xs: 1.5, sm: 2 }, 
+                  width: '100%',
+                  '& .MuiAlert-message': {
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }
+                }}
+              >
                 {error}
               </Alert>
             )}
@@ -119,6 +133,15 @@ function Login() {
                       <PersonIcon color="action" />
                     </InputAdornment>
                   ),
+                }}
+                sx={{
+                  mt: { xs: 1, sm: 2 },
+                  '& .MuiInputBase-root': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }
                 }}
               />
 
@@ -142,11 +165,21 @@ function Login() {
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
+                        size="medium"
                       >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
                     </InputAdornment>
                   ),
+                }}
+                sx={{
+                  mt: { xs: 1, sm: 2 },
+                  '& .MuiInputBase-root': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }
                 }}
               />
 
@@ -156,7 +189,11 @@ function Login() {
                 size="large"
                 type="submit"
                 disabled={loading}
-                sx={{ mt: 3 }}
+                sx={{ 
+                  mt: { xs: 2, sm: 3 },
+                  py: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
+                }}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
