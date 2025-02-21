@@ -11,14 +11,15 @@ import {
   Alert,
   Grid,
   Paper,
+  Autocomplete,
 } from '@mui/material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 import { MonetizationOn as MonetizationIcon } from '@mui/icons-material';
-import { iqamaPriceApi } from '../../services/api';
+import { iqamaPriceApi, incomeApi } from '../../services/api';
 
-function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', error }) {
+function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', error, referredByOptions = [] }) {
   const initialFormData = {
     name: '',
     nationality: '',
@@ -130,7 +131,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -181,6 +182,11 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
           name: formData.name?.charAt(0).toUpperCase() + formData.name?.slice(1),
           amount: isAddMode ? (parseFloat(formData.amount) || 0) : undefined
         };
+
+        // If there's a new referrer, add it to the options
+        if (formData.referredBy && !referredByOptions.includes(formData.referredBy)) {
+          referredByOptions.push(formData.referredBy);
+        }
       } else {
         // For renew mode
         submitData = {
@@ -225,31 +231,20 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   };
 
   useEffect(() => {
-    if (mode === 'add') {
+    if (individual && !isAddMode) {
+      setFormData({
+        name: individual.name || '',
+        nationality: individual.nationality || '',
+        phoneNumber: individual.phoneNumber || '',
+        iqamaNumber: individual.iqamaNumber || '',
+        expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
+        referredBy: individual.referredBy || '',
+        amount: individual.amount?.toString() || '',
+      });
+    } else {
       setFormData(initialFormData);
-      setValidationErrors({});
-    } else if (individual) {
-      if (mode === 'renew') {
-        // For renew mode, only set expiryDate and amount
-        setFormData({
-          ...initialFormData,
-          expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
-          amount: ''
-        });
-      } else {
-        // For edit mode, set all fields
-        setFormData({
-          name: individual.name || '',
-          nationality: individual.nationality || '',
-          phoneNumber: individual.phoneNumber || '',
-          iqamaNumber: individual.iqamaNumber || '',
-          expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
-          referredBy: individual.referredBy || '',
-          amount: individual.amount || '',
-        });
-      }
     }
-  }, [individual, mode]);
+  }, [individual, isAddMode]);
 
   useEffect(() => {
     const loadIqamaPrice = async () => {
@@ -308,7 +303,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             {!isRenewMode && (
               <Grid container spacing={2}>
-                {['name', 'nationality', 'phoneNumber', 'iqamaNumber', 'referredBy'].map((field) => (
+                {['name', 'nationality', 'phoneNumber', 'iqamaNumber'].map((field) => (
                   <Grid item xs={12} sm={6} key={field}>
                     <TextField
                       fullWidth
@@ -322,6 +317,39 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     />
                   </Grid>
                 ))}
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    freeSolo
+                    options={referredByOptions}
+                    value={formData.referredBy}
+                    onChange={(event, newValue) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        referredBy: newValue || ''
+                      }));
+                    }}
+                    onInputChange={(event, newInputValue) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        referredBy: newInputValue
+                      }));
+                    }}
+                    openOnFocus
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        label="Referred By"
+                        name="referredBy"
+                        error={!!validationErrors.referredBy}
+                        helperText={validationErrors.referredBy}
+                        onFocus={(event) => {
+                          event.target.click();
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
                 {isAddMode && (
                   <>
                     <Grid item xs={12} sm={6}>

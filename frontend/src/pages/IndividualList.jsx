@@ -104,6 +104,7 @@ function IndividualList() {
     open: false,
     text: ''
   });
+  const [referredByList, setReferredByList] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,6 +187,12 @@ function IndividualList() {
   const handleEdit = (individual) => {
     setSelectedIndividual(individual);
     setDialogMode('edit');
+    if (referredByList.length === 0) {
+      fetchReferredByList();
+    }
+    if (individual.referredBy && !referredByList.includes(individual.referredBy)) {
+      setReferredByList(prev => [...new Set([...prev, individual.referredBy])]);
+    }
     setDialogOpen(true);
   };
 
@@ -218,6 +225,16 @@ function IndividualList() {
     }
   };
 
+  const fetchReferredByList = async () => {
+    try {
+      const response = await incomeApi.getReferredByList();
+      const uniqueOptions = [...new Set(response.data.filter(option => option))];
+      setReferredByList(uniqueOptions);
+    } catch (error) {
+      console.error('Error fetching referred by list:', error);
+    }
+  };
+
   const handleSubmit = async (formData) => {
     try {
       setDialogError('');
@@ -240,8 +257,14 @@ function IndividualList() {
               amount: parseFloat(formData.amount) || 0,
               referredBy: formData.referredBy || ''
             });
+            if (formData.referredBy) {
+              setReferredByList(prev => [...new Set([...prev, formData.referredBy])]);
+            }
           } else if (dialogMode === 'edit') {
             await individualApi.update(selectedIndividual._id, formData);
+            if (formData.referredBy) {
+              setReferredByList(prev => [...new Set([...prev, formData.referredBy])]);
+            }
           } else {
             // First update the individual
             const updatedIndividual = await individualApi.update(selectedIndividual._id, { 
@@ -302,6 +325,10 @@ function IndividualList() {
       };
     }
   }, [confirmDialogOpen, handleConfirmKeyPress]);
+
+  useEffect(() => {
+    fetchReferredByList();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -977,6 +1004,7 @@ function IndividualList() {
         onSubmit={handleSubmit}
         mode={dialogMode}
         error={dialogError}
+        referredByOptions={referredByList}
       />
 
       <ConfirmDialog
