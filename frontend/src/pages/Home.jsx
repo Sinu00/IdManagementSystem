@@ -107,27 +107,31 @@ function Home() {
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 4, pb: 6 }}>
+    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 3}}>
       <Container maxWidth="lg">
 
 
         {/* Stats Section */}
-        <Box sx={{ mt: 3 }}>
+        <Box sx={{ mt: { xs: 0, sm: 3 } }}>
           <Fade in timeout={1000}>
             <Box>
               {loading ? (
                 <StatCardSkeletonList />
               ) : (
-                <Grid container spacing={3}>
+                <Grid container spacing={{ xs: 0, sm: 3 }}>
                   <Grid item xs={4} sm={4}>
                     <Paper 
                       elevation={0}
                       sx={{ 
                         p: { xs: 1.5, sm: 3 }, 
                         bgcolor: 'primary.light',
-                        borderRadius: 3,
+                        borderRadius: { 
+                          xs: '24px 0 0 24px',
+                          sm: 3 
+                        },
                         position: 'relative',
                         overflow: 'hidden',
+                        height: '100%'
                       }}
                     >
                       <Box 
@@ -139,7 +143,7 @@ function Home() {
                           opacity: 0.2
                         }}
                       >
-                        <PersonIcon sx={{ fontSize: { xs: 40, sm: 80 } }} />
+                        <PersonIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
                       </Box>
                       <Box display="flex" flexDirection="column" gap={0.5}>
                         <Typography 
@@ -147,7 +151,7 @@ function Home() {
                           fontWeight="bold" 
                           color="primary.dark"
                           sx={{ 
-                            fontSize: { xs: '1.5rem', sm: '2.5rem' }
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
                           }}
                         >
                           {stats?.totalMainPersons || <Skeleton width={100} />}
@@ -156,7 +160,7 @@ function Home() {
                           variant="subtitle2" 
                           color="primary.dark"
                           sx={{ 
-                            fontSize: { xs: '0.75rem', sm: '1rem' }
+                            fontSize: { xs: '0.7rem', sm: '1rem' }
                           }}
                         >
                           Main Persons
@@ -171,9 +175,13 @@ function Home() {
                       sx={{ 
                         p: { xs: 1.5, sm: 3 }, 
                         bgcolor: 'warning.light',
-                        borderRadius: 3,
+                        borderRadius: { 
+                          xs: 0,
+                          sm: 3 
+                        },
                         position: 'relative',
                         overflow: 'hidden',
+                        height: '100%'
                       }}
                     >
                       <Box 
@@ -185,7 +193,7 @@ function Home() {
                           opacity: 0.2
                         }}
                       >
-                        <BadgeIcon sx={{ fontSize: { xs: 40, sm: 80 } }} />
+                        <BadgeIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
                       </Box>
                       <Box display="flex" flexDirection="column" gap={0.5}>
                         <Typography 
@@ -193,7 +201,7 @@ function Home() {
                           fontWeight="bold" 
                           color="warning.dark"
                           sx={{ 
-                            fontSize: { xs: '1.5rem', sm: '2.5rem' }
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
                           }}
                         >
                           {stats?.totalIndividuals || <Skeleton width={100} />}
@@ -202,7 +210,7 @@ function Home() {
                           variant="subtitle2" 
                           color="warning.dark"
                           sx={{ 
-                            fontSize: { xs: '0.75rem', sm: '1rem' }
+                            fontSize: { xs: '0.7rem', sm: '1rem' }
                           }}
                         >
                           Total IDs
@@ -217,9 +225,13 @@ function Home() {
                       sx={{ 
                         p: { xs: 1.5, sm: 3 }, 
                         bgcolor: 'error.light',
-                        borderRadius: 3,
+                        borderRadius: { 
+                          xs: '0 24px 24px 0',
+                          sm: 3 
+                        },
                         position: 'relative',
                         overflow: 'hidden',
+                        height: '100%'
                       }}
                     >
                       <Box 
@@ -231,7 +243,7 @@ function Home() {
                           opacity: 0.2
                         }}
                       >
-                        <WarningIcon sx={{ fontSize: { xs: 40, sm: 80 } }} />
+                        <WarningIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
                       </Box>
                       <Box display="flex" flexDirection="column" gap={0.5}>
                         <Typography 
@@ -239,7 +251,7 @@ function Home() {
                           fontWeight="bold" 
                           color="error.dark"
                           sx={{ 
-                            fontSize: { xs: '1.5rem', sm: '2.5rem' }
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
                           }}
                         >
                           {stats?.urgentExpiring || <Skeleton width={100} />}
@@ -248,7 +260,7 @@ function Home() {
                           variant="subtitle2" 
                           color="error.dark"
                           sx={{ 
-                            fontSize: { xs: '0.75rem', sm: '1rem' }
+                            fontSize: { xs: '0.7rem', sm: '1rem' }
                           }}
                         >
                           Urgent

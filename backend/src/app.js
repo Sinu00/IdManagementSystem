@@ -16,7 +16,6 @@ const app = express();
 app.use(cors({
   origin: [
     'https://namoraidmanagementsystem.vercel.app',
-    'https://namoraidmanagementsystem.vercel.app/',
     'http://localhost:5173'
   ],
   credentials: true,
@@ -29,7 +28,6 @@ app.use(express.json());
 app.use((req, res, next) => {
   const allowedOrigins = [
     'https://namoraidmanagementsystem.vercel.app',
-    'https://namoraidmanagementsystem.vercel.app/',
     'http://localhost:5173'
   ];
   const origin = req.headers.origin;
