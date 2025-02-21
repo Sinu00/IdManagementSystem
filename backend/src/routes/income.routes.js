@@ -1,31 +1,53 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import Income from '../models/income.model.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
+
+// Define the excluded mainPerson ID as a constant
+const EXCLUDED_MAIN_PERSON_ID = "67b22c3748dc9b1348b1d636";
+
+// Helper function to add mainPerson filter
+const addMainPersonFilter = (query) => {
+  return {
+    ...query,
+    mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID }
+  };
+};
 
 // Get incomes by date range
 router.get('/filter/date', protect, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const incomes = await Income.find({
-      $or: [
+    const query = {
+      $and: [
+        { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
         {
-          createdAt: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          }
-        },
-        {
-          dateAndTime: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          }
+          $or: [
+            {
+              createdAt: {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+              }
+            },
+            {
+              dateAndTime: {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+              }
+            }
+          ]
         }
       ]
-    }).sort({ createdAt: -1 });
+    };
+
+    const incomes = await Income.find(query)
+      .sort({ createdAt: -1 })
+      .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {
+    console.error('Error in filter/date:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -33,9 +55,14 @@ router.get('/filter/date', protect, async (req, res) => {
 // Get all incomes
 router.get('/', protect, async (req, res) => {
   try {
-    const incomes = await Income.find().sort({ createdAt: -1 });
+    const incomes = await Income.find({ 
+      mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } 
+    })
+    .sort({ createdAt: -1 })
+    .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {
+    console.error('Error in get all:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -43,14 +70,13 @@ router.get('/', protect, async (req, res) => {
 // Get unique referred by list
 router.get('/referred-by', protect, async (req, res) => {
   try {
-    const uniqueReferredBy = await Income.distinct('referredBy', { 
-      referredBy: { 
-        $ne: null, 
-        $ne: '' 
-      } 
+    const uniqueReferredBy = await Income.distinct('referredBy', {
+      mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID },
+      referredBy: { $exists: true, $ne: '' }
     });
-    res.json(uniqueReferredBy);
+    res.json(uniqueReferredBy.filter(Boolean));
   } catch (error) {
+    console.error('Error in referred-by:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -115,20 +141,28 @@ router.delete('/:id', protect, async (req, res) => {
 router.post('/filter', protect, async (req, res) => {
   try {
     const { startDate, endDate, referredBy } = req.body;
-    const query = {
-      createdAt: {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      }
+    let query = {
+      $and: [
+        { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
+        {
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
+        }
+      ]
     };
 
     if (referredBy) {
-      query.referredBy = referredBy;
+      query.$and.push({ referredBy: referredBy });
     }
 
-    const incomes = await Income.find(query).sort({ createdAt: -1 });
+    const incomes = await Income.find(query)
+      .sort({ createdAt: -1 })
+      .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {
+    console.error('Error in filter:', error);
     res.status(500).json({ message: error.message });
   }
 });

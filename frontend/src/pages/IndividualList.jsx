@@ -100,6 +100,10 @@ function IndividualList() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState({
+    open: false,
+    text: ''
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,17 +243,22 @@ function IndividualList() {
           } else if (dialogMode === 'edit') {
             await individualApi.update(selectedIndividual._id, formData);
           } else {
-            await individualApi.update(selectedIndividual._id, { 
+            // First update the individual
+            const updatedIndividual = await individualApi.update(selectedIndividual._id, { 
               expiryDate: formData.expiryDate,
               amount: parseFloat(formData.amount) || 0
             });
 
-            await incomeApi.create({
-              name: `${selectedIndividual.name}`,
-              amount: parseFloat(formData.amount) || 0,
-              iqamaNumber: selectedIndividual.iqamaNumber,
-              referredBy: selectedIndividual.referredBy || ''
-            });
+            // Then create the income record using the updated individual data
+            if (updatedIndividual.data) {
+              await incomeApi.create({
+                name: updatedIndividual.data.name,
+                amount: parseFloat(formData.amount) || 0,
+                iqamaNumber: updatedIndividual.data.iqamaNumber,
+                referredBy: updatedIndividual.data.referredBy || '',
+                mainPerson: updatedIndividual.data.company.mainPerson._id
+              });
+            }
           }
           
           const response = await individualApi.getByCompany(companyId);
@@ -264,20 +273,11 @@ function IndividualList() {
         }
       });
       
-      // Clear any existing keypress handlers before showing confirm dialog
       window.removeEventListener('keypress', handleConfirmKeyPress);
       setConfirmDialogOpen(true);
-      
-      // Focus the confirm button in the confirmation dialog
-      setTimeout(() => {
-        const confirmButton = document.querySelector('[data-confirm-action="true"]');
-        if (confirmButton) {
-          confirmButton.focus();
-        }
-      }, 100);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      setDialogError(error.message || 'An error occurred');
+      setDialogError(error.response?.data?.message || 'An error occurred');
     }
   };
 
@@ -344,9 +344,17 @@ function IndividualList() {
     }
   };
 
-  const handleCopy = (text) => {
+  const handleCopy = (text, label) => {
     navigator.clipboard.writeText(text).then(() => {
-      // Optional: You can add a snackbar/toast notification here
+      setCopyFeedback({
+        open: true,
+        text: `${label} copied!`
+      });
+      
+      // Auto hide after 2 seconds
+      setTimeout(() => {
+        setCopyFeedback({ open: false, text: '' });
+      }, 2000);
     });
   };
 
@@ -412,16 +420,22 @@ function IndividualList() {
                     <BusinessIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     CR: {company?.crNumber || 'N/A'}
                     {company?.crNumber && (
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(company.crNumber);
-                        }}
-                        sx={{ p: 0.5 }}
+                      <Tooltip 
+                        open={copyFeedback.open && copyFeedback.text === 'CR Number copied!'}
+                        title="Copied!"
+                        placement="top"
                       >
-                        <ContentCopyIcon sx={{ fontSize: 14 }} />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(company.crNumber, 'CR Number');
+                          }}
+                          sx={{ p: 0.5 }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
                     )}
                   </Typography>
                   <Typography 
@@ -433,16 +447,22 @@ function IndividualList() {
                     <BadgeIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     GOSI: {company?.gosiNumber || 'N/A'}
                     {company?.gosiNumber && (
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(company.gosiNumber);
-                        }}
-                        sx={{ p: 0.5 }}
+                      <Tooltip 
+                        open={copyFeedback.open && copyFeedback.text === 'GOSI Number copied!'}
+                        title="Copied!"
+                        placement="top"
                       >
-                        <ContentCopyIcon sx={{ fontSize: 14 }} />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(company.gosiNumber, 'GOSI Number');
+                          }}
+                          sx={{ p: 0.5 }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
                     )}
                   </Typography>
                 </Paper>
@@ -468,16 +488,22 @@ function IndividualList() {
                     <PersonIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     Sponsor: {company?.sponserId || 'N/A'}
                     {company?.sponserId && (
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(company.sponserId);
-                        }}
-                        sx={{ p: 0.5 }}
+                      <Tooltip 
+                        open={copyFeedback.open && copyFeedback.text === 'Sponsor copied!'}
+                        title="Copied!"
+                        placement="top"
                       >
-                        <ContentCopyIcon sx={{ fontSize: 14 }} />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(company.sponserId, 'Sponsor');
+                          }}
+                          sx={{ p: 0.5 }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
                     )}
                   </Typography>
                   <Typography 
@@ -489,16 +515,22 @@ function IndividualList() {
                     <LocationIcon sx={{ fontSize: 16, verticalAlign: 'text-bottom' }} />
                     MOI: {company?.makthabNumber || company?.molNumber || 'N/A'}
                     {(company?.makthabNumber || company?.molNumber) && (
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopy(company?.makthabNumber || company?.molNumber);
-                        }}
-                        sx={{ p: 0.5 }}
+                      <Tooltip 
+                        open={copyFeedback.open && copyFeedback.text === 'MOI copied!'}
+                        title="Copied!"
+                        placement="top"
                       >
-                        <ContentCopyIcon sx={{ fontSize: 14 }} />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(company?.makthabNumber || company?.molNumber, 'MOI');
+                          }}
+                          sx={{ p: 0.5 }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
                     )}
                   </Typography>
                 </Paper>

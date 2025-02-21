@@ -21,7 +21,8 @@ router.post('/login', async (req, res) => {
         id: user._id, 
         username: user.username,
         isAdmin: user.isAdmin,
-        allowedMainPersons: user.allowedMainPersons || []
+        allowedMainPersons: user.allowedMainPersons || [],
+        hasIncomeAccess: user.hasIncomeAccess
       },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
@@ -31,7 +32,8 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         username: user.username,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        hasIncomeAccess: user.hasIncomeAccess
       }
     });
   } catch (error) {

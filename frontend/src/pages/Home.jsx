@@ -17,7 +17,8 @@ import {
   Avatar,
   Button,
   Stack,
-  Skeleton
+  Skeleton,
+  Tooltip
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -31,7 +32,8 @@ import {
   Login as LoginIcon,
   PictureAsPdf as PdfIcon,
   Lock as LockIcon,
-  AccountBalanceWallet as WalletIcon
+  AccountBalanceWallet as WalletIcon,
+  MonetizationOn as MonetizationIcon
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -46,7 +48,11 @@ function Home() {
   const [stats, setStats] = useState(null);
   const navigate = useNavigate();
   const theme = useTheme();
-  const { admin, logout, allowedMainPersons, username, user } = useAuth();
+  const { user, logout } = useAuth();
+
+  useEffect(() => {
+    console.log('Current user object:', user);
+  }, [user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -424,6 +430,7 @@ function Home() {
         </Box>
       </Container>
 
+      {/* Bottom Toolbar */}
       <Box 
         sx={{ 
           width: '100%',
@@ -452,46 +459,57 @@ function Home() {
               username={user?.username} 
               onLogout={handleLogout}
             />
-            <Button
-              variant="contained"
-              startIcon={<PdfIcon />}
-              onClick={() => window.print()}
-              sx={{
-                bgcolor: 'secondary.main',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                borderRadius: 3,
-                fontWeight: 600,
-                '&:hover': {
-                  bgcolor: 'secondary.dark',
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme.shadows[4]
-                }
-              }}
-            >
-              Print PDF
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<WalletIcon />}
-              onClick={() => navigate('/income-expense')}
-              sx={{
-                bgcolor: 'success.main',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                borderRadius: 3,
-                fontWeight: 600,
-                '&:hover': {
-                  bgcolor: 'success.dark',
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme.shadows[4]
-                }
-              }}
-            >
-              Income & Expense
-            </Button>
+            <Tooltip title="Print PDF">
+              <IconButton
+                onClick={() => window.print()}
+                size="small"
+                sx={{ 
+                  bgcolor: 'secondary.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'secondary.dark',
+                  }
+                }}
+              >
+                <Avatar 
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    bgcolor: 'inherit',
+                    color: 'inherit'
+                  }}
+                >
+                  <PdfIcon />
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+
+            {Boolean(user?.hasIncomeAccess) && (
+              <Tooltip title="Income & Expense">
+                <IconButton
+                  onClick={() => navigate('/income-expense')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: 'success.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'success.dark',
+                    }
+                  }}
+                >
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32,
+                      bgcolor: 'inherit',
+                      color: 'inherit'
+                    }}
+                  >
+                    <WalletIcon />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         </Container>
       </Box>

@@ -15,7 +15,8 @@ export function AuthProvider({ children }) {
         setUser({
           username: decoded.username,
           isAdmin: decoded.isAdmin,
-          allowedMainPersons: decoded.allowedMainPersons || []
+          allowedMainPersons: decoded.allowedMainPersons || [],
+          hasIncomeAccess: decoded.hasIncomeAccess
         });
       } catch (error) {
         console.error('Invalid token:', error);
@@ -31,7 +32,8 @@ export function AuthProvider({ children }) {
     setUser({
       username: decoded.username,
       isAdmin: decoded.isAdmin,
-      allowedMainPersons: decoded.allowedMainPersons || []
+      allowedMainPersons: decoded.allowedMainPersons || [],
+      hasIncomeAccess: decoded.hasIncomeAccess
     });
   };
 

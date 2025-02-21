@@ -61,6 +61,7 @@ export const individualApi = {
   getExpired: (mainPersonId) => api.get(`/individuals/expired/${mainPersonId}`),
   getExpiringSoon: (mainPersonId) => api.get(`/individuals/expiring-soon/${mainPersonId}`),
   payPending: (id, data) => api.post(`/individuals/${id}/pay-pending`, data),
+  getByIqamaNumber: (iqamaNumber) => api.get(`/individuals/by-iqama/${iqamaNumber}`),
 };
 
 export const notificationApi = {

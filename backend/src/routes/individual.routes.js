@@ -54,7 +54,7 @@ router.get('/', protect, async (req, res, next) => {
         select: 'name address contactNumber mainPerson',
         populate: {
           path: 'mainPerson',
-          select: 'name email contactNumber'
+          select: 'name email contactNumber _id'
         }
       });
 
@@ -85,7 +85,16 @@ router.get('/company/:companyId', protect, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const individuals = await Individual.find({ company: companyId });
+    const individuals = await Individual.find({ company: companyId })
+      .populate({
+        path: 'company',
+        select: 'name address contactNumber mainPerson',
+        populate: {
+          path: 'mainPerson',
+          select: 'name email contactNumber _id'
+        }
+      });
+
     res.json(individuals);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -111,6 +120,8 @@ router.post('/', protect, async (req, res) => {
 
     // Create income record if initial payment is made
     if (initialAmount > 0) {
+      const company = await Company.findById(req.body.company).populate('mainPerson');
+      
       await Income.create({
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
@@ -118,7 +129,8 @@ router.post('/', protect, async (req, res) => {
         referredBy: req.body.referredBy || '',
         addedBy: req.user.username,
         dateAndTime: new Date(),
-        notes: 'Initial payment for new individual'
+        notes: 'Initial payment for new individual',
+        mainPerson: company.mainPerson._id
       });
     }
 
@@ -157,6 +169,7 @@ router.post('/:id/pay-pending', protect, async (req, res) => {
     await individual.save();
 
     // Create income record for the payment
+    const company = await Company.findById(individual.company).populate('mainPerson');
     await Income.create({
       name: individual.name,
       iqamaNumber: individual.iqamaNumber,
@@ -164,7 +177,8 @@ router.post('/:id/pay-pending', protect, async (req, res) => {
       referredBy: individual.referredBy || '',
       addedBy: req.user.username,
       dateAndTime: new Date(),
-      notes: 'Pending payment'
+      notes: 'Pending payment',
+      mainPerson: company.mainPerson._id
     });
 
     res.json(individual);
@@ -195,8 +209,22 @@ router.put('/:id', protect, async (req, res) => {
         lastUpdatedBy: req.user.username,
         lastUpdateDate: new Date()
       },
-      { new: true }
-    );
+      { 
+        new: true,
+        runValidators: true 
+      }
+    ).populate({
+      path: 'company',
+      select: 'name address contactNumber mainPerson',
+      populate: {
+        path: 'mainPerson',
+        select: 'name email contactNumber _id'
+      }
+    });
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
 
     res.json(individual);
   } catch (error) {
@@ -341,6 +369,26 @@ router.get('/:id', protect, async (req, res) => {
     res.json(individual);
   } catch (error) {
     res.status(404).json({ message: error.message });
+  }
+});
+
+// Add this new route to get individual by iqama number
+router.get('/by-iqama/:iqamaNumber', protect, async (req, res) => {
+  try {
+    const individual = await Individual.findOne({ 
+      iqamaNumber: req.params.iqamaNumber 
+    }).populate({
+      path: 'company',
+      select: 'mainPerson'
+    });
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    res.json(individual);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

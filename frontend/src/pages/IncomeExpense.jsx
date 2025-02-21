@@ -52,7 +52,7 @@ import {
   MonetizationOn as MonetizationIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { incomeApi, expenseApi, iqamaPriceApi } from '../services/api';
+import { incomeApi, expenseApi, iqamaPriceApi, individualApi } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -300,29 +300,32 @@ function IncomeExpense() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = {
-        ...formData,
-        amount: parseFloat(formData.amount)
-      };
-
+      setError('');
+      
+      // If it's an income entry, we need to get the mainPerson
       if (dialogType === 'income') {
-        if (editData) {
-          await incomeApi.update(editData._id, data);
-        } else {
-          await incomeApi.create(data);
+        // First find the individual by iqamaNumber to get their company and mainPerson
+        const individualsResponse = await individualApi.getByIqamaNumber(formData.iqamaNumber);
+        const individual = individualsResponse.data;
+        
+        if (!individual) {
+          setError('No individual found with this iqama number');
+          return;
         }
+
+        await incomeApi.create({
+          ...formData,
+          mainPerson: individual.company.mainPerson
+        });
       } else {
-        if (editData) {
-          await expenseApi.update(editData._id, data);
-        } else {
-          await expenseApi.create(data);
-        }
+        await expenseApi.create(formData);
       }
 
       handleCloseDialog();
       fetchData();
     } catch (error) {
-      setError(error.response?.data?.message || 'An error occurred');
+      console.error('Error creating record:', error);
+      setError(error.response?.data?.message || 'Failed to create record');
     }
   };
 

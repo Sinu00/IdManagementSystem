@@ -20,6 +20,11 @@ const incomeSchema = new mongoose.Schema(
     referredBy: {
       type: String,
       trim: true
+    },
+    mainPerson: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MainPerson',  // Changed from 'Individual' to 'MainPerson'
+      required: [true, 'Main person reference is required']
     }
   },
   { timestamps: true }

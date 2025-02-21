@@ -61,7 +61,11 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="/income-expense" element={<IncomeExpense />} />
+              <Route path="/income-expense" element={
+                <ProtectedRoute>
+                  <IncomeExpense />
+                </ProtectedRoute>
+              } />
 
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>

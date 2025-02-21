@@ -19,7 +19,11 @@ const userSchema = new mongoose.Schema(
     allowedMainPersons: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "MainPerson"
-    }]
+    }],
+    hasIncomeAccess: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );

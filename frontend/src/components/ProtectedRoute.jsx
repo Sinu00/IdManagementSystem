@@ -13,6 +13,10 @@ function ProtectedRoute({ children, adminOnly = false }) {
     return <Navigate to="/" replace />;
   }
 
+  if (location.pathname === '/income-expense' && !user.hasIncomeAccess) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
 
