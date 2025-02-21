@@ -45,7 +45,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// Routes with /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/main-persons', mainPersonRoutes);
 app.use('/api/companies', companyRoutes);
