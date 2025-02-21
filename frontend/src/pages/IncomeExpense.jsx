@@ -49,7 +49,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   FilterAlt as FilterIcon,
-  MonetizationOn as MonetizationIcon
+  MonetizationOn as MonetizationIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { incomeApi, expenseApi, iqamaPriceApi, individualApi } from '../services/api';
@@ -775,6 +776,7 @@ function IncomeExpense() {
             gap: 2
           }}
         >
+          {/* Left side with back button and title */}
           <Box display="flex" alignItems="center" gap={2}>
             <IconButton 
               onClick={() => navigate(-1)} 
@@ -796,26 +798,40 @@ function IncomeExpense() {
             </Box>
           </Box>
 
-          {/* Add IQAMA Price Update Button here */}
-          {user?.isAdmin && (
+          {/* Right side with both buttons */}
+          <Box display="flex" gap={2}>
+            {user?.isAdmin && (
+              <Button
+                variant="outlined"
+                startIcon={<MonetizationIcon />}
+                onClick={() => setIsIqamaPriceDialogOpen(true)}
+                sx={{
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    bgcolor: 'primary.lighter'
+                  }
+                }}
+              >
+                IQAMA Price: SAR {iqamaPrice}
+              </Button>
+            )}
+
             <Button
               variant="outlined"
-              color="primary"
-              startIcon={<MonetizationIcon />}
-              onClick={() => setIsIqamaPriceDialogOpen(true)}
+              startIcon={<PeopleIcon />}
+              onClick={() => navigate('/users')}
               sx={{
                 borderRadius: 2,
-                borderColor: 'primary.main',
-                color: 'primary.main',
                 '&:hover': {
                   borderColor: 'primary.dark',
                   bgcolor: 'primary.lighter'
                 }
               }}
             >
-              IQAMA Price: SAR {iqamaPrice}
+              Manage Users
             </Button>
-          )}
+          </Box>
         </Box>
 
         {/* Summary Cards */}

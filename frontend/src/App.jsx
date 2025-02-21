@@ -5,6 +5,7 @@ import theme from './theme';
 import { AuthProvider } from './context/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
 import ProtectedRoute from './components/ProtectedRoute';
+import UserManagement from './pages/UserManagement';
 
 const Login = lazy(() => import('./pages/Login'));
 const Home = lazy(() => import('./pages/Home'));
@@ -64,6 +65,12 @@ function App() {
               <Route path="/income-expense" element={
                 <ProtectedRoute>
                   <IncomeExpense />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/users" element={
+                <ProtectedRoute>
+                  <UserManagement />
                 </ProtectedRoute>
               } />
 
