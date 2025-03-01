@@ -578,7 +578,22 @@ function CompanyList() {
                           <Box display="flex" alignItems="center" gap={1} mb={2}>
 
                             <Box flex={1}>
-                              <Typography variant="h5" fontWeight="bold">
+                              <Typography 
+                                variant="h5" 
+                                fontWeight="bold"
+                                sx={{ 
+                                  direction: 'rtl',
+                                  textAlign: 'right',
+                                  fontFamily: 'var(--font-family-arabic)',
+                                  fontSize: { xs: '1.5rem', sm: '1.5rem' },
+                                  lineHeight: 1.4,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical'
+                                }}
+                              >
                                 {company.name}
                               </Typography>
                             </Box>

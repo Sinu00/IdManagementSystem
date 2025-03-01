@@ -19,8 +19,26 @@ export const CompanyCardSkeleton = () => (
     <CardContent sx={{ p: 3 }}>
       {/* Header Section */}
       <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <Box flex={1}>
-          <Skeleton variant="text" width="80%" sx={{ height: '32px' }} />
+        <Box flex={1} sx={{ direction: 'rtl', textAlign: 'right' }}>
+          <Skeleton 
+            variant="text" 
+            width="90%" 
+            sx={{ 
+              height: '32px',
+              ml: 'auto',
+              borderRadius: '4px'
+            }} 
+          />
+          <Skeleton 
+            variant="text" 
+            width="60%" 
+            sx={{ 
+              height: '20px',
+              ml: 'auto',
+              mt: 0.5,
+              borderRadius: '4px'
+            }} 
+          />
         </Box>
         <Avatar 
           sx={{ 
