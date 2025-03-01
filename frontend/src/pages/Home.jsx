@@ -145,9 +145,9 @@ function Home() {
                         <Skeleton 
                           variant="text" 
                           width={100} 
-                          height={{ xs: 30, sm: 60 }}
                           sx={{ 
-                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' },
+                            height: { xs: '30px', sm: '60px' }
                           }}
                         />
                       ) : (
@@ -206,9 +206,9 @@ function Home() {
                         <Skeleton 
                           variant="text" 
                           width={100} 
-                          height={{ xs: 30, sm: 60 }}
                           sx={{ 
-                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' },
+                            height: { xs: '30px', sm: '60px' }
                           }}
                         />
                       ) : (
@@ -267,9 +267,9 @@ function Home() {
                         <Skeleton 
                           variant="text" 
                           width={100} 
-                          height={{ xs: 30, sm: 60 }}
                           sx={{ 
-                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' },
+                            height: { xs: '30px', sm: '60px' }
                           }}
                         />
                       ) : (
@@ -349,8 +349,16 @@ function Home() {
                               <PersonIcon fontSize="large" sx={{ color: 'grey.400' }} />
                             </Avatar>
                             <Box>
-                              <Skeleton variant="text" width={150} height={28} />
-                              <Skeleton variant="text" width={100} height={20} />
+                              <Skeleton 
+                                variant="text" 
+                                width={150} 
+                                sx={{ height: '28px' }}
+                              />
+                              <Skeleton 
+                                variant="text" 
+                                width={100} 
+                                sx={{ height: '20px' }}
+                              />
                             </Box>
                           </Box>
 
@@ -362,14 +370,22 @@ function Home() {
                                 fontSize="small" 
                                 sx={{ color: 'grey.400' }}
                               />
-                              <Skeleton variant="text" width={180} height={20} />
+                              <Skeleton 
+                                variant="text" 
+                                width={180} 
+                                sx={{ height: '20px' }}
+                              />
                             </Box>
                             <Box display="flex" alignItems="center" gap={1}>
                               <PhoneIcon 
                                 fontSize="small" 
                                 sx={{ color: 'grey.400' }}
                               />
-                              <Skeleton variant="text" width={140} height={20} />
+                              <Skeleton 
+                                variant="text" 
+                                width={140} 
+                                sx={{ height: '20px' }}
+                              />
                             </Box>
                           </Box>
                         </CardContent>
