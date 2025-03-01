@@ -169,7 +169,7 @@ function Home() {
                           fontSize: { xs: '0.7rem', sm: '1rem' }
                         }}
                       >
-                        Main Persons
+                        Sponsors
                       </Typography>
                     </Box>
                   </Paper>
@@ -291,7 +291,7 @@ function Home() {
                           fontSize: { xs: '0.7rem', sm: '1rem' }
                         }}
                       >
-                        Urgent
+                        Expiring Soon
                       </Typography>
                     </Box>
                   </Paper>
@@ -489,7 +489,7 @@ function Home() {
                                   variant="body2" 
                                   color={isAllowed ? 'text.secondary' : 'text.disabled'}
                                 >
-                                  Main Person
+                                  Sponsors
                                 </Typography>
                               </Box>
                             </Box>
