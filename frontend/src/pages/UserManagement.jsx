@@ -31,7 +31,8 @@ import {
   Divider,
   Avatar,
   CircularProgress,
-  Skeleton
+  Skeleton,
+  Grid
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -217,37 +218,54 @@ const UserManagement = () => {
         <Box 
           sx={{ 
             mb: 5,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            position: 'relative',
             background: theme.palette.background.paper,
-            p: 3,
+            p: { xs: 2, sm: 3 },
+            pt: { xs: 4, sm: 5 }, // Extra padding top to accommodate back button
             borderRadius: 3,
             boxShadow: theme.shadows[2]
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => navigate(-1)}
-              sx={{
-                borderRadius: 2,
-                borderWidth: 2,
-                '&:hover': {
-                  borderWidth: 2,
-                  background: alpha(theme.palette.primary.main, 0.1)
-                }
-              }}
-            >
-              Back
-            </Button>
+          {/* Back Button - Absolute positioned */}
+          <IconButton
+            onClick={() => navigate(-1)}
+            sx={{
+              position: 'absolute',
+              top: { xs: -20, sm: -24 },
+              left: { xs: 16, sm: 24 },
+              borderRadius: 2,
+              bgcolor: theme.palette.background.paper,
+              border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              boxShadow: theme.shadows[2],
+              width: { xs: 40, sm: 48 },
+              height: { xs: 40, sm: 48 },
+              '&:hover': {
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+
+          {/* Header Content */}
+          <Box 
+            sx={{ 
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'center', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: { xs: 2, sm: 0 },
+              textAlign: { xs: 'center', sm: 'left' }
+            }}
+          >
             <Box>
               <Typography 
                 variant="h4" 
                 component="h1"
                 sx={{ 
                   fontWeight: 600,
+                  fontSize: { xs: '1.5rem', sm: '2rem' },
                   background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -256,28 +274,35 @@ const UserManagement = () => {
               >
                 User Management
               </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
+              <Typography 
+                variant="subtitle1" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}
+              >
                 Manage system users and their permissions
               </Typography>
             </Box>
+
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setDialogOpen(true)}
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                '&:hover': {
+                  background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+                }
+              }}
+            >
+              Add User
+            </Button>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setDialogOpen(true)}
-            sx={{ 
-              borderRadius: 2,
-              px: 3,
-              py: 1,
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
-              '&:hover': {
-                background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-              }
-            }}
-          >
-            Add User
-          </Button>
         </Box>
       )}
 
@@ -309,82 +334,250 @@ const UserManagement = () => {
         </Alert>
       ) : (
         <Fade in timeout={800}>
-          <TableContainer 
-            component={Paper} 
-            elevation={3} 
-            sx={{ 
-              borderRadius: 4,
-              overflow: 'hidden',
-              transform: 'translateY(0)', // Initial position
-              transition: 'all 0.3s ease',
-              '& .MuiTableRow-root': {
-                transition: 'all 0.2s ease',
-              },
-              '& .MuiTableCell-head': {
-                backgroundColor: theme.palette.mode === 'dark' 
-                  ? alpha(theme.palette.primary.main, 0.2)
-                  : alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.text.primary,
-                fontWeight: 600,
-                fontSize: '0.95rem'
-              },
-              '& .MuiTableCell-root': {
-                borderColor: theme.palette.divider
-              }
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell width="30%">Username</TableCell>
-                  <TableCell width="15%">Role</TableCell>
-                  <TableCell width="15%">Income Access</TableCell>
-                  <TableCell width="30%">Allowed Main Persons</TableCell>
-                  <TableCell width="10%" align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow 
-                    key={user._id}
-                    sx={{ 
-                      transition: 'all 0.2s',
-                      '&:hover': { 
-                        backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                        transform: 'translateX(6px)'
-                      }
-                    }}
-                  >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar 
-                          sx={{ 
-                            bgcolor: user.isAdmin 
-                              ? alpha(theme.palette.primary.main, 0.9)
-                              : alpha(theme.palette.secondary.main, 0.9),
-                            width: 40,
-                            height: 40,
-                            boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.15)}`
-                          }}
-                        >
-                          {user.isAdmin ? <AdminIcon /> : <UserIcon />}
-                        </Avatar>
-                        <Box>
-                          <Typography fontWeight="600">{user.username}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            ID: {user._id.slice(-6)}
-                          </Typography>
+          <Box>
+            {/* Desktop Table View */}
+            <TableContainer 
+              component={Paper} 
+              elevation={3} 
+              sx={{ 
+                borderRadius: 4,
+                overflow: 'hidden',
+                display: { xs: 'none', md: 'block' } // Hide on mobile
+              }}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell width="30%">Username</TableCell>
+                    <TableCell width="15%">Role</TableCell>
+                    <TableCell width="15%">Income Access</TableCell>
+                    <TableCell width="30%">Allowed Main Persons</TableCell>
+                    <TableCell width="10%" align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow 
+                      key={user._id}
+                      sx={{ 
+                        transition: 'all 0.2s',
+                        '&:hover': { 
+                          backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                          transform: 'translateX(6px)'
+                        }
+                      }}
+                    >
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: user.isAdmin 
+                                ? alpha(theme.palette.primary.main, 0.9)
+                                : alpha(theme.palette.secondary.main, 0.9),
+                              width: 40,
+                              height: 40,
+                              boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.15)}`
+                            }}
+                          >
+                            {user.isAdmin ? <AdminIcon /> : <UserIcon />}
+                          </Avatar>
+                          <Box>
+                            <Typography fontWeight="600">{user.username}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ID: {user._id.slice(-6)}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={user.isAdmin ? 'Admin' : 'User'}
+                          color={user.isAdmin ? 'primary' : 'default'}
+                          size="small"
+                          sx={{ 
+                            fontWeight: 600,
+                            px: 1,
+                            borderRadius: '6px',
+                            background: user.isAdmin 
+                              ? alpha(theme.palette.primary.main, 0.1)
+                              : alpha(theme.palette.grey[500], 0.1),
+                            border: '2px solid',
+                            borderColor: user.isAdmin 
+                              ? alpha(theme.palette.primary.main, 0.3)
+                              : alpha(theme.palette.grey[500], 0.2)
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={user.hasIncomeAccess ? 'Yes' : 'No'}
+                          color={user.hasIncomeAccess ? 'success' : 'error'}
+                          size="small"
+                          sx={{ 
+                            fontWeight: 600,
+                            px: 1,
+                            borderRadius: '6px',
+                            background: user.hasIncomeAccess
+                              ? alpha(theme.palette.success.main, 0.1)
+                              : alpha(theme.palette.error.main, 0.1),
+                            border: '2px solid',
+                            borderColor: user.hasIncomeAccess
+                              ? alpha(theme.palette.success.main, 0.3)
+                              : alpha(theme.palette.error.main, 0.3)
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          {user.allowedMainPersons.length > 0 ? (
+                            user.allowedMainPersons.map((person, index) => (
+                              <Chip
+                                key={person._id || index}
+                                label={person.name || 'Unknown'}
+                                size="small"
+                                sx={{ 
+                                  borderRadius: '6px',
+                                  background: alpha(theme.palette.info.main, 0.1),
+                                  border: `2px solid ${alpha(theme.palette.info.main, 0.3)}`,
+                                  fontWeight: 500,
+                                  transition: 'all 0.2s',
+                                  '&:hover': { 
+                                    background: alpha(theme.palette.info.main, 0.2)
+                                  }
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                color: alpha(theme.palette.error.main, 0.7),
+                                fontStyle: 'italic'
+                              }}
+                            >
+                              No access
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                          <Tooltip title="Edit User" arrow>
+                            <IconButton 
+                              onClick={() => handleEdit(user)}
+                              sx={{ 
+                                color: theme.palette.primary.main,
+                                '&:hover': { 
+                                  background: alpha(theme.palette.primary.main, 0.1)
+                                }
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete User" arrow>
+                            <IconButton 
+                              onClick={() => {
+                                setUserToDelete(user);
+                                setDeleteConfirmOpen(true);
+                              }}
+                              sx={{ 
+                                color: theme.palette.error.main,
+                                '&:hover': { 
+                                  background: alpha(theme.palette.error.main, 0.1)
+                                }
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* Mobile Card View */}
+            <Box 
+              sx={{ 
+                display: { xs: 'flex', md: 'none' },
+                flexDirection: 'column',
+                gap: 2
+              }}
+            >
+              {users.map((user) => (
+                <Paper
+                  key={user._id}
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: theme.shadows[8]
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: user.isAdmin 
+                          ? alpha(theme.palette.primary.main, 0.9)
+                          : alpha(theme.palette.secondary.main, 0.9),
+                        width: 40,
+                        height: 40,
+                        boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.15)}`
+                      }}
+                    >
+                      {user.isAdmin ? <AdminIcon /> : <UserIcon />}
+                    </Avatar>
+                    <Box flex={1}>
+                      <Typography fontWeight="600">{user.username}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ID: {user._id.slice(-6)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(user)}
+                        sx={{ 
+                          bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) }
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setUserToDelete(user);
+                          setDeleteConfirmOpen(true);
+                        }}
+                        sx={{ 
+                          bgcolor: alpha(theme.palette.error.main, 0.1),
+                          '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.2) }
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Role</Typography>
                       <Chip 
                         label={user.isAdmin ? 'Admin' : 'User'}
                         color={user.isAdmin ? 'primary' : 'default'}
                         size="small"
                         sx={{ 
+                          mt: 0.5,
                           fontWeight: 600,
-                          px: 1,
+                          width: '100%',
                           borderRadius: '6px',
                           background: user.isAdmin 
                             ? alpha(theme.palette.primary.main, 0.1)
@@ -395,97 +588,59 @@ const UserManagement = () => {
                             : alpha(theme.palette.grey[500], 0.2)
                         }}
                       />
-                    </TableCell>
-                    <TableCell>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Income Access</Typography>
                       <Chip 
                         label={user.hasIncomeAccess ? 'Yes' : 'No'}
-                        color={user.hasIncomeAccess ? 'success' : 'error'}
+                        color={user.hasIncomeAccess ? 'success' : 'default'}
                         size="small"
                         sx={{ 
+                          mt: 0.5,
                           fontWeight: 600,
-                          px: 1,
-                          borderRadius: '6px',
-                          background: user.hasIncomeAccess
-                            ? alpha(theme.palette.success.main, 0.1)
-                            : alpha(theme.palette.error.main, 0.1),
-                          border: '2px solid',
-                          borderColor: user.hasIncomeAccess
-                            ? alpha(theme.palette.success.main, 0.3)
-                            : alpha(theme.palette.error.main, 0.3)
+                          width: '100%',
+                          borderRadius: '6px'
                         }}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {user.allowedMainPersons.length > 0 ? (
-                          user.allowedMainPersons.map((person, index) => (
-                            <Chip
-                              key={person._id || index}
-                              label={person.name || 'Unknown'}
-                              size="small"
-                              sx={{ 
-                                borderRadius: '6px',
-                                background: alpha(theme.palette.info.main, 0.1),
-                                border: `2px solid ${alpha(theme.palette.info.main, 0.3)}`,
-                                fontWeight: 500,
-                                transition: 'all 0.2s',
-                                '&:hover': { 
-                                  background: alpha(theme.palette.info.main, 0.2)
-                                }
-                              }}
-                            />
-                          ))
-                        ) : (
-                          <Typography 
-                            variant="body2" 
+                    </Grid>
+                  </Grid>
+
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Allowed Main Persons
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+                      {user.allowedMainPersons.length > 0 ? (
+                        user.allowedMainPersons.map((person, index) => (
+                          <Chip
+                            key={person._id || index}
+                            label={person.name || 'Unknown'}
+                            size="small"
                             sx={{ 
-                              color: alpha(theme.palette.error.main, 0.7),
-                              fontStyle: 'italic'
+                              borderRadius: '6px',
+                              background: alpha(theme.palette.info.main, 0.1),
+                              border: `2px solid ${alpha(theme.palette.info.main, 0.3)}`,
+                              fontWeight: 500
                             }}
-                          >
-                            No access
-                          </Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                        <Tooltip title="Edit User" arrow>
-                          <IconButton 
-                            onClick={() => handleEdit(user)}
-                            sx={{ 
-                              color: theme.palette.primary.main,
-                              '&:hover': { 
-                                background: alpha(theme.palette.primary.main, 0.1)
-                              }
-                            }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete User" arrow>
-                          <IconButton 
-                            onClick={() => {
-                              setUserToDelete(user);
-                              setDeleteConfirmOpen(true);
-                            }}
-                            sx={{ 
-                              color: theme.palette.error.main,
-                              '&:hover': { 
-                                background: alpha(theme.palette.error.main, 0.1)
-                              }
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                          />
+                        ))
+                      ) : (
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: alpha(theme.palette.error.main, 0.7),
+                            fontStyle: 'italic'
+                          }}
+                        >
+                          No access
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          </Box>
         </Fade>
       )}
 
