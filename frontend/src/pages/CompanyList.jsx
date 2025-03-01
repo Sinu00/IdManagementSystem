@@ -553,277 +553,277 @@ function CompanyList() {
               <CompanyCardSkeletonList count={6} />
             ) : (
               <>
-              <Grid container spacing={3}>
+                <Grid container spacing={3}>
                   {paginatedCompanies.map((company) => (
-                  <Grid item xs={12} sm={6} md={4} key={company._id}>
-                    <Card 
-                      onClick={() => navigate(`/company/${company._id}/individuals`)}
-                      sx={{ 
-                        height: '100%',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease-in-out',
-                        borderRadius: 3,
-                        position: 'relative',
-                        '@media (hover: hover)': {
-                          '&:hover': {
-                            transform: 'translateY(-4px)',
-                            boxShadow: theme.shadows[8]
+                    <Grid item xs={12} sm={6} md={4} key={company._id}>
+                      <Card 
+                        onClick={() => navigate(`/company/${company._id}/individuals`)}
+                        sx={{ 
+                          height: '100%',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease-in-out',
+                          borderRadius: 3,
+                          position: 'relative',
+                          '@media (hover: hover)': {
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: theme.shadows[8]
+                            }
                           }
-                        }
-                      }}
-                    >
-                      <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
-                      <CardContent sx={{ p: 3 }}>
-                        {/* Header Section */}
-                        <Box display="flex" alignItems="center" gap={1} mb={2}>
+                        }}
+                      >
+                        <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
+                        <CardContent sx={{ p: 3 }}>
+                          {/* Header Section */}
+                          <Box display="flex" alignItems="center" gap={1} mb={2}>
 
-                          <Box flex={1}>
-                            <Typography variant="h5" fontWeight="bold">
-                              {company.name}
-                            </Typography>
+                            <Box flex={1}>
+                              <Typography variant="h5" fontWeight="bold">
+                                {company.name}
+                              </Typography>
+                            </Box>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                                width: 56,
+                                height: 56
+                              }}
+                            >
+                              <BusinessIcon fontSize="large" />
+                            </Avatar>
                           </Box>
-                          <Avatar 
-                            sx={{ 
-                              bgcolor: 'primary.light',
-                              color: 'primary.main',
-                              width: 56,
-                              height: 56
-                            }}
-                          >
-                            <BusinessIcon fontSize="large" />
-                          </Avatar>
-                        </Box>
 
-                        <Divider sx={{ my: 2 }} />
+                          <Divider sx={{ my: 2 }} />
 
-                        {/* Company Details Grid */}
-                        <Grid container spacing={2}>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              CR: <span className="no-link">{company.crNumber || 'N/A'}</span>
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              Sponsor: {company.sponserId || 'N/A'}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              <ErrorIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              GOSI: <span className="no-link">{company.gosiNumber || 'N/A'}</span>
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                              MOL: {company.molNumber || 'N/A'}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-
-                        {/* Status Cards */}
-                        <Box sx={{ mt: 3 }}>
+                          {/* Company Details Grid */}
                           <Grid container spacing={2}>
-                            <Grid item xs={4}>
-                              <Box
-                                sx={{ 
-                                  p: 1.5, 
-                                  bgcolor: 'error.lighter',
-                                  borderRadius: 2,
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  position: 'relative',
-                                  overflow: 'hidden',
-                                  '&:hover': {
-                                    transform: 'translateY(-3px)',
-                                    transition: 'transform 0.2s ease-in-out'
-                                  },
-                                  '&::before': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '2px',
-                                    bgcolor: 'error.main'
-                                  }
-                                }}
-                              >
-                                <Typography 
-                                  variant="h5" 
-                                  color="error.dark" 
-                                  fontWeight="bold"
-                                  sx={{ mb: 0.5 }}
-                                >
-                                  {company.redCards || 0}
-                                </Typography>
-                                <Typography 
-                                  variant="caption" 
-                                  color="error.dark" 
-                                  fontWeight="medium"
-                                  sx={{ 
-                                    whiteSpace: 'nowrap',
-                                    fontSize: '0.7rem'
-                                  }}
-                                >
-                                  Expired
-                                </Typography>
-                              </Box>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                                CR: <span className="no-link">{company.crNumber || 'N/A'}</span>
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                                Sponsor: {company.sponserId || 'N/A'}
+                              </Typography>
                             </Grid>
-
-                            <Grid item xs={4}>
-                              <Box
-                                sx={{ 
-                                  p: 1.5, 
-                                  bgcolor: 'warning.lighter',
-                                  borderRadius: 2,
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  position: 'relative',
-                                  overflow: 'hidden',
-                                  '&:hover': {
-                                    transform: 'translateY(-3px)',
-                                    transition: 'transform 0.2s ease-in-out'
-                                  },
-                                  '&::before': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '2px',
-                                    bgcolor: 'warning.main'
-                                  }
-                                }}
-                              >
-                                <Typography 
-                                  variant="h5" 
-                                  color="warning.dark" 
-                                  fontWeight="bold"
-                                  sx={{ mb: 0.5 }}
-                                >
-                                  {company.orangeCards || 0}
-                                </Typography>
-                                <Typography 
-                                  variant="caption" 
-                                  color="warning.dark" 
-                                  fontWeight="medium"
-                                  sx={{ 
-                                    whiteSpace: 'nowrap',
-                                    fontSize: '0.7rem'
-                                  }}
-                                >
-                                  Warning
-                                </Typography>
-                              </Box>
-                            </Grid>
-
-                            <Grid item xs={4}>
-                              <Box
-                                sx={{ 
-                                  p: 1.5, 
-                                  bgcolor: 'success.lighter',
-                                  borderRadius: 2,
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  position: 'relative',
-                                  overflow: 'hidden',
-                                  '&:hover': {
-                                    transform: 'translateY(-3px)',
-                                    transition: 'transform 0.2s ease-in-out'
-                                  },
-                                  '&::before': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '2px',
-                                    bgcolor: 'success.main'
-                                  }
-                                }}
-                              >
-                                <Typography 
-                                  variant="h5" 
-                                  color="success.dark" 
-                                  fontWeight="bold"
-                                  sx={{ mb: 0.5 }}
-                                >
-                                 {company.totalIndividuals || 0}
-                                </Typography>
-                                <Typography 
-                                  variant="caption" 
-                                  color="success.dark" 
-                                  fontWeight="medium"
-                                  sx={{ 
-                                    whiteSpace: 'nowrap',
-                                    fontSize: '0.7rem'
-                                  }}
-                                >
-                                  Total IDs
-                                </Typography>
-                              </Box>
+                            <Grid item xs={6}>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <ErrorIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                                GOSI: <span className="no-link">{company.gosiNumber || 'N/A'}</span>
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
+                                MOL: {company.molNumber || 'N/A'}
+                              </Typography>
                             </Grid>
                           </Grid>
-                        </Box>
 
-                        {/* Admin Actions */}
-                        {user?.isAdmin && (
-                          <Box 
-                            sx={{ 
-                              position: 'absolute',
-                              top: 12,
-                              right: 12,
-                              display: 'flex',
-                              gap: 1,
-                              zIndex: 2
-                            }}
-                          >
-                            <IconButton 
-                              size="small" 
-                              color="primary"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEdit(company);
-                              }}
-                              sx={{ 
-                                bgcolor: 'background.paper',
-                                boxShadow: 1,
-                                '&:hover': {
-                                  transform: 'scale(1.1)',
-                                  bgcolor: 'primary.lighter'
-                                }
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton 
-                              size="small" 
-                              color="error"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(company);
-                              }}
-                              sx={{ 
-                                bgcolor: 'background.paper',
-                                boxShadow: 1,
-                                '&:hover': {
-                                  transform: 'scale(1.1)',
-                                  bgcolor: 'error.lighter'
-                                }
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
+                          {/* Status Cards */}
+                          <Box sx={{ mt: 3 }}>
+                            <Grid container spacing={2}>
+                              <Grid item xs={4}>
+                                <Box
+                                  sx={{ 
+                                    p: 1.5, 
+                                    bgcolor: 'error.lighter',
+                                    borderRadius: 2,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    '&:hover': {
+                                      transform: 'translateY(-3px)',
+                                      transition: 'transform 0.2s ease-in-out'
+                                    },
+                                    '&::before': {
+                                      content: '""',
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      height: '2px',
+                                      bgcolor: 'error.main'
+                                    }
+                                  }}
+                                >
+                                  <Typography 
+                                    variant="h5" 
+                                    color="error.dark" 
+                                    fontWeight="bold"
+                                    sx={{ mb: 0.5 }}
+                                  >
+                                    {company.redCards || 0}
+                                  </Typography>
+                                  <Typography 
+                                    variant="caption" 
+                                    color="error.dark" 
+                                    fontWeight="medium"
+                                    sx={{ 
+                                      whiteSpace: 'nowrap',
+                                      fontSize: '0.7rem'
+                                    }}
+                                  >
+                                    Expired
+                                  </Typography>
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={4}>
+                                <Box
+                                  sx={{ 
+                                    p: 1.5, 
+                                    bgcolor: 'warning.lighter',
+                                    borderRadius: 2,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    '&:hover': {
+                                      transform: 'translateY(-3px)',
+                                      transition: 'transform 0.2s ease-in-out'
+                                    },
+                                    '&::before': {
+                                      content: '""',
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      height: '2px',
+                                      bgcolor: 'warning.main'
+                                    }
+                                  }}
+                                >
+                                  <Typography 
+                                    variant="h5" 
+                                    color="warning.dark" 
+                                    fontWeight="bold"
+                                    sx={{ mb: 0.5 }}
+                                  >
+                                    {company.orangeCards || 0}
+                                  </Typography>
+                                  <Typography 
+                                    variant="caption" 
+                                    color="warning.dark" 
+                                    fontWeight="medium"
+                                    sx={{ 
+                                      whiteSpace: 'nowrap',
+                                      fontSize: '0.7rem'
+                                    }}
+                                  >
+                                    Warning
+                                  </Typography>
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={4}>
+                                <Box
+                                  sx={{ 
+                                    p: 1.5, 
+                                    bgcolor: 'success.lighter',
+                                    borderRadius: 2,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    '&:hover': {
+                                      transform: 'translateY(-3px)',
+                                      transition: 'transform 0.2s ease-in-out'
+                                    },
+                                    '&::before': {
+                                      content: '""',
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      height: '2px',
+                                      bgcolor: 'success.main'
+                                    }
+                                  }}
+                                >
+                                  <Typography 
+                                    variant="h5" 
+                                    color="success.dark" 
+                                    fontWeight="bold"
+                                    sx={{ mb: 0.5 }}
+                                  >
+                                   {company.totalIndividuals || 0}
+                                  </Typography>
+                                  <Typography 
+                                    variant="caption" 
+                                    color="success.dark" 
+                                    fontWeight="medium"
+                                    sx={{ 
+                                      whiteSpace: 'nowrap',
+                                      fontSize: '0.7rem'
+                                    }}
+                                  >
+                                    Total IDs
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
                           </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
+
+                          {/* Admin Actions */}
+                          {user?.isAdmin && (
+                            <Box 
+                              sx={{ 
+                                position: 'absolute',
+                                top: 12,
+                                right: 12,
+                                display: 'flex',
+                                gap: 1,
+                                zIndex: 2
+                              }}
+                            >
+                              <IconButton 
+                                size="small" 
+                                color="primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(company);
+                                }}
+                                sx={{ 
+                                  bgcolor: 'background.paper',
+                                  boxShadow: 1,
+                                  '&:hover': {
+                                    transform: 'scale(1.1)',
+                                    bgcolor: 'primary.lighter'
+                                  }
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton 
+                                size="small" 
+                                color="error"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(company);
+                                }}
+                                sx={{ 
+                                  bgcolor: 'background.paper',
+                                  boxShadow: 1,
+                                  '&:hover': {
+                                    transform: 'scale(1.1)',
+                                    bgcolor: 'error.lighter'
+                                  }
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
                 
                 <Box
                   sx={{
