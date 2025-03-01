@@ -1,33 +1,92 @@
-import { Card, CardContent, Box, Skeleton, Grid } from '@mui/material';
+import { Card, CardContent, Box, Skeleton, Grid, Paper } from '@mui/material';
 
 export const StatCardSkeleton = () => (
-  <Card sx={{ 
-    height: '100%',
-    borderRadius: 3,
-    position: 'relative',
-    minWidth: { xs: '100%', sm: 220 }
-  }}>
-    <CardContent sx={{ p: 3 }}>
-      <Box display="flex" alignItems="center" gap={2}>
-        <Skeleton variant="circular" width={40} height={40} />
-        <Box flex={1}>
-          <Skeleton variant="text" width="60%" height={24} />
-          <Skeleton variant="text" width="40%" height={20} />
-        </Box>
-      </Box>
-      <Box mt={2}>
-        <Skeleton variant="text" width="80%" height={28} />
-      </Box>
-    </CardContent>
-  </Card>
+  <Paper 
+    elevation={0}
+    sx={{ 
+      p: { xs: 1.5, sm: 3 },
+      height: '100%',
+      borderRadius: { 
+        xs: 'inherit',
+        sm: 3 
+      },
+      bgcolor: 'grey.100',
+      position: 'relative',
+      overflow: 'hidden'
+    }}
+  >
+    <Box 
+      sx={{ 
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        p: { xs: 1, sm: 2 },
+        opacity: 0.1
+      }}
+    >
+      <Skeleton variant="circular" width={{ xs: 32, sm: 80 }} height={{ xs: 32, sm: 80 }} />
+    </Box>
+    <Box display="flex" flexDirection="column" gap={0.5}>
+      <Skeleton 
+        variant="text" 
+        width={100} 
+        height={{ xs: 30, sm: 60 }}
+        sx={{ 
+          fontSize: { xs: '1.25rem', sm: '2.5rem' }
+        }}
+      />
+      <Skeleton 
+        variant="text" 
+        width={80}
+        height={24}
+        sx={{ 
+          fontSize: { xs: '0.7rem', sm: '1rem' }
+        }}
+      />
+    </Box>
+  </Paper>
 );
 
 export const StatCardSkeletonList = () => (
-  <Grid container spacing={3}>
-    {[...Array(3)].map((_, index) => (
-      <Grid item xs={12} sm={6} md={4} key={index}>
+  <Grid container spacing={{ xs: 0, sm: 3 }}>
+    <Grid item xs={4} sm={4}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          borderRadius: { 
+            xs: '10px 0 0 10px',
+            sm: 3 
+          }
+        }}
+      >
         <StatCardSkeleton />
-      </Grid>
-    ))}
+      </Paper>
+    </Grid>
+    <Grid item xs={4} sm={4}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          borderRadius: { 
+            xs: 0,
+            sm: 3 
+          }
+        }}
+      >
+        <StatCardSkeleton />
+      </Paper>
+    </Grid>
+    <Grid item xs={4} sm={4}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          borderRadius: { 
+            xs: '0 10px 10px 0',
+            sm: 3 
+          }
+        }}
+      >
+        <StatCardSkeleton />
+      </Paper>
+    </Grid>
   </Grid>
 ); 

@@ -109,43 +109,48 @@ function Home() {
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 3}}>
       <Container maxWidth="lg">
-
-
-        {/* Stats Section */}
+        {/* Stats Section - Show cards immediately with skeletons only for numbers */}
         <Box sx={{ mt: { xs: 0, sm: 3 } }}>
           <Fade in timeout={1000}>
             <Box>
-              {loading ? (
-                <StatCardSkeletonList />
-              ) : (
-                <Grid container spacing={{ xs: 0, sm: 3 }}>
-                  <Grid item xs={4} sm={4}>
-                    <Paper 
-                      elevation={0}
+              <Grid container spacing={{ xs: 0, sm: 3 }}>
+                <Grid item xs={4} sm={4}>
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      p: { xs: 1.5, sm: 3 }, 
+                      bgcolor: 'primary.light',
+                      borderRadius: { 
+                        xs: '10px 0 0 10px',
+                        sm: 3 
+                      },
+                      position: 'relative',
+                      overflow: 'hidden',
+                      height: '100%'
+                    }}
+                  >
+                    <Box 
                       sx={{ 
-                        p: { xs: 1.5, sm: 3 }, 
-                        bgcolor: 'primary.light',
-                        borderRadius: { 
-                          xs: '10px 0 0 10px',
-                          sm: 3 
-                        },
-                        position: 'relative',
-                        overflow: 'hidden',
-                        height: '100%'
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        p: { xs: 1, sm: 2 },
+                        opacity: 0.2
                       }}
                     >
-                      <Box 
-                        sx={{ 
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          p: { xs: 1, sm: 2 },
-                          opacity: 0.2
-                        }}
-                      >
-                        <PersonIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
-                      </Box>
-                      <Box display="flex" flexDirection="column" gap={0.5}>
+                      <PersonIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap={0.5}>
+                      {loading ? (
+                        <Skeleton 
+                          variant="text" 
+                          width={100} 
+                          height={{ xs: 30, sm: 60 }}
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                          }}
+                        />
+                      ) : (
                         <Typography 
                           variant="h3" 
                           fontWeight="bold" 
@@ -154,122 +159,144 @@ function Home() {
                             fontSize: { xs: '1.25rem', sm: '2.5rem' }
                           }}
                         >
-                          {stats?.totalMainPersons || <Skeleton width={100} />}
+                          {stats?.totalMainPersons}
                         </Typography>
-                        <Typography 
-                          variant="subtitle2" 
-                          color="primary.dark"
-                          sx={{ 
-                            fontSize: { xs: '0.7rem', sm: '1rem' }
-                          }}
-                        >
-                          Main Persons
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-
-                  <Grid item xs={4} sm={4}>
-                    <Paper 
-                      elevation={0}
-                      sx={{ 
-                        p: { xs: 1.5, sm: 3 }, 
-                        bgcolor: 'warning.light',
-                        borderRadius: { 
-                          xs: 0,
-                          sm: 3 
-                        },
-                        position: 'relative',
-                        overflow: 'hidden',
-                        height: '100%'
-                      }}
-                    >
-                      <Box 
+                      )}
+                      <Typography 
+                        variant="subtitle2" 
+                        color="primary.dark"
                         sx={{ 
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          p: { xs: 1, sm: 2 },
-                          opacity: 0.2
+                          fontSize: { xs: '0.7rem', sm: '1rem' }
                         }}
                       >
-                        <BadgeIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
-                      </Box>
-                      <Box display="flex" flexDirection="column" gap={0.5}>
-                        <Typography 
-                          variant="h3" 
-                          fontWeight="bold" 
-                          color="warning.dark"
-                          sx={{ 
-                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
-                          }}
-                        >
-                          {stats?.totalIndividuals || <Skeleton width={100} />}
-                        </Typography>
-                        <Typography 
-                          variant="subtitle2" 
-                          color="warning.dark"
-                          sx={{ 
-                            fontSize: { xs: '0.7rem', sm: '1rem' }
-                          }}
-                        >
-                          Total IDs
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-
-                  <Grid item xs={4} sm={4}>
-                    <Paper 
-                      elevation={0}
-                      sx={{ 
-                        p: { xs: 1.5, sm: 3 }, 
-                        bgcolor: 'error.light',
-                        borderRadius: { 
-                          xs: '0 10px 10px 0',
-                          sm: 3 
-                        },
-                        position: 'relative',
-                        overflow: 'hidden',
-                        height: '100%'
-                      }}
-                    >
-                      <Box 
-                        sx={{ 
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          p: { xs: 1, sm: 2 },
-                          opacity: 0.2
-                        }}
-                      >
-                        <WarningIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
-                      </Box>
-                      <Box display="flex" flexDirection="column" gap={0.5}>
-                        <Typography 
-                          variant="h3" 
-                          fontWeight="bold" 
-                          color="error.dark"
-                          sx={{ 
-                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
-                          }}
-                        >
-                          {stats?.urgentExpiring || <Skeleton width={100} />}
-                        </Typography>
-                        <Typography 
-                          variant="subtitle2" 
-                          color="error.dark"
-                          sx={{ 
-                            fontSize: { xs: '0.7rem', sm: '1rem' }
-                          }}
-                        >
-                          Urgent
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
+                        Main Persons
+                      </Typography>
+                    </Box>
+                  </Paper>
                 </Grid>
-              )}
+
+                <Grid item xs={4} sm={4}>
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      p: { xs: 1.5, sm: 3 }, 
+                      bgcolor: 'warning.light',
+                      borderRadius: { 
+                        xs: 0,
+                        sm: 3 
+                      },
+                      position: 'relative',
+                      overflow: 'hidden',
+                      height: '100%'
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        p: { xs: 1, sm: 2 },
+                        opacity: 0.2
+                      }}
+                    >
+                      <BadgeIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap={0.5}>
+                      {loading ? (
+                        <Skeleton 
+                          variant="text" 
+                          width={100} 
+                          height={{ xs: 30, sm: 60 }}
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                          }}
+                        />
+                      ) : (
+                        <Typography 
+                          variant="h3" 
+                          fontWeight="bold" 
+                          color="warning.dark"
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                          }}
+                        >
+                          {stats?.totalIndividuals}
+                        </Typography>
+                      )}
+                      <Typography 
+                        variant="subtitle2" 
+                        color="warning.dark"
+                        sx={{ 
+                          fontSize: { xs: '0.7rem', sm: '1rem' }
+                        }}
+                      >
+                        Total IDs
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={4} sm={4}>
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      p: { xs: 1.5, sm: 3 }, 
+                      bgcolor: 'error.light',
+                      borderRadius: { 
+                        xs: '0 10px 10px 0',
+                        sm: 3 
+                      },
+                      position: 'relative',
+                      overflow: 'hidden',
+                      height: '100%'
+                    }}
+                  >
+                    <Box 
+                      sx={{ 
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        p: { xs: 1, sm: 2 },
+                        opacity: 0.2
+                      }}
+                    >
+                      <WarningIcon sx={{ fontSize: { xs: 32, sm: 80 } }} />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap={0.5}>
+                      {loading ? (
+                        <Skeleton 
+                          variant="text" 
+                          width={100} 
+                          height={{ xs: 30, sm: 60 }}
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                          }}
+                        />
+                      ) : (
+                        <Typography 
+                          variant="h3" 
+                          fontWeight="bold" 
+                          color="error.dark"
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2.5rem' }
+                          }}
+                        >
+                          {stats?.urgentExpiring}
+                        </Typography>
+                      )}
+                      <Typography 
+                        variant="subtitle2" 
+                        color="error.dark"
+                        sx={{ 
+                          fontSize: { xs: '0.7rem', sm: '1rem' }
+                        }}
+                      >
+                        Urgent
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              </Grid>
             </Box>
           </Fade>
         </Box>
@@ -278,11 +305,80 @@ function Home() {
         <Box sx={{ mt: 4 }}>
           <Fade in timeout={1200}>
             <Box>
-              {loading ? (
-                <CompanyCardSkeletonList count={3} />
-              ) : (
-                <Grid container spacing={3}>
-                  {mainPersons.map((person, index) => {
+              <Grid container spacing={3}>
+                {loading ? (
+                  // Show placeholder cards while loading
+                  [...Array(3)].map((_, index) => (
+                    <Grid 
+                      item 
+                      xs={12} 
+                      sm={6} 
+                      md={4} 
+                      key={index}
+                      sx={{
+                        mb: { xs: index === 2 ? 15 : 0, sm: 0 }
+                      }}
+                    >
+                      <Card 
+                        sx={{ 
+                          borderRadius: 4,
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          position: 'relative',
+                          opacity: 0.7
+                        }}
+                      >
+                        <Box 
+                          sx={{ 
+                            height: 8,
+                            bgcolor: 'grey.300',
+                            width: '100%'
+                          }} 
+                        />
+                        
+                        <CardContent sx={{ p: 3, flex: 1 }}>
+                          <Box display="flex" alignItems="center" gap={2} mb={2}>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: 'grey.200',
+                                width: 56, 
+                                height: 56 
+                              }}
+                            >
+                              <PersonIcon fontSize="large" sx={{ color: 'grey.400' }} />
+                            </Avatar>
+                            <Box>
+                              <Skeleton variant="text" width={150} height={28} />
+                              <Skeleton variant="text" width={100} height={20} />
+                            </Box>
+                          </Box>
+
+                          <Divider sx={{ my: 2 }} />
+
+                          <Box sx={{ pl: 1 }}>
+                            <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+                              <EmailIcon 
+                                fontSize="small" 
+                                sx={{ color: 'grey.400' }}
+                              />
+                              <Skeleton variant="text" width={180} height={20} />
+                            </Box>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <PhoneIcon 
+                                fontSize="small" 
+                                sx={{ color: 'grey.400' }}
+                              />
+                              <Skeleton variant="text" width={140} height={20} />
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))
+                ) : (
+                  // Show actual data when loaded
+                  mainPersons.map((person, index) => {
                     const isAllowed = isMainPersonAllowed(person);
                     const isLastItem = index === mainPersons.length - 1;
 
@@ -436,9 +532,9 @@ function Home() {
                         </Card>
                       </Grid>
                     );
-                  })}
-                </Grid>
-              )}
+                  })
+                )}
+              </Grid>
             </Box>
           </Fade>
         </Box>
