@@ -620,10 +620,10 @@ function IndividualList() {
                       }}
                     >
                       <LocationIcon sx={{ fontSize: 16 }} />
-                      MOI: {company?.makthabNumber || company?.molNumber || 'N/A'}
+                      MOL: {company?.makthabNumber || company?.molNumber || 'N/A'}
                       {(company?.makthabNumber || company?.molNumber) && (
                         <Tooltip 
-                          open={copyFeedback.open && copyFeedback.text === 'MOI copied!'}
+                          open={copyFeedback.open && copyFeedback.text === 'MOL copied!'}
                           title="Copied!"
                           placement="top"
                         >
