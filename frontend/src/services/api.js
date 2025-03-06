@@ -69,6 +69,7 @@ export const companyApi = {
   update: (id, data) => api.put(`/api/companies/${id}`, data),
   delete: (id) => api.delete(`/api/companies/${id}`),
   getStats: () => api.get('/api/companies/stats'),
+  processPayment: (id, paymentData) => api.post(`/api/companies/${id}/payment`, paymentData)
 };
 
 export const individualApi = {

@@ -45,12 +45,16 @@ import {
   CheckCircle as CheckCircleIcon,
   PictureAsPdf as PdfIcon,
   Error as ErrorIcon,
+  Cached as CachedIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import CompanyDialog from '../components/dialogs/CompanyDialog';
+import CompanyPaymentDialog from '../components/dialogs/CompanyPaymentDialog';
+import CompanyRenewDialog from '../components/dialogs/CompanyRenewDialog';
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
 import LoadingScreen from '../components/common/LoadingScreen';
 
@@ -77,6 +81,8 @@ function CompanyList() {
   const [mainPerson, setMainPerson] = useState(null);
   const { user, logout } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
@@ -177,6 +183,16 @@ function CompanyList() {
     setDialogOpen(true);
   };
 
+  const handlePaymentClick = (company) => {
+    setSelectedCompany(company);
+    setPaymentDialogOpen(true);
+  };
+
+  const handleRenewClick = (company) => {
+    setSelectedCompany(company);
+    setRenewDialogOpen(true);
+  };
+
   const handleDelete = (company) => {
     setSelectedCompany(company);
     setConfirmMessage(`Are you sure you want to delete ${company.name}?`);
@@ -238,6 +254,24 @@ function CompanyList() {
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       setDialogError(error.message || 'An error occurred');
+    }
+  };
+
+  const handlePaymentSubmit = async (paymentData) => {
+    try {
+      const response = await companyApi.processPayment(selectedCompany._id, paymentData);
+      
+      // Update the company in the list
+      setCompanies(companies.map(company => 
+        company._id === selectedCompany._id ? response.data : company
+      ));
+      
+      setPaymentDialogOpen(false);
+      setRenewDialogOpen(false);
+      setSelectedCompany(null);
+      toast.success('Payment processed successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to process payment');
     }
   };
 
@@ -574,28 +608,58 @@ function CompanyList() {
                       >
                         <Box sx={{ height: 6, bgcolor: 'primary.main', width: '100%' }} />
                         <CardContent sx={{ p: 3 }}>
+                          {/* Payment Status Indicator */}
+                          <Tooltip 
+                            title={
+                              company.paymentStatus === 'fully_paid' ? 'Fully Paid' :
+                              company.paymentStatus === 'partially_paid' ? 'Partially Paid' :
+                              company.paymentStatus === 'renewed' ? 'Renewed' : 'None Paid'
+                            }
+                          >
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 12,
+                                left: 12,
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                bgcolor: 
+                                  company.paymentStatus === 'fully_paid' ? 'success.main' :
+                                  company.paymentStatus === 'partially_paid' ? 'warning.main' :
+                                  company.paymentStatus === 'renewed' ? 'primary.main' : 'error.main',
+                                border: '2px solid',
+                                borderColor: 'background.paper',
+                                boxShadow: 1,
+                                zIndex: 1
+                              }}
+                            />
+                          </Tooltip>
+
                           {/* Header Section */}
                           <Box display="flex" alignItems="center" gap={1} mb={2}>
-
                             <Box flex={1}>
-                              <Typography 
-                                variant="h5" 
-                                fontWeight="bold"
-                                sx={{ 
-                                  direction: 'rtl',
-                                  textAlign: 'right',
-                                  fontFamily: 'var(--font-family-arabic)',
-                                  fontSize: { xs: '1.5rem', sm: '1.5rem' },
-                                  lineHeight: 1.4,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical'
-                                }}
-                              >
-                                {company.name}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                <Typography 
+                                  variant="h5" 
+                                  fontWeight="bold"
+                                  sx={{ 
+                                    direction: 'rtl',
+                                    textAlign: 'right',
+                                    fontFamily: 'var(--font-family-arabic)',
+                                    fontSize: { xs: '1.5rem', sm: '1.5rem' },
+                                    lineHeight: 1.4,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    flex: 1
+                                  }}
+                                >
+                                  {company.name}
+                                </Typography>
+                              </Box>
                             </Box>
                             <Avatar 
                               sx={{ 
@@ -634,6 +698,7 @@ function CompanyList() {
                               </Typography>
                             </Grid>
                           </Grid>
+
 
                           {/* Status Cards */}
                           <Box sx={{ mt: 3 }}>
@@ -788,50 +853,80 @@ function CompanyList() {
                           {user?.isAdmin && (
                             <Box 
                               sx={{ 
-                                position: 'absolute',
-                                top: 12,
-                                right: 12,
                                 display: 'flex',
                                 gap: 1,
-                                zIndex: 2
+                                justifyContent: 'flex-end',
                               }}
                             >
-                              <IconButton 
-                                size="small" 
-                                color="primary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEdit(company);
-                                }}
-                                sx={{ 
-                                  bgcolor: 'background.paper',
-                                  boxShadow: 1,
-                                  '&:hover': {
-                                    transform: 'scale(1.1)',
-                                    bgcolor: 'primary.lighter'
-                                  }
-                                }}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton 
-                                size="small" 
-                                color="error"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(company);
-                                }}
-                                sx={{ 
-                                  bgcolor: 'background.paper',
-                                  boxShadow: 1,
-                                  '&:hover': {
-                                    transform: 'scale(1.1)',
-                                    bgcolor: 'error.lighter'
-                                  }
-                                }}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
+                              <Tooltip title="Edit Company">
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(company);
+                                  }}
+                                  startIcon={<EditIcon />}
+                                  sx={{ 
+                                    bgcolor: 'background.paper',
+                                    boxShadow: 1,
+                                    '&:hover': {
+                                      transform: 'translateY(-1px)',
+                                      bgcolor: 'primary.lighter'
+                                    }
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                              </Tooltip>
+
+                              <Tooltip title={company.paymentStatus === 'fully_paid' ? "Renew Company" : "Process Payment"}>
+                                <Button
+                                  size="small"
+                                  color={company.paymentStatus === 'fully_paid' ? "success" : "info"}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (company.paymentStatus === 'fully_paid') {
+                                      handleRenewClick(company);
+                                    } else {
+                                      handlePaymentClick(company);
+                                    }
+                                  }}
+                                  startIcon={company.paymentStatus === 'fully_paid' ? <CachedIcon /> : <PaymentIcon />}
+                                  sx={{ 
+                                    bgcolor: 'background.paper',
+                                    boxShadow: 1,
+                                    '&:hover': {
+                                      transform: 'translateY(-1px)',
+                                      bgcolor: company.paymentStatus === 'fully_paid' ? 'success.lighter' : 'info.lighter'
+                                    }
+                                  }}
+                                >
+                                  {company.paymentStatus === 'fully_paid' ? 'Renew' : 'Pay'}
+                                </Button>
+                              </Tooltip>
+
+                              <Tooltip title="Delete Company">
+                                <Button
+                                  size="small"
+                                  color="error"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(company);
+                                  }}
+                                  startIcon={<DeleteIcon />}
+                                  sx={{ 
+                                    bgcolor: 'background.paper',
+                                    boxShadow: 1,
+                                    '&:hover': {
+                                      transform: 'translateY(-1px)',
+                                      bgcolor: 'error.lighter'
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </Tooltip>
                             </Box>
                           )}
                         </CardContent>
@@ -891,6 +986,26 @@ function CompanyList() {
         company={selectedCompany}
         mode={dialogMode}
         error={dialogError}
+      />
+
+      <CompanyPaymentDialog
+        open={paymentDialogOpen}
+        onClose={() => {
+          setPaymentDialogOpen(false);
+          setSelectedCompany(null);
+        }}
+        onSubmit={handlePaymentSubmit}
+        company={selectedCompany}
+      />
+
+      <CompanyRenewDialog
+        open={renewDialogOpen}
+        onClose={() => {
+          setRenewDialogOpen(false);
+          setSelectedCompany(null);
+        }}
+        onSubmit={handlePaymentSubmit}
+        company={selectedCompany}
       />
 
       <ConfirmDialog

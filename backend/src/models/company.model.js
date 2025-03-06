@@ -29,6 +29,27 @@ const companySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MainPerson',
       required: true
+    },
+    crAmount: {
+      type: Number,
+      default: 0
+    },
+    qiwaAmount: {
+      type: Number,
+      default: 0
+    },
+    muqeemAmount: {
+      type: Number,
+      default: 0
+    },
+    efaAmount: {
+      type: Number,
+      default: 0
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['none_paid', 'partially_paid', 'fully_paid', 'renewed'],
+      default: 'none_paid'
     }
   },
   { 
@@ -102,6 +123,11 @@ companySchema.virtual('cardCounts').get(async function() {
     greenCards: 0,
     totalIndividuals: 0
   };
+});
+
+// Add virtual field for total amount
+companySchema.virtual('totalAmount').get(function() {
+  return this.crAmount + this.qiwaAmount + this.muqeemAmount + this.efaAmount;
 });
 
 const Company = mongoose.model("Company", companySchema);

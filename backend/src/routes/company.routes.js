@@ -160,6 +160,76 @@ router.put('/:id', adminProtect, async (req, res) => {
   }
 });
 
+// Process company payment
+router.post('/:id/payment', adminProtect, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid company ID' });
+    }
+
+    const { paymentType, paymentAmount, resetPayments } = req.body;
+    
+    // Find the company
+    const company = await Company.findById(req.params.id);
+    
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    
+    // Update based on payment type
+    if (resetPayments) {
+      // For renewal, reset all payment amounts and set status to none_paid
+      company.qiwaAmount = 0;
+      company.muqeemAmount = 0;
+      company.efaAmount = 0;
+      company.crAmount = paymentAmount; // Set new CR amount
+      company.paymentStatus = 'none_paid';
+    } else {
+      // For regular payments, update the specific amount
+      switch (paymentType) {
+        case 'qiwa':
+          company.qiwaAmount = paymentAmount;
+          break;
+        case 'muqeem':
+          company.muqeemAmount = paymentAmount;
+          break;
+        case 'efa':
+          company.efaAmount = paymentAmount;
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid payment type' });
+      }
+      
+      // Check payment status
+      const hasQiwa = company.qiwaAmount > 0;
+      const hasMuqeem = company.muqeemAmount > 0;
+      const hasEfa = company.efaAmount > 0;
+      
+      if (hasQiwa && hasMuqeem && hasEfa) {
+        company.paymentStatus = 'fully_paid';
+      } else if (hasQiwa || hasMuqeem || hasEfa) {
+        company.paymentStatus = 'partially_paid';
+      } else {
+        company.paymentStatus = 'none_paid';
+      }
+    }
+    
+    // Save the updated company
+    await company.save();
+    
+    // Return the updated company
+    const updatedCompany = await Company.findById(req.params.id)
+      .populate('mainPerson', 'name email contactNumber');
+    
+    res.json(updatedCompany);
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(400).json({ 
+      message: error.message || 'Failed to process payment' 
+    });
+  }
+});
+
 // Delete company
 router.delete('/:id', adminProtect, async (req, res) => {
   try {

@@ -8,7 +8,8 @@ import {
   Button,
   Box,
   Alert,
-  Grid
+  Grid,
+  InputAdornment
 } from '@mui/material';
 
 function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }) {
@@ -18,7 +19,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
     sponserId: company?.sponserId || '',
     gosiNumber: company?.gosiNumber || '',
     molNumber: company?.molNumber || '',
-    makthabNumber: company?.makthabNumber || ''
+    makthabNumber: company?.makthabNumber || '',
+    crAmount: company?.crAmount || 0
   });
 
   useEffect(() => {
@@ -29,7 +31,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
         sponserId: '',
         gosiNumber: '',
         molNumber: '',
-        makthabNumber: ''
+        makthabNumber: '',
+        crAmount: 0
       });
     } else if (company) {
       setFormData({
@@ -38,7 +41,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
         sponserId: company.sponserId || '',
         gosiNumber: company.gosiNumber || '',
         molNumber: company.molNumber || '',
-        makthabNumber: company.makthabNumber || ''
+        makthabNumber: company.makthabNumber || '',
+        crAmount: company.crAmount || 0
       });
     }
   }, [company, mode]);
@@ -148,6 +152,19 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
                 name="molNumber"
                 value={formData.molNumber}
                 onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="CR Amount"
+                name="crAmount"
+                type="number"
+                value={formData.crAmount}
+                onChange={handleChange}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">SAR</InputAdornment>,
+                }}
               />
             </Grid>
           </Grid>
