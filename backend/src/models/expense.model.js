@@ -5,7 +5,8 @@ const expenseSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, 'Expense name is required'],
-      trim: true
+      trim: true,
+      default: 'General Purpose'
     },
     amount: {
       type: Number,
@@ -15,17 +16,21 @@ const expenseSchema = new mongoose.Schema(
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
-      required: true
+      required: false
     },
     mainPerson: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MainPerson',
-      required: true
+      required: false
     },
     expenseType: {
       type: String,
       enum: ['cr', 'qiwa', 'muqeem', 'saudi', 'efa', 'other'],
       required: true
+    },
+    specification: {
+      type: String,
+      trim: true
     },
     createdAt: {
       type: Date,

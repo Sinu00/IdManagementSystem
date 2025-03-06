@@ -35,7 +35,8 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  TablePagination
+  TablePagination,
+  Tooltip
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -64,7 +65,7 @@ import autoTable from 'jspdf-autotable';
 import IqamaPriceDialog from '../components/dialogs/IqamaPriceDialog';
 
 // Create a memoized FilterSection component outside the main component
-const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [], companies = [] }) => (
+const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [] }) => (
   <Box sx={{ 
     mb: 3,
     display: visible ? 'block' : 'none'
@@ -136,43 +137,24 @@ const FilterSection = memo(({ type, visible, filters, onFilterChange, referredBy
           </Grid>
         )}
         {type === 'expense' && (
-          <>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Company</InputLabel>
-                <Select
-                  value={filters.company}
-                  label="Company"
-                  onChange={(e) => onFilterChange(type, 'company', e.target.value)}
-                >
-                  <MenuItem value="all">All Companies</MenuItem>
-                  {companies.map((company) => (
-                    <MenuItem key={company._id} value={company._id}>
-                      {company.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Expense Type</InputLabel>
-                <Select
-                  value={filters.expenseType}
-                  label="Expense Type"
-                  onChange={(e) => onFilterChange(type, 'expenseType', e.target.value)}
-                >
-                  <MenuItem value="all">All Types</MenuItem>
-                  <MenuItem value="cr">CR Amount</MenuItem>
-                  <MenuItem value="qiwa">Qiwa Amount</MenuItem>
-                  <MenuItem value="muqeem">Muqeem Amount</MenuItem>
-                  <MenuItem value="saudi">Saudi Amount</MenuItem>
-                  <MenuItem value="efa">EFA Amount</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Expense Type</InputLabel>
+              <Select
+                value={filters.expenseType}
+                label="Expense Type"
+                onChange={(e) => onFilterChange(type, 'expenseType', e.target.value)}
+              >
+                <MenuItem value="all">All Types</MenuItem>
+                <MenuItem value="cr">CR Amount</MenuItem>
+                <MenuItem value="qiwa">Qiwa Amount</MenuItem>
+                <MenuItem value="muqeem">Muqeem Amount</MenuItem>
+                <MenuItem value="saudi">Saudi Amount</MenuItem>
+                <MenuItem value="efa">EFA Amount</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
         )}
       </Grid>
     </Paper>
@@ -198,7 +180,8 @@ function IncomeExpense() {
     iqamaNumber: '', // only for income
     referredBy: '',
     company: '', // for expense
-    expenseType: 'other' // for expense
+    expenseType: 'other', // for expense
+    specification: '' // for other expense type
   });
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState('createdAt');
@@ -234,7 +217,6 @@ function IncomeExpense() {
       end: endOfMonth(new Date())
     },
     nameSearch: '',
-    company: 'all',
     expenseType: 'all'
   });
   const [showIncomeFilters, setShowIncomeFilters] = useState(false);
@@ -303,7 +285,8 @@ function IncomeExpense() {
       iqamaNumber: '',
       referredBy: '',
       company: '',
-      expenseType: 'other'
+      expenseType: 'other',
+      specification: ''
     });
     setDialogOpen(true);
   };
@@ -323,7 +306,8 @@ function IncomeExpense() {
       iqamaNumber: item.iqamaNumber || '',
       referredBy: item.referredBy || '',
       company: item.company || '',
-      expenseType: item.expenseType || 'other'
+      expenseType: item.expenseType || 'other',
+      specification: item.expenseType || ''
     });
     setDialogOpen(true);
   };
@@ -368,7 +352,14 @@ function IncomeExpense() {
           mainPerson: individual.company.mainPerson
         });
       } else {
-        await expenseApi.create(formData);
+        // For expenses, we'll create without company and mainPerson
+        const { company, ...expenseData } = formData; // Remove company field
+        await expenseApi.create({
+          ...expenseData,
+          name: 'General Purpose', // Set default name for general expenses
+          expenseType: 'other', // Always set expenseType as 'other' for custom types
+          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType // Store the actual type in specification
+        });
       }
 
       handleCloseDialog();
@@ -395,13 +386,10 @@ function IncomeExpense() {
       const referredByMatch = type === 'income' ? 
         (filters.referredBy === 'all' || item.referredBy === filters.referredBy) : true;
       
-      const companyMatch = type === 'expense' ?
-        (filters.company === 'all' || item.company === filters.company) : true;
-      
       const expenseTypeMatch = type === 'expense' ?
         (filters.expenseType === 'all' || item.expenseType === filters.expenseType) : true;
       
-      return dateMatch && nameMatch && referredByMatch && companyMatch && expenseTypeMatch;
+      return dateMatch && nameMatch && referredByMatch && expenseTypeMatch;
     });
   };
 
@@ -439,8 +427,14 @@ function IncomeExpense() {
         case 'amount':
           comparison = a.amount - b.amount;
           break;
+        case 'company.name':
+          comparison = (a.company?.name || '').localeCompare(b.company?.name || '');
+          break;
+        case 'expenseType':
+          comparison = (a.expenseType || '').localeCompare(b.expenseType || '');
+          break;
         default:
-          comparison = String(a[expenseSortField]).localeCompare(String(b[expenseSortField]));
+          comparison = 0;
       }
       return expenseSortOrder === 'asc' ? comparison : -comparison;
     });
@@ -448,7 +442,8 @@ function IncomeExpense() {
 
   const formatDate = (dateString) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy');
+      const date = new Date(dateString);
+      return `${format(date, 'MMM')}\n${date.getDate()}\n${date.getFullYear()}`;
     } catch (error) {
       console.error('Date formatting error:', error);
       return 'Invalid Date';
@@ -1177,7 +1172,9 @@ function IncomeExpense() {
                             sx={{ 
                               cursor: 'pointer', 
                               '&:hover': { bgcolor: 'action.hover' },
-                              width: '15%'
+                              width: '10%',
+                              whiteSpace: 'pre-line',
+                              textAlign: 'left'
                             }}
                           >
                             Date {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -1190,10 +1187,10 @@ function IncomeExpense() {
                               width: '35%'
                             }}
                           >
-                            Name & Referred By {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            Name {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell sx={{ width: '25%' }}>
-                            Iqama Number
+                            Iqama
                           </TableCell>
                           <TableCell 
                             onClick={() => handleSort('amount')}
@@ -1203,7 +1200,7 @@ function IncomeExpense() {
                               width: '25%'
                             }}
                           >
-                            Amount (SAR) {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             sx={{ 
@@ -1226,7 +1223,15 @@ function IncomeExpense() {
                                 '&:hover': { bgcolor: 'action.hover' }
                               }}
                             >
-                              <TableCell>{formatDate(income.createdAt)}</TableCell>
+                              <TableCell 
+                                sx={{ 
+                                  whiteSpace: 'pre-line',
+                                  textAlign: 'left',
+                                  width: '10%'
+                                }}
+                              >
+                                {formatDate(income.createdAt)}
+                              </TableCell>
                               <TableCell>
                                 <Typography variant="body2">{income.name}</Typography>
                                 {income.referredBy && (
@@ -1401,27 +1406,100 @@ function IncomeExpense() {
                     filters={expenseFilters}
                     onFilterChange={handleFilterChange}
                     referredByList={referredByList}
-                    companies={companies}
                   />
                   <TableContainer>
                     <Table size="small" aria-label="expense table">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Company</TableCell>
-                          <TableCell>Type</TableCell>
-                          <TableCell>Amount (SAR)</TableCell>
-                          <TableCell>Actions</TableCell>
+                          <TableCell 
+                            onClick={() => handleExpenseSort('createdAt')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '10%',
+                              whiteSpace: 'pre-line',
+                              textAlign: 'left'
+                            }}
+                          >
+                            Date {expenseSortField === 'createdAt' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                          </TableCell>
+                          <TableCell 
+                            onClick={() => handleExpenseSort('company.name')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '25%'
+                            }}
+                          >
+                            Company {expenseSortField === 'company.name' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                          </TableCell>
+                          <TableCell 
+                            onClick={() => handleExpenseSort('expenseType')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '20%'
+                            }}
+                          >
+                            Paid For {expenseSortField === 'expenseType' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                          </TableCell>
+                          <TableCell 
+                            onClick={() => handleExpenseSort('amount')}
+                            sx={{ 
+                              cursor: 'pointer', 
+                              '&:hover': { bgcolor: 'action.hover' },
+                              width: '20%'
+                            }}
+                          >
+                            Amount (SAR) {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              width: '15%',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Actions
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {expenses.map((expense) => (
+                        {sortedExpenses
+                          .slice(expensePage * expenseRowsPerPage, expensePage * expenseRowsPerPage + expenseRowsPerPage)
+                          .map((expense) => (
                           <TableRow key={expense._id}>
-                            <TableCell>{formatDate(expense.createdAt)}</TableCell>
-                            <TableCell>{expense.name}</TableCell>
-                            <TableCell>{expense.company?.name || 'Unknown Company'}</TableCell>
-                            <TableCell>{expense.expenseType ? expense.expenseType.replace('_', ' ') : 'Other'}</TableCell>
+                            <TableCell 
+                              sx={{ 
+                                whiteSpace: 'pre-line',
+                                textAlign: 'left',
+                                width: '10%'
+                              }}
+                            >
+                              {formatDate(expense.createdAt)}
+                            </TableCell>
+                            <TableCell>
+                              {expense.company ? (
+                                <Tooltip
+                                  title={
+                                    <Box sx={{ whiteSpace: 'pre-line' }}>
+                                      CR: {expense.company?.crNumber || '-'}
+                                      {'\n'}
+                                      Sponsor ID: {expense.company?.sponserId || '-'}
+                                      {'\n'}
+                                      GOSI: {expense.company?.gosiNumber || '-'}
+                                      {'\n'}
+                                      MOL: {expense.company?.molNumber || '-'}
+                                    </Box>
+                                  }
+                                  arrow
+                                >
+                                  <Typography sx={{ cursor: 'pointer' }}>{expense.company.name}</Typography>
+                                </Tooltip>
+                              ) : (
+                                <Typography>Namora</Typography>
+                              )}
+                            </TableCell>
+                            <TableCell>{expense.specification || (expense.expenseType ? expense.expenseType.replace('_', ' ') : 'Other')}</TableCell>
                             <TableCell sx={{ color: 'error.main' }}>{expense.amount.toFixed(2)}</TableCell>
                             <TableCell>
                               <IconButton
@@ -1446,7 +1524,7 @@ function IncomeExpense() {
                   </TableContainer>
                   <TablePagination
                     component="div"
-                    count={expenses.length}
+                    count={sortedExpenses.length}
                     page={expensePage}
                     onPageChange={handleChangeExpensePage}
                     rowsPerPage={expenseRowsPerPage}
@@ -1484,65 +1562,49 @@ function IncomeExpense() {
             </Alert>
           )}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              margin="normal"
-            />
-            {dialogType === 'income' && (
-              <TextField
-                fullWidth
-                label="Iqama Number"
-                value={formData.iqamaNumber}
-                onChange={(e) => setFormData({ ...formData, iqamaNumber: e.target.value })}
-                required
-                margin="normal"
-              />
-            )}
-            <TextField
-              fullWidth
-              label="Amount"
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              required
-              margin="normal"
-            />
-            {dialogType === 'income' && (
-              <TextField
-                fullWidth
-                label="Referred By"
-                value={formData.referredBy}
-                onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
-                margin="normal"
-              />
-            )}
-            {dialogType === 'expense' && (
+            {dialogType === 'income' ? (
+              <>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Iqama Number"
+                  value={formData.iqamaNumber}
+                  onChange={(e) => setFormData({ ...formData, iqamaNumber: e.target.value })}
+                  required
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Amount"
+                  type="number"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  required
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Referred By"
+                  value={formData.referredBy}
+                  onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
+                  margin="normal"
+                />
+              </>
+            ) : (
               <>
                 <FormControl fullWidth margin="normal">
-                  <InputLabel>Company</InputLabel>
-                  <Select
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    label="Company"
-                    required
-                  >
-                    {companies.map((company) => (
-                      <MenuItem key={company._id} value={company._id}>
-                        {company.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Expense Type</InputLabel>
+                  <InputLabel>Paid For</InputLabel>
                   <Select
                     value={formData.expenseType}
                     onChange={(e) => setFormData({ ...formData, expenseType: e.target.value })}
-                    label="Expense Type"
+                    label="Paid For"
                     required
                   >
                     <MenuItem value="cr">CR Amount</MenuItem>
@@ -1553,6 +1615,25 @@ function IncomeExpense() {
                     <MenuItem value="other">Other</MenuItem>
                   </Select>
                 </FormControl>
+                {formData.expenseType === 'other' && (
+                  <TextField
+                    fullWidth
+                    label="Specify Other"
+                    value={formData.specification}
+                    onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
+                    required
+                    margin="normal"
+                  />
+                )}
+                <TextField
+                  fullWidth
+                  label="Amount"
+                  type="number"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  required
+                  margin="normal"
+                />
               </>
             )}
           </Box>
@@ -1560,7 +1641,7 @@ function IncomeExpense() {
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained" color="primary">
-            Add
+            {editData ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -15,7 +15,7 @@ router.get('/filter/date', protect, async (req, res) => {
       },
       mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     })
-    .populate('company', 'name')
+    .populate('company', 'name crNumber sponserId gosiNumber molNumber')
     .populate('mainPerson', 'name')
     .sort({ createdAt: -1 });
     res.json(expenses);
@@ -30,7 +30,7 @@ router.get('/', protect, async (req, res) => {
     const expenses = await Expense.find({
       mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     })
-      .populate('company', 'name')
+      .populate('company', 'name crNumber sponserId gosiNumber molNumber')
       .populate('mainPerson', 'name')
       .sort({ createdAt: -1 });
     res.json(expenses);
@@ -46,6 +46,7 @@ router.get('/:id', protect, async (req, res) => {
       _id: req.params.id,
       mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     })
+      .populate('company', 'name crNumber sponserId gosiNumber molNumber')
       .populate('company', 'name')
       .populate('mainPerson', 'name');
     if (!expense) {
