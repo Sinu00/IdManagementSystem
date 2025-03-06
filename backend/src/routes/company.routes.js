@@ -116,6 +116,7 @@ router.post('/', adminProtect, async (req, res) => {
         name: `CR Amount for ${company.name}`,
         amount: crAmount,
         company: company._id,
+        mainPerson: company.mainPerson,
         expenseType: 'cr'
       });
       await expense.save();

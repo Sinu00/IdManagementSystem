@@ -281,6 +281,7 @@ function CompanyList() {
           : `${paymentData.paymentType.charAt(0).toUpperCase() + paymentData.paymentType.slice(1)} Payment for ${selectedCompany.name}`,
         amount: paymentData.paymentAmount,
         company: selectedCompany._id,
+        mainPerson: selectedCompany.mainPerson,
         expenseType: paymentData.resetPayments ? 'cr' : paymentData.paymentType
       });
       
@@ -307,6 +308,7 @@ function CompanyList() {
         name: `Saudi Payment for ${selectedCompany.name}`,
         amount: paymentData.amount,
         company: selectedCompany._id,
+        mainPerson: selectedCompany.mainPerson,
         expenseType: 'saudi'
       });
       

@@ -17,6 +17,11 @@ const expenseSchema = new mongoose.Schema(
       ref: 'Company',
       required: true
     },
+    mainPerson: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MainPerson',
+      required: true
+    },
     expenseType: {
       type: String,
       enum: ['cr', 'qiwa', 'muqeem', 'saudi', 'efa', 'other'],
