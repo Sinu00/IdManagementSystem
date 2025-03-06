@@ -3,6 +3,7 @@ import { adminProtect } from '../middleware/auth.middleware.js';
 import Company from '../models/company.model.js';
 import mongoose from 'mongoose';
 import Individual from '../models/individual.model.js';
+import Expense from '../models/expense.model.js';
 
 const router = express.Router();
 
@@ -86,7 +87,7 @@ router.get('/:id', async (req, res) => {
 // Create company
 router.post('/', adminProtect, async (req, res) => {
   try {
-    const { mainPerson, crNumber } = req.body;
+    const { mainPerson, crNumber, crAmount } = req.body;
 
     // Check if CR number already exists for this main person
     if (crNumber) {
@@ -102,8 +103,23 @@ router.post('/', adminProtect, async (req, res) => {
       }
     }
 
-    const company = new Company(req.body);
+    // Create the company
+    const company = new Company({
+      ...req.body,
+      paymentStatus: 'none_paid' // Set initial payment status
+    });
     await company.save();
+    
+    // Create expense entry for CR amount if provided
+    if (crAmount > 0) {
+      const expense = new Expense({
+        name: `CR Amount for ${company.name}`,
+        amount: crAmount,
+        company: company._id,
+        expenseType: 'cr'
+      });
+      await expense.save();
+    }
     
     const populatedCompany = await Company.findById(company._id)
       .populate('mainPerson', 'name email contactNumber');

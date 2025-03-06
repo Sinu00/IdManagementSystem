@@ -18,14 +18,26 @@ import CachedIcon from '@mui/icons-material/Cached';
 
 function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
   const [amount, setAmount] = useState(company?.crAmount || 0);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit({
-      paymentType: 'renew',
-      paymentAmount: Number(amount),
-      resetPayments: true
-    });
+    try {
+      // Create payment data for renewal
+      const paymentData = {
+        paymentType: 'qiwa',
+        paymentAmount: Number(amount),
+        resetPayments: true
+      };
+
+      // Process the renewal payment
+      await onSubmit(paymentData);
+
+      onClose();
+    } catch (error) {
+      console.error('Error processing renewal:', error);
+      setError(error.response?.data?.message || 'Failed to process renewal');
+    }
   };
 
   return (

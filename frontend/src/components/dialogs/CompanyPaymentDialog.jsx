@@ -11,11 +11,6 @@ import {
   Grid,
   Typography,
   FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Divider,
   InputAdornment,
   Paper,
   InputLabel,
@@ -25,58 +20,45 @@ import {
 import PaymentIcon from '@mui/icons-material/Payment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
-import CachedIcon from '@mui/icons-material/Cached';
+import { expenseApi } from '../../services/api';
 
 function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
-  const [paymentType, setPaymentType] = useState('qiwa');
-  const [amount, setAmount] = useState(0);
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    paymentType: 'qiwa',
+    amount: 0,
+    paymentDate: new Date().toISOString().split('T')[0],
+    error: ''
+  });
   
   useEffect(() => {
     if (company) {
       // Set the default amount based on payment type
-      switch (paymentType) {
-        case 'qiwa':
-          setAmount(company.qiwaAmount || 0);
-          break;
-        case 'muqeem':
-          setAmount(company.muqeemAmount || 0);
-          break;
-        case 'efa':
-          setAmount(company.efaAmount || 0);
-          break;
-        default:
-          setAmount(0);
-      }
+      setFormData(prevData => ({
+        ...prevData,
+        amount: company.qiwaAmount || 0
+      }));
     }
-  }, [company, paymentType]);
+  }, [company]);
 
-  const handlePaymentTypeChange = (event) => {
-    setPaymentType(event.target.value);
-  };
-
-  const handleAmountChange = (event) => {
-    setAmount(event.target.value);
-  };
-
-  const handleSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    onSubmit({
-      paymentType,
-      paymentAmount: Number(amount)
-    });
-  };
+    try {
+      // Create payment data with the specific amount field
+      const paymentData = {
+        paymentType: formData.paymentType,
+        paymentAmount: parseFloat(formData.amount),
+        paymentDate: formData.paymentDate
+      };
 
-  const isPaid = (type) => {
-    switch (type) {
-      case 'qiwa':
-        return company?.qiwaAmount > 0;
-      case 'muqeem':
-        return company?.muqeemAmount > 0;
-      case 'efa':
-        return company?.efaAmount > 0;
-      default:
-        return false;
+      // Process the payment
+      await onSubmit(paymentData);
+      onClose();
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      setFormData(prevData => ({
+        ...prevData,
+        error: error.response?.data?.message || 'Failed to process payment'
+      }));
     }
   };
 
@@ -111,10 +93,10 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
       </DialogTitle>
       <DialogContent>
         {company && (
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            {error && (
+          <Box component="form" onSubmit={handleFormSubmit} sx={{ mt: 2 }}>
+            {formData.error && (
               <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
+                {formData.error}
               </Alert>
             )}
             
@@ -158,33 +140,22 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
                         EFA Amount: <strong>{company.efaAmount} SAR</strong>
                       </Typography>
                     </Grid>
-                    <Grid item xs={12}>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                        Total Amount: <strong>{company.totalAmount} SAR</strong>
-                      </Typography>
-                    </Grid>
                   </Grid>
                 </Paper>
               </Grid>
             </Grid>
             
-            <FormControl fullWidth sx={{ mb: 2 }}>
+            <FormControl fullWidth margin="normal">
               <InputLabel>Payment Type</InputLabel>
               <Select
-                value={paymentType}
-                onChange={handlePaymentTypeChange}
+                value={formData.paymentType}
+                onChange={(e) => setFormData({ ...formData, paymentType: e.target.value })}
                 label="Payment Type"
+                required
               >
-                <MenuItem value="qiwa" disabled={isPaid('qiwa')}>
-                  Qiwa Payment {isPaid('qiwa') ? '(Paid)' : ''}
-                </MenuItem>
-                <MenuItem value="muqeem" disabled={isPaid('muqeem')}>
-                  Muqeem Payment {isPaid('muqeem') ? '(Paid)' : ''}
-                </MenuItem>
-                <MenuItem value="efa" disabled={isPaid('efa')}>
-                  EFA Payment {isPaid('efa') ? '(Paid)' : ''}
-                </MenuItem>
+                <MenuItem value="qiwa">Qiwa Amount</MenuItem>
+                <MenuItem value="muqeem">Muqeem Amount</MenuItem>
+                <MenuItem value="efa">EFA Amount</MenuItem>
               </Select>
             </FormControl>
             
@@ -192,8 +163,8 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
               fullWidth
               label="Payment Amount"
               type="number"
-              value={amount}
-              onChange={handleAmountChange}
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               InputProps={{
                 startAdornment: <InputAdornment position="start">SAR</InputAdornment>,
               }}
@@ -205,7 +176,7 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button 
-          onClick={handleSubmit} 
+          onClick={handleFormSubmit} 
           variant="contained" 
           color="primary"
           startIcon={<PaymentIcon />}

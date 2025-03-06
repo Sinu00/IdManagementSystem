@@ -12,6 +12,20 @@ const expenseSchema = new mongoose.Schema(
       required: [true, 'Amount is required'],
       min: [0, 'Amount cannot be negative']
     },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Company',
+      required: true
+    },
+    expenseType: {
+      type: String,
+      enum: ['cr', 'qiwa', 'muqeem', 'saudi', 'efa', 'other'],
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
   },
   { timestamps: true }
 );

@@ -63,6 +63,7 @@ export const mainPersonApi = {
 };
 
 export const companyApi = {
+  getAll: () => api.get('/api/companies'),
   getByMainPerson: (mainPersonId) => api.get(`/api/companies/main-person/${mainPersonId}`),
   getById: (id) => api.get(`/api/companies/${id}`),
   create: (data) => api.post('/api/companies', data),

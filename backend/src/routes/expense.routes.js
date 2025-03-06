@@ -13,7 +13,9 @@ router.get('/filter/date', protect, async (req, res) => {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       }
-    }).sort({ createdAt: -1 });
+    })
+    .populate('company', 'name')
+    .sort({ createdAt: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -23,7 +25,9 @@ router.get('/filter/date', protect, async (req, res) => {
 // Get all expenses
 router.get('/', protect, async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ createdAt: -1 });
+    const expenses = await Expense.find()
+      .populate('company', 'name')
+      .sort({ createdAt: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -33,7 +37,8 @@ router.get('/', protect, async (req, res) => {
 // Get expense by ID
 router.get('/:id', protect, async (req, res) => {
   try {
-    const expense = await Expense.findById(req.params.id);
+    const expense = await Expense.findById(req.params.id)
+      .populate('company', 'name');
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
     }
@@ -46,11 +51,11 @@ router.get('/:id', protect, async (req, res) => {
 // Create new expense
 router.post('/', protect, async (req, res) => {
   try {
-    const expense = new Expense({
-      ...req.body
-    });
+    const expense = new Expense(req.body);
     const savedExpense = await expense.save();
-    res.status(201).json(savedExpense);
+    const populatedExpense = await Expense.findById(savedExpense._id)
+      .populate('company', 'name');
+    res.status(201).json(populatedExpense);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -62,8 +67,9 @@ router.put('/:id', protect, async (req, res) => {
     const expense = await Expense.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true }
-    );
+      { new: true }
+    ).populate('company', 'name');
+    
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
     }
@@ -89,13 +95,27 @@ router.delete('/:id', protect, async (req, res) => {
 // Get filtered expenses
 router.post('/filter', protect, async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
-    const expenses = await Expense.find({
-      createdAt: {
+    const { startDate, endDate, company, expenseType } = req.body;
+    const query = {};
+
+    if (startDate && endDate) {
+      query.createdAt = {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
-      }
-    }).sort({ createdAt: -1 });
+      };
+    }
+
+    if (company && company !== 'all') {
+      query.company = company;
+    }
+
+    if (expenseType && expenseType !== 'all') {
+      query.expenseType = expenseType;
+    }
+
+    const expenses = await Expense.find(query)
+      .populate('company', 'name')
+      .sort({ createdAt: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });

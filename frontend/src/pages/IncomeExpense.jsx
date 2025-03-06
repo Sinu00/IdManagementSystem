@@ -53,7 +53,7 @@ import {
   People as PeopleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { incomeApi, expenseApi, iqamaPriceApi, individualApi } from '../services/api';
+import { incomeApi, expenseApi, iqamaPriceApi, individualApi, companyApi } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -64,7 +64,7 @@ import autoTable from 'jspdf-autotable';
 import IqamaPriceDialog from '../components/dialogs/IqamaPriceDialog';
 
 // Create a memoized FilterSection component outside the main component
-const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [] }) => (
+const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [], companies = [] }) => (
   <Box sx={{ 
     mb: 3,
     display: visible ? 'block' : 'none'
@@ -135,6 +135,45 @@ const FilterSection = memo(({ type, visible, filters, onFilterChange, referredBy
             </FormControl>
           </Grid>
         )}
+        {type === 'expense' && (
+          <>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Company</InputLabel>
+                <Select
+                  value={filters.company}
+                  label="Company"
+                  onChange={(e) => onFilterChange(type, 'company', e.target.value)}
+                >
+                  <MenuItem value="all">All Companies</MenuItem>
+                  {companies.map((company) => (
+                    <MenuItem key={company._id} value={company._id}>
+                      {company.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Expense Type</InputLabel>
+                <Select
+                  value={filters.expenseType}
+                  label="Expense Type"
+                  onChange={(e) => onFilterChange(type, 'expenseType', e.target.value)}
+                >
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="cr">CR Amount</MenuItem>
+                  <MenuItem value="qiwa">Qiwa Amount</MenuItem>
+                  <MenuItem value="muqeem">Muqeem Amount</MenuItem>
+                  <MenuItem value="saudi">Saudi Amount</MenuItem>
+                  <MenuItem value="efa">EFA Amount</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </>
+        )}
       </Grid>
     </Paper>
   </Box>
@@ -157,7 +196,9 @@ function IncomeExpense() {
     name: '',
     amount: '',
     iqamaNumber: '', // only for income
-    referredBy: ''
+    referredBy: '',
+    company: '', // for expense
+    expenseType: 'other' // for expense
   });
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState('createdAt');
@@ -192,12 +233,15 @@ function IncomeExpense() {
       start: startOfMonth(new Date()),
       end: endOfMonth(new Date())
     },
-    nameSearch: ''
+    nameSearch: '',
+    company: 'all',
+    expenseType: 'all'
   });
   const [showIncomeFilters, setShowIncomeFilters] = useState(false);
   const [showExpenseFilters, setShowExpenseFilters] = useState(false);
   const [iqamaPrice, setIqamaPrice] = useState(5000);
   const [isIqamaPriceDialogOpen, setIsIqamaPriceDialogOpen] = useState(false);
+  const [companies, setCompanies] = useState([]);
 
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -208,6 +252,7 @@ function IncomeExpense() {
     fetchData();
     fetchReferredByList();
     loadIqamaPrice();
+    fetchCompanies();
   }, []);
 
   const fetchData = async () => {
@@ -256,7 +301,9 @@ function IncomeExpense() {
       name: '',
       amount: '',
       iqamaNumber: '',
-      referredBy: ''
+      referredBy: '',
+      company: '',
+      expenseType: 'other'
     });
     setDialogOpen(true);
   };
@@ -274,7 +321,9 @@ function IncomeExpense() {
       name: item.name,
       amount: item.amount.toString(),
       iqamaNumber: item.iqamaNumber || '',
-      referredBy: item.referredBy || ''
+      referredBy: item.referredBy || '',
+      company: item.company || '',
+      expenseType: item.expenseType || 'other'
     });
     setDialogOpen(true);
   };
@@ -346,7 +395,13 @@ function IncomeExpense() {
       const referredByMatch = type === 'income' ? 
         (filters.referredBy === 'all' || item.referredBy === filters.referredBy) : true;
       
-      return dateMatch && nameMatch && referredByMatch;
+      const companyMatch = type === 'expense' ?
+        (filters.company === 'all' || item.company === filters.company) : true;
+      
+      const expenseTypeMatch = type === 'expense' ?
+        (filters.expenseType === 'all' || item.expenseType === filters.expenseType) : true;
+      
+      return dateMatch && nameMatch && referredByMatch && companyMatch && expenseTypeMatch;
     });
   };
 
@@ -759,6 +814,16 @@ function IncomeExpense() {
     } catch (error) {
       console.error('Error updating IQAMA price:', error);
       throw new Error('Failed to update IQAMA price. Please try again.');
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await companyApi.getAll();
+      setCompanies(response.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      setError('Error fetching companies');
     }
   };
 
@@ -1336,93 +1401,52 @@ function IncomeExpense() {
                     filters={expenseFilters}
                     onFilterChange={handleFilterChange}
                     referredByList={referredByList}
+                    companies={companies}
                   />
                   <TableContainer>
                     <Table size="small" aria-label="expense table">
                       <TableHead>
                         <TableRow>
-                          <TableCell 
-                            onClick={() => handleExpenseSort('createdAt')}
-                            sx={{ 
-                              cursor: 'pointer', 
-                              '&:hover': { bgcolor: 'action.hover' },
-                              width: '25%'
-                            }}
-                          >
-                            Date {expenseSortField === 'createdAt' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
-                          </TableCell>
-                          <TableCell 
-                            onClick={() => handleExpenseSort('name')}
-                            sx={{ 
-                              cursor: 'pointer', 
-                              '&:hover': { bgcolor: 'action.hover' },
-                              width: '45%'
-                            }}
-                          >
-                            Name {expenseSortField === 'name' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
-                          </TableCell>
-                          <TableCell 
-                            onClick={() => handleExpenseSort('amount')}
-                            sx={{ 
-                              cursor: 'pointer', 
-                              '&:hover': { bgcolor: 'action.hover' },
-                              width: '30%'
-                            }}
-                          >
-                            Amount (SAR) {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
-                          </TableCell>
-                          <TableCell 
-                            sx={{ 
-                              width: '15%',
-                              textAlign: 'center'
-                            }}
-                          >
-                            Actions
-                          </TableCell>
+                          <TableCell>Date</TableCell>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Company</TableCell>
+                          <TableCell>Type</TableCell>
+                          <TableCell>Amount (SAR)</TableCell>
+                          <TableCell>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {sortedExpenses
-                          .slice(expensePage * expenseRowsPerPage, expensePage * expenseRowsPerPage + expenseRowsPerPage)
-                          .map((expense) => (
-                            <TableRow
-                              key={expense._id}
-                              sx={{
-                                '&:last-child td, &:last-child th': { border: 0 },
-                                '&:hover': { bgcolor: 'action.hover' }
-                              }}
-                            >
-                              <TableCell>{formatDate(expense.createdAt)}</TableCell>
-                              <TableCell>
-                                <Typography variant="body2">{expense.name}</Typography>
-                              </TableCell>
-                              <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                                {expense.amount.toFixed(2)}
-                              </TableCell>
-                              <TableCell sx={{ textAlign: 'center' }}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(expense, 'expense')}
-                                  sx={{ color: 'primary.main', mr: 1 }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleDeleteClick(expense, 'expense')}
-                                  sx={{ color: 'error.main' }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                        {expenses.map((expense) => (
+                          <TableRow key={expense._id}>
+                            <TableCell>{formatDate(expense.createdAt)}</TableCell>
+                            <TableCell>{expense.name}</TableCell>
+                            <TableCell>{expense.company?.name || 'Unknown Company'}</TableCell>
+                            <TableCell>{expense.expenseType ? expense.expenseType.replace('_', ' ') : 'Other'}</TableCell>
+                            <TableCell sx={{ color: 'error.main' }}>{expense.amount.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEdit(expense, 'expense')}
+                                sx={{ color: 'primary.main', mr: 1 }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDeleteClick(expense, 'expense')}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                   <TablePagination
                     component="div"
-                    count={sortedExpenses.length}
+                    count={expenses.length}
                     page={expensePage}
                     onPageChange={handleChangeExpensePage}
                     rowsPerPage={expenseRowsPerPage}
@@ -1495,6 +1519,41 @@ function IncomeExpense() {
                 onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
                 margin="normal"
               />
+            )}
+            {dialogType === 'expense' && (
+              <>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Company</InputLabel>
+                  <Select
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    label="Company"
+                    required
+                  >
+                    {companies.map((company) => (
+                      <MenuItem key={company._id} value={company._id}>
+                        {company.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Expense Type</InputLabel>
+                  <Select
+                    value={formData.expenseType}
+                    onChange={(e) => setFormData({ ...formData, expenseType: e.target.value })}
+                    label="Expense Type"
+                    required
+                  >
+                    <MenuItem value="cr">CR Amount</MenuItem>
+                    <MenuItem value="qiwa">Qiwa Amount</MenuItem>
+                    <MenuItem value="muqeem">Muqeem Amount</MenuItem>
+                    <MenuItem value="saudi">Saudi Amount</MenuItem>
+                    <MenuItem value="efa">EFA Amount</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+              </>
             )}
           </Box>
         </DialogContent>

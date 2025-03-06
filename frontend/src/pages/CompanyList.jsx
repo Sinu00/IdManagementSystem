@@ -58,6 +58,7 @@ import CompanyRenewDialog from '../components/dialogs/CompanyRenewDialog';
 import CompanySaudiPaymentDialog from '../components/dialogs/CompanySaudiPaymentDialog';
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
 import LoadingScreen from '../components/common/LoadingScreen';
+import { expenseApi } from '../services/api';
 
 function calculateTotalCounts(companies) {
   return companies.reduce((totals, company) => {
@@ -266,7 +267,22 @@ function CompanyList() {
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      const response = await companyApi.processPayment(selectedCompany._id, paymentData);
+      // Process the payment and get updated company
+      const response = await companyApi.processPayment(selectedCompany._id, {
+        paymentType: paymentData.paymentType,
+        paymentAmount: paymentData.paymentAmount,
+        resetPayments: paymentData.resetPayments || false
+      });
+      
+      // Create expense entry for the payment
+      await expenseApi.create({
+        name: paymentData.resetPayments 
+          ? `CR Renewal for ${selectedCompany.name}`
+          : `${paymentData.paymentType.charAt(0).toUpperCase() + paymentData.paymentType.slice(1)} Payment for ${selectedCompany.name}`,
+        amount: paymentData.paymentAmount,
+        company: selectedCompany._id,
+        expenseType: paymentData.resetPayments ? 'cr' : paymentData.paymentType
+      });
       
       // Update the company in the list
       setCompanies(companies.map(company => 
@@ -285,6 +301,14 @@ function CompanyList() {
   const handleSaudiPaymentSubmit = async (paymentData) => {
     try {
       const response = await companyApi.processSaudiPayment(selectedCompany._id, paymentData);
+      
+      // Create expense entry for the Saudi payment
+      await expenseApi.create({
+        name: `Saudi Payment for ${selectedCompany.name}`,
+        amount: paymentData.amount,
+        company: selectedCompany._id,
+        expenseType: 'saudi'
+      });
       
       // Update the company in the list
       setCompanies(companies.map(company => 
