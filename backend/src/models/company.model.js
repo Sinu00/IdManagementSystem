@@ -46,6 +46,14 @@ const companySchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    saudiAmount: {
+      type: Number,
+      default: 0
+    },
+    saudiCount: {
+      type: Number,
+      default: 0
+    },
     paymentStatus: {
       type: String,
       enum: ['none_paid', 'partially_paid', 'fully_paid', 'renewed'],

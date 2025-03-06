@@ -49,10 +49,6 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
               {company.name}
             </Typography>
             
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              By renewing this company, all payment amounts will be reset to 0 and the payment status will be set to "none_paid".
-            </Alert>
-            
             <Paper 
               sx={{ 
                 p: 2, 

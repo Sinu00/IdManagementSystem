@@ -55,6 +55,7 @@ import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import CompanyDialog from '../components/dialogs/CompanyDialog';
 import CompanyPaymentDialog from '../components/dialogs/CompanyPaymentDialog';
 import CompanyRenewDialog from '../components/dialogs/CompanyRenewDialog';
+import CompanySaudiPaymentDialog from '../components/dialogs/CompanySaudiPaymentDialog';
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
 import LoadingScreen from '../components/common/LoadingScreen';
 
@@ -91,6 +92,7 @@ function CompanyList() {
   const [dialogError, setDialogError] = useState('');
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(15);
+  const [saudiPaymentDialogOpen, setSaudiPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -193,6 +195,11 @@ function CompanyList() {
     setRenewDialogOpen(true);
   };
 
+  const handleSaudiPaymentClick = (company) => {
+    setSelectedCompany(company);
+    setSaudiPaymentDialogOpen(true);
+  };
+
   const handleDelete = (company) => {
     setSelectedCompany(company);
     setConfirmMessage(`Are you sure you want to delete ${company.name}?`);
@@ -269,9 +276,26 @@ function CompanyList() {
       setPaymentDialogOpen(false);
       setRenewDialogOpen(false);
       setSelectedCompany(null);
-      toast.success('Payment processed successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to process payment');
+      console.error('Error processing payment:', error);
+      setDialogError(error.response?.data?.message || 'Failed to process payment');
+    }
+  };
+
+  const handleSaudiPaymentSubmit = async (paymentData) => {
+    try {
+      const response = await companyApi.processSaudiPayment(selectedCompany._id, paymentData);
+      
+      // Update the company in the list
+      setCompanies(companies.map(company => 
+        company._id === selectedCompany._id ? response.data : company
+      ));
+      
+      setSaudiPaymentDialogOpen(false);
+      setSelectedCompany(null);
+    } catch (error) {
+      console.error('Error processing Saudi payment:', error);
+      setDialogError(error.response?.data?.message || 'Failed to process Saudi payment');
     }
   };
 
@@ -853,11 +877,48 @@ function CompanyList() {
                           {user?.isAdmin && (
                             <Box 
                               sx={{ 
+                                mt: 2,
                                 display: 'flex',
-                                gap: 1,
-                                justifyContent: 'flex-end',
+                                gap: 0.75,
+                                '& .MuiButton-root': {
+                                  flex: 1,
+                                  minWidth: 'auto',
+                                  textTransform: 'none',
+                                  fontSize: '0.7rem',
+                                  py: 0.5,
+                                  px: 1,
+                                  '& .MuiButton-startIcon': {
+                                    marginRight: 0.5,
+                                    '& .MuiSvgIcon-root': {
+                                      fontSize: 16
+                                    }
+                                  }
+                                }
                               }}
                             >
+
+                                <Tooltip title="Delete Company">
+                                <Button
+                                  size="small"
+                                  color="error"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(company);
+                                  }}
+                                  startIcon={<DeleteIcon />}
+                                  sx={{ 
+                                    bgcolor: 'background.paper',
+                                    boxShadow: 1,
+                                    '&:hover': {
+                                      transform: 'translateY(-1px)',
+                                      bgcolor: 'error.lighter'
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </Tooltip>
+
                               <Tooltip title="Edit Company">
                                 <Button
                                   size="small"
@@ -906,27 +967,28 @@ function CompanyList() {
                                 </Button>
                               </Tooltip>
 
-                              <Tooltip title="Delete Company">
+                              <Tooltip title="Saudi Payment">
                                 <Button
                                   size="small"
-                                  color="error"
+                                  color="secondary"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(company);
+                                    handleSaudiPaymentClick(company);
                                   }}
-                                  startIcon={<DeleteIcon />}
+                                  startIcon={<PaymentIcon />}
                                   sx={{ 
                                     bgcolor: 'background.paper',
                                     boxShadow: 1,
                                     '&:hover': {
                                       transform: 'translateY(-1px)',
-                                      bgcolor: 'error.lighter'
+                                      bgcolor: 'secondary.lighter'
                                     }
                                   }}
                                 >
-                                  Delete
+                                  Saudi
                                 </Button>
                               </Tooltip>
+
                             </Box>
                           )}
                         </CardContent>
@@ -1005,6 +1067,16 @@ function CompanyList() {
           setSelectedCompany(null);
         }}
         onSubmit={handlePaymentSubmit}
+        company={selectedCompany}
+      />
+
+      <CompanySaudiPaymentDialog
+        open={saudiPaymentDialogOpen}
+        onClose={() => {
+          setSaudiPaymentDialogOpen(false);
+          setSelectedCompany(null);
+        }}
+        onSubmit={handleSaudiPaymentSubmit}
         company={selectedCompany}
       />
 

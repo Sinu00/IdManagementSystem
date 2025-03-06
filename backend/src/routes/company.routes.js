@@ -230,6 +230,32 @@ router.post('/:id/payment', adminProtect, async (req, res) => {
   }
 });
 
+// Process Saudi payment
+router.post('/:id/saudi-payment', async (req, res) => {
+  try {
+    const { amount, clear } = req.body;
+    const company = await Company.findById(req.params.id);
+    
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    if (clear) {
+      company.saudiAmount = 0;
+      company.saudiCount = 0;
+    } else {
+      company.saudiAmount += amount;
+      company.saudiCount += 1;
+    }
+    
+    await company.save();
+
+    res.json(company);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete company
 router.delete('/:id', adminProtect, async (req, res) => {
   try {
