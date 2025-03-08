@@ -191,7 +191,8 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         // For renew mode
         submitData = {
           expiryDate: formData.expiryDate,
-          amount: parseFloat(formData.amount) || 0
+          amount: parseFloat(formData.amount) || 0,
+          iqamaPrice: currentIqamaPrice
         };
       }
 

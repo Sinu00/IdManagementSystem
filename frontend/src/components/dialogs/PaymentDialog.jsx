@@ -65,8 +65,9 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
 
   const handlePaymentChange = (e) => {
     const value = parseFloat(e.target.value);
-    if (value > individual.pendingAmount) {
-      setPaymentError(`Amount cannot exceed pending amount of ${individual.pendingAmount} SAR`);
+    const pendingAmount = individual.pendingAmount || individual.iqamaPrice;
+    if (value > pendingAmount) {
+      setPaymentError(`Amount cannot exceed pending amount of ${pendingAmount} SAR`);
     } else if (value < 0) {
       setPaymentError('Please enter a valid amount');
     } else {

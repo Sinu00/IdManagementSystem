@@ -34,7 +34,11 @@ import {
   Person as PersonIcon,
   Badge as BadgeIcon,
   CalendarToday as CalendarIcon,
-  AccountCircle as AccountCircleIcon
+  AccountCircle as AccountCircleIcon,
+  Add as AddIcon,
+  Autorenew as RenewIcon,
+  MonetizationOn as PaymentIcon,
+  Business as BusinessIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { notifyAdminApi, individualApi } from '../services/api';
@@ -119,6 +123,40 @@ function AdminNotifications() {
     return format(new Date(date), 'dd MMM yyyy');
   };
 
+  const getRequestTypeChip = (requestType) => {
+    let color;
+    let icon;
+    switch (requestType) {
+      case 'ADD':
+        color = 'primary';
+        icon = <AddIcon />;
+        break;
+      case 'RENEW':
+        color = 'success';
+        icon = <RenewIcon />;
+        break;
+      case 'PAYMENT':
+        color = 'warning';
+        icon = <PaymentIcon />;
+        break;
+      default:
+        color = 'default';
+        icon = <NotificationsIcon />;
+    }
+    return (
+      <Chip
+        icon={icon}
+        label={requestType}
+        color={color}
+        size="small"
+        sx={{ 
+          '& .MuiChip-icon': { fontSize: 16 },
+          fontWeight: 'medium'
+        }}
+      />
+    );
+  };
+
   if (loading) {
     return (
       <Box sx={{ 
@@ -179,16 +217,16 @@ function AdminNotifications() {
                 </Typography>
               </Paper>
             ) : (
-              <TableContainer component={Paper} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+              <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 2 }}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'background.default' }}>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Nationality</TableCell>
-                      <TableCell>Iqama Number</TableCell>
-                      <TableCell>Expiry Date</TableCell>
-                      <TableCell>Added By</TableCell>
-                      <TableCell>Added On</TableCell>
+                    <TableRow>
+                      <TableCell>Type</TableCell>
+                      <TableCell>Individual</TableCell>
+                      <TableCell>Company</TableCell>
+                      <TableCell>Details</TableCell>
+                      <TableCell>Requested By</TableCell>
+                      <TableCell>Date</TableCell>
                       <TableCell align="right">Actions</TableCell>
                     </TableRow>
                   </TableHead>
@@ -196,44 +234,81 @@ function AdminNotifications() {
                     {notifications.map((notification) => (
                       <TableRow 
                         key={notification._id}
-                        sx={{ '&:hover': { bgcolor: 'action.hover' } }}
+                        sx={{ 
+                          '&:last-child td, &:last-child th': { border: 0 },
+                          transition: 'background-color 0.2s',
+                          '&:hover': {
+                            backgroundColor: 'action.hover'
+                          }
+                        }}
                       >
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <PersonIcon color="primary" fontSize="small" />
-                            {notification.name}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{notification.nationality}</TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <BadgeIcon color="primary" fontSize="small" />
-                            {notification.iqamaNumber}
-                          </Box>
+                          {getRequestTypeChip(notification.requestType)}
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CalendarIcon color="primary" fontSize="small" />
-                            {formatDate(notification.expiryDate)}
+                            <Avatar 
+                              sx={{ 
+                                width: 32, 
+                                height: 32,
+                                bgcolor: 'primary.lighter',
+                                color: 'primary.main'
+                              }}
+                            >
+                              {notification.name?.charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2">
+                                {notification.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {notification.nationality}
+                              </Typography>
+                            </Box>
                           </Box>
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <AccountCircleIcon color="primary" fontSize="small" />
+                            <BusinessIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                            <Typography variant="body2">
+                              {notification.company?.name || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              Iqama: {notification.iqamaNumber}
+                            </Typography>
+                            {notification.amount && (
+                              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <PaymentIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                                Amount: SAR {notification.amount}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
                             {notification.addedBy?.username || 'Unknown'}
-                          </Box>
+                          </Typography>
                         </TableCell>
-                        <TableCell>{formatDate(notification.createdAt)}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {formatDate(notification.createdAt)}
+                          </Typography>
+                        </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
                             <Tooltip title="Approve">
                               <IconButton
                                 size="small"
+                                color="success"
                                 onClick={() => handleApprove(notification)}
-                                sx={{
-                                  bgcolor: 'success.light',
-                                  color: 'success.dark',
-                                  '&:hover': { bgcolor: 'success.main', color: 'white' }
+                                sx={{ 
+                                  bgcolor: 'success.lighter',
+                                  '&:hover': { bgcolor: 'success.light' }
                                 }}
                               >
                                 <CheckIcon fontSize="small" />
@@ -242,11 +317,11 @@ function AdminNotifications() {
                             <Tooltip title="Reject">
                               <IconButton
                                 size="small"
+                                color="error"
                                 onClick={() => handleReject(notification)}
-                                sx={{
-                                  bgcolor: 'error.light',
-                                  color: 'error.dark',
-                                  '&:hover': { bgcolor: 'error.main', color: 'white' }
+                                sx={{ 
+                                  bgcolor: 'error.lighter',
+                                  '&:hover': { bgcolor: 'error.light' }
                                 }}
                               >
                                 <CloseIcon fontSize="small" />
@@ -293,6 +368,11 @@ function AdminNotifications() {
               <Typography variant="subtitle1">
                 <strong>Iqama Number:</strong> {selectedNotification.iqamaNumber}
               </Typography>
+              {selectedNotification.company?.name && (
+                <Typography variant="subtitle1">
+                  <strong>Company:</strong> {selectedNotification.company.name}
+                </Typography>
+              )}
             </Box>
           )}
         </DialogContent>

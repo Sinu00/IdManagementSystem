@@ -106,26 +106,36 @@ router.post('/', protect, async (req, res) => {
   try {
     const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
     const iqamaPrice = currentPrice?.price || 5000;
-    const initialAmount = parseFloat(req.body.amount) || 0;
+    const initialPayment = parseFloat(req.body.amount) || 0;
+    
+    // Calculate payment status - isFullyPaid only when exact match
+    const pendingAmount = iqamaPrice - initialPayment;
+    const isFullyPaid = initialPayment === iqamaPrice;
     
     const individual = await Individual.create({
       ...req.body,
       iqamaPrice,
-      totalPaidAmount: initialAmount,
-      pendingAmount: iqamaPrice - initialAmount,
-      isFullyPaid: initialAmount >= iqamaPrice,
+      totalPaidAmount: initialPayment,
+      pendingAmount,
+      isFullyPaid,
       lastUpdatedBy: req.user.username,
-      lastUpdateDate: new Date()
+      lastUpdateDate: new Date(),
+      paymentHistory: initialPayment > 0 ? [{
+        amount: initialPayment,
+        paidBy: req.user.username,
+        paidAt: new Date(),
+        remainingAmount: pendingAmount
+      }] : []
     });
 
-    // Create income record if initial payment is made
-    if (initialAmount > 0) {
+    // Create income record if payment is made
+    if (initialPayment > 0) {
       const company = await Company.findById(req.body.company).populate('mainPerson');
       
       await Income.create({
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
-        amount: initialAmount,
+        amount: initialPayment,
         referredBy: req.body.referredBy || '',
         addedBy: req.user.username,
         dateAndTime: new Date(),
@@ -149,21 +159,34 @@ router.post('/:id/pay-pending', protect, async (req, res) => {
       return res.status(404).json({ message: 'Individual not found' });
     }
 
-    const paymentAmount = parseFloat(req.body.amount);
-    if (paymentAmount > individual.pendingAmount) {
-      return res.status(400).json({ message: 'Payment amount exceeds pending balance' });
+    const paymentAmount = parseFloat(req.body.amount) || 0;
+    if (paymentAmount <= 0) {
+      return res.status(400).json({ message: 'Invalid payment amount' });
     }
 
+    // Calculate new payment status
+    const newTotalPaid = individual.totalPaidAmount + paymentAmount;
+    
+    // Don't allow overpayment
+    if (newTotalPaid > individual.iqamaPrice) {
+      return res.status(400).json({ message: 'Payment amount exceeds required amount' });
+    }
+
+    const newPendingAmount = individual.iqamaPrice - newTotalPaid;
+    const isFullyPaid = newTotalPaid === individual.iqamaPrice; // Exact match required
+    
     // Update individual payment details
-    individual.totalPaidAmount += paymentAmount;
-    individual.pendingAmount -= paymentAmount;
-    individual.isFullyPaid = individual.pendingAmount <= 0;
+    individual.totalPaidAmount = newTotalPaid;
+    individual.pendingAmount = newPendingAmount;
+    individual.isFullyPaid = isFullyPaid;
     individual.lastUpdatedBy = req.user.username;
     individual.lastUpdateDate = new Date();
+    
     individual.paymentHistory.push({
       amount: paymentAmount,
       paidBy: req.user.username,
-      paidAt: new Date()
+      paidAt: new Date(),
+      remainingAmount: newPendingAmount
     });
 
     await individual.save();
@@ -191,16 +214,61 @@ router.post('/:id/pay-pending', protect, async (req, res) => {
 // Update individual (including renewal)
 router.put('/:id', protect, async (req, res) => {
   try {
-    if (req.body.expiryDate) { // Renewal
+    // Check if this is a renewal operation (has both expiryDate and isRenewal flag)
+    if (req.body.expiryDate && req.body.isRenewal) {
       const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
       const iqamaPrice = currentPrice?.price || 5000;
-      const initialPayment = parseFloat(req.body.amount) || 0;
+      const renewalPayment = parseFloat(req.body.totalPaidAmount) || 0;
       
-      req.body.iqamaPrice = iqamaPrice; // Use new price for renewal
-      req.body.totalPaidAmount = initialPayment;
-      req.body.pendingAmount = iqamaPrice - initialPayment;
-      req.body.isFullyPaid = initialPayment >= iqamaPrice;
+      // Calculate payment status for new period - isFullyPaid only when exact match
+      const pendingAmount = iqamaPrice - renewalPayment;
+      const isFullyPaid = renewalPayment === iqamaPrice;
+      
+      // Reset payment status for new period
+      req.body.iqamaPrice = iqamaPrice;
+      req.body.totalPaidAmount = renewalPayment;
+      req.body.pendingAmount = pendingAmount;
+      req.body.isFullyPaid = isFullyPaid;
+
+      // Add payment to history if there's a payment
+      if (renewalPayment > 0) {
+        const individual = await Individual.findById(req.params.id);
+        const company = await Company.findById(req.body.company || individual.company).populate('mainPerson');
+        
+        if (!company || !company.mainPerson) {
+          throw new Error('Company or main person not found');
+        }
+
+        // Create income record for the renewal payment
+        await Income.create({
+          name: individual.name,
+          iqamaNumber: individual.iqamaNumber,
+          amount: renewalPayment,
+          referredBy: individual.referredBy || '',
+          addedBy: req.user.username,
+          dateAndTime: new Date(),
+          notes: 'Renewal payment',
+          mainPerson: company.mainPerson._id
+        });
+
+        req.body.paymentHistory = [{
+          amount: renewalPayment,
+          paidBy: req.user.username,
+          paidAt: new Date(),
+          remainingAmount: pendingAmount
+        }];
+      }
+    } else {
+      // For regular updates, remove any payment-related fields to prevent accidental updates
+      delete req.body.iqamaPrice;
+      delete req.body.totalPaidAmount;
+      delete req.body.pendingAmount;
+      delete req.body.isFullyPaid;
+      delete req.body.paymentHistory;
     }
+
+    // Remove isRenewal from the update data as it's not part of the model
+    delete req.body.isRenewal;
 
     const individual = await Individual.findByIdAndUpdate(
       req.params.id,

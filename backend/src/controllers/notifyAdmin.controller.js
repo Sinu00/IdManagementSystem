@@ -102,26 +102,195 @@ export const deleteNotification = async (req, res) => {
 // Approve notification (move to Individual model)
 export const approveNotification = async (req, res) => {
   try {
-    const notification = await NotifyAdmin.findById(req.params.id);
+    const notification = await NotifyAdmin.findById(req.params.id)
+      .populate('originalIndividual')
+      .populate({
+        path: 'company',
+        populate: {
+          path: 'mainPerson'
+        }
+      });
     
     if (!notification) {
       return res.status(StatusCodes.NOT_FOUND).json({ message: 'Notification not found' });
     }
-    
-    // Create a new individual record from the notification data
-    const { addedBy, __v, _id, createdAt, updatedAt, ...individualData } = notification.toObject();
-    
-    // Use the Individual model directly from import to avoid circular dependency
+
     const Individual = mongoose.model('Individual');
-    const newIndividual = new Individual(individualData);
-    await newIndividual.save();
+    const Income = mongoose.model('Income');
+    const Company = mongoose.model('Company');
+    let updatedIndividual;
+
+    // Helper function to get company with mainPerson
+    const getCompanyWithMainPerson = async (companyId) => {
+      const company = await Company.findById(companyId).populate('mainPerson');
+      if (!company || !company.mainPerson) {
+        throw new Error('Company or main person not found');
+      }
+      return company;
+    };
+
+    // Helper function to create income record
+    const createIncomeRecord = async (data) => {
+      const company = await getCompanyWithMainPerson(data.companyId);
+      await Income.create({
+        name: data.name,
+        iqamaNumber: data.iqamaNumber,
+        amount: data.amount,
+        referredBy: data.referredBy || '',
+        addedBy: data.addedBy,
+        dateAndTime: new Date(),
+        notes: data.notes,
+        mainPerson: company.mainPerson._id
+      });
+    };
+
+    switch (notification.requestType) {
+      case 'ADD':
+        // Handle new individual creation
+        const { addedBy, __v, _id, createdAt, updatedAt, requestType, originalIndividual, ...individualData } = notification.toObject();
+        
+        // Get the initial payment amount
+        const initialPayment = Number(notification.amount) || 0;
+        const iqamaPrice = Number(notification.iqamaPrice) || 5000;
+        
+        // Calculate payment status
+        const pendingAmount = iqamaPrice - initialPayment;
+        const isFullyPaid = initialPayment === iqamaPrice;
+
+        // Set up individual data with correct payment details
+        individualData.iqamaPrice = iqamaPrice;
+        individualData.totalPaidAmount = initialPayment;
+        individualData.pendingAmount = pendingAmount;
+        individualData.isFullyPaid = isFullyPaid;
+        individualData.lastUpdateDate = new Date();
+        individualData.lastUpdatedBy = req.user.username;
+        
+        // Add payment history if there's an initial payment
+        individualData.paymentHistory = initialPayment > 0 ? [{
+          amount: initialPayment,
+          paidBy: req.user.username,
+          paidAt: new Date(),
+          remainingAmount: pendingAmount
+        }] : [];
+        
+        const newIndividual = new Individual(individualData);
+        updatedIndividual = await newIndividual.save();
+
+        // Create income record if there's an initial payment
+        if (initialPayment > 0) {
+          await createIncomeRecord({
+            name: individualData.name,
+            iqamaNumber: individualData.iqamaNumber,
+            amount: initialPayment,
+            referredBy: individualData.referredBy,
+            addedBy: req.user.username,
+            notes: 'Initial payment for new individual',
+            companyId: notification.company
+          });
+        }
+        break;
+
+      case 'RENEW':
+        if (!notification.originalIndividual) {
+          throw new Error('Original individual not found for renewal');
+        }
+        
+        const renewalPayment = Number(notification.amount) || 0;
+        const renewalIqamaPrice = Number(notification.iqamaPrice) || 5000;
+        const renewalPendingAmount = renewalIqamaPrice - renewalPayment;
+        const renewalIsFullyPaid = renewalPayment === renewalIqamaPrice;
+
+        // Update expiry date and payment status
+        updatedIndividual = await Individual.findByIdAndUpdate(
+          notification.originalIndividual._id,
+          {
+            expiryDate: notification.expiryDate,
+            totalPaidAmount: renewalPayment,
+            iqamaPrice: renewalIqamaPrice,
+            pendingAmount: renewalPendingAmount,
+            isFullyPaid: renewalIsFullyPaid,
+            lastUpdateDate: new Date(),
+            lastUpdatedBy: req.user.username,
+            $set: {
+              paymentHistory: renewalPayment > 0 ? [{
+                amount: renewalPayment,
+                paidBy: req.user.username,
+                paidAt: new Date(),
+                remainingAmount: renewalPendingAmount
+              }] : []
+            }
+          },
+          { new: true, runValidators: true }
+        );
+
+        // Create income record for renewal payment
+        if (renewalPayment > 0) {
+          await createIncomeRecord({
+            name: updatedIndividual.name,
+            iqamaNumber: updatedIndividual.iqamaNumber,
+            amount: renewalPayment,
+            referredBy: updatedIndividual.referredBy,
+            addedBy: req.user.username,
+            notes: 'Renewal payment',
+            companyId: notification.company
+          });
+        }
+        break;
+
+      case 'PAYMENT':
+        if (!notification.originalIndividual) {
+          throw new Error('Original individual not found for payment');
+        }
+        // Update payment information
+        const paymentAmount = Number(notification.amount) || 0;
+        const newTotalPaid = notification.originalIndividual.totalPaidAmount + paymentAmount;
+        const newPendingAmount = notification.originalIndividual.iqamaPrice - newTotalPaid;
+        const paymentIsFullyPaid = newTotalPaid === notification.originalIndividual.iqamaPrice;
+        
+        updatedIndividual = await Individual.findByIdAndUpdate(
+          notification.originalIndividual._id,
+          {
+            $push: {
+              paymentHistory: {
+                amount: paymentAmount,
+                paidBy: req.user.username,
+                paidAt: new Date(),
+                remainingAmount: newPendingAmount
+              }
+            },
+            totalPaidAmount: newTotalPaid,
+            pendingAmount: newPendingAmount,
+            isFullyPaid: paymentIsFullyPaid,
+            lastUpdateDate: new Date(),
+            lastUpdatedBy: req.user.username
+          },
+          { new: true, runValidators: true }
+        );
+
+        // Create income record for payment
+        if (paymentAmount > 0) {
+          await createIncomeRecord({
+            name: updatedIndividual.name,
+            iqamaNumber: updatedIndividual.iqamaNumber,
+            amount: paymentAmount,
+            referredBy: updatedIndividual.referredBy,
+            addedBy: req.user.username,
+            notes: 'Pending payment',
+            companyId: notification.company
+          });
+        }
+        break;
+
+      default:
+        throw new Error('Invalid request type');
+    }
     
-    // Delete the notification after approving
+    // Delete the notification after processing
     await NotifyAdmin.findByIdAndDelete(req.params.id);
     
     res.status(StatusCodes.OK).json({ 
-      message: 'Notification approved and moved to Individuals',
-      individual: newIndividual
+      message: `${notification.requestType} request approved successfully`,
+      individual: updatedIndividual
     });
   } catch (error) {
     console.error('Error approving notification:', error);

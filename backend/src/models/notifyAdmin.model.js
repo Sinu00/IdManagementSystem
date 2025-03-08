@@ -84,6 +84,19 @@ const notifyAdminSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, 'User reference is required']
+    },
+    requestType: {
+      type: String,
+      required: [true, 'Request type is required'],
+      enum: ['ADD', 'RENEW', 'PAYMENT'],
+      default: 'ADD'
+    },
+    originalIndividual: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Individual',
+      required: function() {
+        return this.requestType === 'RENEW' || this.requestType === 'PAYMENT';
+      }
     }
   },
   { 

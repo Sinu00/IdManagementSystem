@@ -203,7 +203,11 @@ function IndividualList() {
       setError('Please complete all payments before renewing');
       return;
     }
-    setSelectedIndividual(individual);
+    setSelectedIndividual({
+      ...individual,
+      pendingAmount: individual.iqamaPrice, // Reset pending amount to full iqama price
+      totalPaidAmount: 0 // Reset total paid amount
+    });
     setDialogMode('renew');
     setDialogOpen(true);
   };
@@ -241,6 +245,30 @@ function IndividualList() {
     try {
       setDialogError('');
       let message;
+      
+      if (!user.isAdmin) {
+        // For regular users, create a notification
+        const notificationData = {
+          name: selectedIndividual?.name || formData.name,
+          nationality: selectedIndividual?.nationality || formData.nationality,
+          phoneNumber: selectedIndividual?.phoneNumber || formData.phoneNumber,
+          iqamaNumber: selectedIndividual?.iqamaNumber || formData.iqamaNumber,
+          expiryDate: formData.expiryDate,
+          company: companyId,
+          requestType: dialogMode === 'add' ? 'ADD' : 'RENEW',
+          originalIndividual: selectedIndividual?._id,
+          amount: Number(formData.amount) || 0,
+          iqamaPrice: selectedIndividual?.iqamaPrice || 5000,
+          totalPaidAmount: selectedIndividual?.totalPaidAmount || 0
+        };
+        
+        await notifyAdminApi.create(notificationData);
+        toast.success(`${dialogMode === 'add' ? 'Addition' : 'Renewal'} request sent to admin for approval`);
+        setDialogOpen(false);
+        return;
+      }
+
+      // For admin users, process directly
       if (dialogMode === 'add') {
         message = 'Are you sure you want to add this individual?';
       } else if (dialogMode === 'edit') {
@@ -252,69 +280,38 @@ function IndividualList() {
       setConfirmMessage(message);
       setConfirmAction(() => async () => {
         try {
+          let response;
           if (dialogMode === 'add') {
-            const individualData = { 
-              ...formData, 
-              company: companyId,
-              amount: parseFloat(formData.amount) || 0,
-              referredBy: formData.referredBy || ''
-            };
-
-            // Check if user is admin
-            if (user.isAdmin) {
-              // Admin users add directly to Individual model
-              await individualApi.create(individualData);
-            } else {
-              // Regular users add to NotifyAdmin model for admin approval
-              await notifyAdminApi.create(individualData);
-              // Show a notification that it's been submitted for admin approval
-              toast.success("Individual has been submitted for admin approval");
-            }
-
-            if (formData.referredBy) {
-              setReferredByList(prev => [...new Set([...prev, formData.referredBy])]);
-            }
+            response = await individualApi.create({ ...formData, company: companyId });
           } else if (dialogMode === 'edit') {
-            await individualApi.update(selectedIndividual._id, formData);
-            if (formData.referredBy) {
-              setReferredByList(prev => [...new Set([...prev, formData.referredBy])]);
-            }
+            response = await individualApi.update(selectedIndividual._id, formData);
           } else {
-            // First update the individual
-            const updatedIndividual = await individualApi.update(selectedIndividual._id, { 
+            // For renewal, send only the necessary fields
+            response = await individualApi.update(selectedIndividual._id, {
               expiryDate: formData.expiryDate,
-              amount: parseFloat(formData.amount) || 0
+              amount: Number(formData.amount) || 0,
+              iqamaPrice: selectedIndividual.iqamaPrice || 5000,
+              totalPaidAmount: Number(formData.amount) || 0,
+              pendingAmount: (selectedIndividual.iqamaPrice || 5000) - (Number(formData.amount) || 0),
+              isFullyPaid: (Number(formData.amount) || 0) >= (selectedIndividual.iqamaPrice || 5000),
+              isRenewal: true // Add this flag to indicate it's a renewal operation
             });
-
-            // Then create the income record using the updated individual data
-            if (updatedIndividual.data) {
-              await incomeApi.create({
-                name: updatedIndividual.data.name,
-                amount: parseFloat(formData.amount) || 0,
-                iqamaNumber: updatedIndividual.data.iqamaNumber,
-                referredBy: updatedIndividual.data.referredBy || '',
-                mainPerson: updatedIndividual.data.company.mainPerson._id
-              });
-            }
           }
           
-          const response = await individualApi.getByCompany(companyId);
-          setAllIndividuals(response.data);
+          const updatedList = await individualApi.getByCompany(companyId);
+          setAllIndividuals(updatedList.data);
           setDialogOpen(false);
           setConfirmDialogOpen(false);
-          setDialogError('');
+          toast.success(`Individual ${dialogMode === 'add' ? 'added' : dialogMode === 'edit' ? 'updated' : 'renewed'} successfully`);
         } catch (error) {
-          console.error('Error saving individual:', error);
-          setDialogError(error.response?.data?.message || 'Failed to save individual');
-          setConfirmDialogOpen(false);
+          console.error('Error:', error);
+          setDialogError(error.response?.data?.message || 'Operation failed');
         }
       });
-      
-      window.removeEventListener('keypress', handleConfirmKeyPress);
       setConfirmDialogOpen(true);
     } catch (error) {
-      console.error('Error preparing submission:', error);
-      setDialogError('An unexpected error occurred');
+      console.error('Error in handleSubmit:', error);
+      setDialogError(error.message || 'An error occurred');
     }
   };
 
@@ -371,6 +368,27 @@ function IndividualList() {
 
   const handlePaymentSubmit = async (amount) => {
     try {
+      if (!user.isAdmin) {
+        // For regular users, create a payment notification
+        const notificationData = {
+          name: selectedIndividual.name,
+          nationality: selectedIndividual.nationality,
+          phoneNumber: selectedIndividual.phoneNumber,
+          iqamaNumber: selectedIndividual.iqamaNumber,
+          expiryDate: selectedIndividual.expiryDate,
+          company: companyId,
+          amount: amount,
+          requestType: 'PAYMENT',
+          originalIndividual: selectedIndividual._id
+        };
+        
+        await notifyAdminApi.create(notificationData);
+        toast.success('Payment request sent to admin for approval');
+        setPaymentDialogOpen(false);
+        return;
+      }
+
+      // For admin users, process payment directly
       const response = await individualApi.payPending(selectedIndividual._id, {
         amount: amount
       });
@@ -380,6 +398,7 @@ function IndividualList() {
       setAllIndividuals(updatedList.data);
       
       setPaymentDialogOpen(false);
+      toast.success('Payment processed successfully');
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to process payment');
     }
@@ -894,6 +913,126 @@ function IndividualList() {
                               </Grid>
 
                               <Grid item xs={12}>
+                                <Box 
+                                  sx={{ 
+                                    mt: 2,
+                                    display: 'flex',
+                                    gap: 0.75,
+                                    '& .MuiButton-root': {
+                                      flex: 1,
+                                      minWidth: 'auto',
+                                      textTransform: 'none',
+                                      fontSize: '0.7rem',
+                                      py: 0.5,
+                                      px: 1,
+                                      '& .MuiButton-startIcon': {
+                                        marginRight: 0.5,
+                                        '& .MuiSvgIcon-root': {
+                                          fontSize: 16
+                                        }
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {!individual.isFullyPaid && (
+                                    <Tooltip title="Pay Pending Amount">
+                                      <Button
+                                        size="small"
+                                        color="warning"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handlePayPending(individual);
+                                        }}
+                                        startIcon={<MonetizationIcon />}
+                                        sx={{ 
+                                          bgcolor: 'background.paper',
+                                          boxShadow: 1,
+                                          '&:hover': {
+                                            transform: 'translateY(-1px)',
+                                            bgcolor: 'warning.lighter'
+                                          }
+                                        }}
+                                      >
+                                        Pay
+                                      </Button>
+                                    </Tooltip>
+                                  )}
+
+                                  {individual.isFullyPaid && (
+                                    <Tooltip title="Renew Individual">
+                                      <Button
+                                        size="small"
+                                        color="success"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRenew(individual);
+                                        }}
+                                        startIcon={<RenewIcon />}
+                                        sx={{ 
+                                          bgcolor: 'background.paper',
+                                          boxShadow: 1,
+                                          '&:hover': {
+                                            transform: 'translateY(-1px)',
+                                            bgcolor: 'success.lighter'
+                                          }
+                                        }}
+                                      >
+                                        Renew
+                                      </Button>
+                                    </Tooltip>
+                                  )}
+
+                                  {user?.isAdmin && (
+                                    <>
+                                      <Tooltip title="Edit Individual">
+                                        <Button
+                                          size="small"
+                                          color="info"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEdit(individual);
+                                          }}
+                                          startIcon={<EditIcon />}
+                                          sx={{ 
+                                            bgcolor: 'background.paper',
+                                            boxShadow: 1,
+                                            '&:hover': {
+                                              transform: 'translateY(-1px)',
+                                              bgcolor: 'info.lighter'
+                                            }
+                                          }}
+                                        >
+                                          Edit
+                                        </Button>
+                                      </Tooltip>
+
+                                      <Tooltip title="Delete Individual">
+                                        <Button
+                                          size="small"
+                                          color="error"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(individual);
+                                          }}
+                                          startIcon={<DeleteIcon />}
+                                          sx={{ 
+                                            bgcolor: 'background.paper',
+                                            boxShadow: 1,
+                                            '&:hover': {
+                                              transform: 'translateY(-1px)',
+                                              bgcolor: 'error.lighter'
+                                            }
+                                          }}
+                                        >
+                                          Delete
+                                        </Button>
+                                      </Tooltip>
+                                    </>
+                                  )}
+                                </Box>
+                              </Grid>
+
+                              <Grid item xs={12}>
                                 {/* <Typography variant="caption" color="text.secondary">
                                   Last updated by {individual.lastUpdatedBy}
                                   {individual.lastUpdateDate && (
@@ -905,61 +1044,6 @@ function IndividualList() {
                                 </Typography> */}
                               </Grid>
                             </Grid>
-
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              {user?.isAdmin && (
-                                <>
-                                  {!individual.isFullyPaid && (
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handlePayPending(individual)}
-                                      sx={{
-                                        color: 'warning.main',
-                                        bgcolor: 'warning.lighter',
-                                        '&:hover': { bgcolor: 'warning.light' }
-                                      }}
-                                    >
-                                      <MonetizationIcon fontSize="small" />
-                                    </IconButton>
-                                  )}
-                                  {individual.isFullyPaid && (
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleRenew(individual)}
-                                      sx={{
-                                        color: 'primary.main',
-                                        bgcolor: 'primary.lighter',
-                                        '&:hover': { bgcolor: 'primary.light' }
-                                      }}
-                                    >
-                                      <RenewIcon fontSize="small" />
-                                    </IconButton>
-                                  )}
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleEdit(individual)}
-                                    sx={{
-                                      color: 'info.main',
-                                      bgcolor: 'info.lighter',
-                                      '&:hover': { bgcolor: 'info.light' }
-                                    }}
-                                  >
-                                    <EditIcon fontSize="small" />
-                                  </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleDelete(individual)}
-                                    sx={{
-                                      color: 'error.main',
-                                      bgcolor: 'error.lighter',
-                                      '&:hover': { bgcolor: 'error.light' }
-                                    }}
-                                  >
-                                    <DeleteIcon fontSize="small" />
-                                  </IconButton>
-                                </>
-                              )}
-                            </Box>
                           </CardContent>
                         </Card>
                       </Grid>
