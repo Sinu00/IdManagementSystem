@@ -49,8 +49,9 @@ import {
   PictureAsPdf as PdfIcon,
   ContentCopy as ContentCopyIcon,
   Error as ErrorIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
-import { individualApi, companyApi, incomeApi } from '../services/api';
+import { individualApi, companyApi, incomeApi, notifyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import LoadingScreen from '../components/common/LoadingScreen';
@@ -59,6 +60,7 @@ import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import ProfileMenu from '../components/ProfileMenu';
 import { IndividualCardSkeletonList } from '../components/skeletons/IndividualCardSkeleton';
 import PaymentDialog from '../components/dialogs/PaymentDialog';
+import { toast } from 'react-hot-toast';
 
 const calculateStatus = (expiryDate) => {
   const daysUntilExpiry = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -251,12 +253,24 @@ function IndividualList() {
       setConfirmAction(() => async () => {
         try {
           if (dialogMode === 'add') {
-            await individualApi.create({ 
+            const individualData = { 
               ...formData, 
               company: companyId,
               amount: parseFloat(formData.amount) || 0,
               referredBy: formData.referredBy || ''
-            });
+            };
+
+            // Check if user is admin
+            if (user.isAdmin) {
+              // Admin users add directly to Individual model
+              await individualApi.create(individualData);
+            } else {
+              // Regular users add to NotifyAdmin model for admin approval
+              await notifyAdminApi.create(individualData);
+              // Show a notification that it's been submitted for admin approval
+              toast.success("Individual has been submitted for admin approval");
+            }
+
             if (formData.referredBy) {
               setReferredByList(prev => [...new Set([...prev, formData.referredBy])]);
             }
@@ -299,8 +313,8 @@ function IndividualList() {
       window.removeEventListener('keypress', handleConfirmKeyPress);
       setConfirmDialogOpen(true);
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      setDialogError(error.response?.data?.message || 'An error occurred');
+      console.error('Error preparing submission:', error);
+      setDialogError('An unexpected error occurred');
     }
   };
 
@@ -978,22 +992,20 @@ function IndividualList() {
           </Box>
         </Fade>
 
-        {user?.isAdmin && (
-          <Fab
-            color="primary"
-            sx={{
-              position: 'fixed',
-              bottom: 24,
-              right: 24,
-              '@media print': {
-                display: 'none'
-              }
-            }}
-            onClick={handleAdd}
-          >
-            <AddIcon />
-          </Fab>
-        )}
+        <Fab
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            '@media print': {
+              display: 'none'
+            }
+          }}
+          onClick={handleAdd}
+        >
+          <AddIcon />
+        </Fab>
       </Container>
 
       <IndividualDialog

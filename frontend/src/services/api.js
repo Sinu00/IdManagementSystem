@@ -89,6 +89,15 @@ export const notificationApi = {
   getExpiring: (days = 10) => api.get(`/api/notifications?days=${days}`),
 };
 
+export const notifyAdminApi = {
+  getAll: () => api.get('/api/notify-admin'),
+  getById: (id) => api.get(`/api/notify-admin/${id}`),
+  create: (data) => api.post('/api/notify-admin', data),
+  update: (id, data) => api.put(`/api/notify-admin/${id}`, data),
+  delete: (id) => api.delete(`/api/notify-admin/${id}`),
+  approve: (id) => api.post(`/api/notify-admin/${id}/approve`),
+};
+
 export const incomeApi = {
   getAll: () => api.get('/api/income'),
   getById: (id) => api.get(`/api/income/${id}`),

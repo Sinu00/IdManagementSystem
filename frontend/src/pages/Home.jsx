@@ -33,7 +33,8 @@ import {
   PictureAsPdf as PdfIcon,
   Lock as LockIcon,
   AccountBalanceWallet as WalletIcon,
-  MonetizationOn as MonetizationIcon
+  MonetizationOn as MonetizationIcon,
+  NotificationsActive as NotificationsIcon
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi, companyApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -581,6 +582,7 @@ function Home() {
             alignItems="center"
             justifyContent="center"
           >
+
             <ProfileMenu 
               username={user?.username} 
               onLogout={handleLogout}
@@ -632,6 +634,26 @@ function Home() {
                     }}
                   >
                     <WalletIcon />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+            )}
+
+{user?.isAdmin && (
+              <Tooltip title="Admin Notifications">
+                <IconButton
+                  onClick={() => navigate('/admin-notifications')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: 'warning.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'warning.dark',
+                    }
+                  }}
+                >
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
+                    <NotificationsIcon />
                   </Avatar>
                 </IconButton>
               </Tooltip>

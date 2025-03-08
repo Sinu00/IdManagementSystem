@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import UserManagement from './pages/UserManagement';
+import { Toaster } from 'react-hot-toast';
 
 const Login = lazy(() => import('./pages/Login'));
 const Home = lazy(() => import('./pages/Home'));
@@ -15,6 +16,7 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const ExpiredIds = lazy(() => import('./pages/ExpiredIds'));
 const ExpiringSoonIds = lazy(() => import('./pages/ExpiringSoonIds'));
 const IncomeExpense = lazy(() => import('./pages/IncomeExpense'));
+const AdminNotifications = lazy(() => import('./pages/AdminNotifications'));
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Suspense fallback={<LoadingScreen />}>
+            <Toaster position="top-right" />
             <Routes>
               <Route path="/login" element={<Login />} />
               
@@ -69,8 +72,14 @@ function App() {
               } />
 
               <Route path="/users" element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly={true}>
                   <UserManagement />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/admin-notifications" element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminNotifications />
                 </ProtectedRoute>
               } />
 
