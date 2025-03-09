@@ -51,7 +51,8 @@ import {
   Delete as DeleteIcon,
   FilterAlt as FilterIcon,
   MonetizationOn as MonetizationIcon,
-  People as PeopleIcon
+  People as PeopleIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { incomeApi, expenseApi, iqamaPriceApi, individualApi, companyApi } from '../services/api';
@@ -421,6 +422,7 @@ function IncomeExpense() {
     return [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (expenseSortField) {
+        case 'dateAndTime':
         case 'createdAt':
           comparison = new Date(a.createdAt) - new Date(b.createdAt);
           break;
@@ -443,7 +445,7 @@ function IncomeExpense() {
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
-      return `${format(date, 'MMM')}\n${date.getDate()}\n${date.getFullYear()}`;
+      return `${format(date, 'MMM')} ${date.getDate()}\n${date.getFullYear()}`;
     } catch (error) {
       console.error('Date formatting error:', error);
       return 'Invalid Date';
@@ -1085,7 +1087,7 @@ function IncomeExpense() {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
-                <IconButton 
+                  <IconButton 
                     onClick={() => setShowIncomeFilters(!showIncomeFilters)}
                     sx={{ 
                       color: showIncomeFilters ? 'primary.main' : 'text.secondary',
@@ -1094,6 +1096,38 @@ function IncomeExpense() {
                   >
                     <FilterIcon />
                   </IconButton>
+                  <Tooltip title="Refresh">
+                    <IconButton 
+                      onClick={fetchData}
+                      disabled={loading}
+                      sx={{ 
+                        bgcolor: 'success.main',
+                        color: '#fff',
+                        '&:hover': { 
+                          bgcolor: 'success.dark', 
+                          color: '#fff' 
+                        },
+                        '&.Mui-disabled': {
+                          bgcolor: 'success.main',
+                          opacity: 0.5
+                        }
+                      }}
+                    >
+                      <RefreshIcon 
+                        sx={{ 
+                          animation: loading ? 'spin 1s linear infinite' : 'none',
+                          '@keyframes spin': {
+                            '0%': {
+                              transform: 'rotate(0deg)',
+                            },
+                            '100%': {
+                              transform: 'rotate(360deg)',
+                            },
+                          },
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
                   <Button 
                     startIcon={<AddIcon />}
                     variant="contained"
@@ -1109,7 +1143,6 @@ function IncomeExpense() {
                   >
                     Add
                   </Button>
-
                   <Button 
                     startIcon={<ReceiptIcon />}
                     variant="outlined"
@@ -1225,12 +1258,20 @@ function IncomeExpense() {
                             >
                               <TableCell 
                                 sx={{ 
-                                  whiteSpace: 'pre-line',
-                                  textAlign: 'left',
-                                  width: '10%'
+                                  width: '10%',
+                                  p: 1
                                 }}
                               >
-                                {formatDate(income.createdAt)}
+                                <Typography
+                                  sx={{
+                                    whiteSpace: 'pre-line',
+                                    textAlign: 'left',
+                                    display: 'block',
+                                    lineHeight: 1.2
+                                  }}
+                                >
+                                  {formatDate(income.createdAt)}
+                                </Typography>
                               </TableCell>
                               <TableCell>
                                 <Typography variant="body2">{income.name}</Typography>
@@ -1329,7 +1370,7 @@ function IncomeExpense() {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
-                <IconButton 
+                  <IconButton 
                     onClick={() => setShowExpenseFilters(!showExpenseFilters)}
                     sx={{ 
                       color: showExpenseFilters ? 'primary.main' : 'text.secondary',
@@ -1338,6 +1379,38 @@ function IncomeExpense() {
                   >
                     <FilterIcon />
                   </IconButton>
+                  <Tooltip title="Refresh">
+                    <IconButton 
+                      onClick={fetchData}
+                      disabled={loading}
+                      sx={{ 
+                        bgcolor: 'error.main',
+                        color: '#fff',
+                        '&:hover': { 
+                          bgcolor: 'error.dark', 
+                          color: '#fff' 
+                        },
+                        '&.Mui-disabled': {
+                          bgcolor: 'error.main',
+                          opacity: 0.5
+                        }
+                      }}
+                    >
+                      <RefreshIcon 
+                        sx={{ 
+                          animation: loading ? 'spin 1s linear infinite' : 'none',
+                          '@keyframes spin': {
+                            '0%': {
+                              transform: 'rotate(0deg)',
+                            },
+                            '100%': {
+                              transform: 'rotate(360deg)',
+                            },
+                          },
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
                   <Button 
                     startIcon={<AddIcon />}
                     variant="contained"
@@ -1412,7 +1485,7 @@ function IncomeExpense() {
                       <TableHead>
                         <TableRow>
                           <TableCell 
-                            onClick={() => handleExpenseSort('createdAt')}
+                            onClick={() => handleExpenseSort('dateAndTime')}
                             sx={{ 
                               cursor: 'pointer', 
                               '&:hover': { bgcolor: 'action.hover' },
@@ -1421,7 +1494,7 @@ function IncomeExpense() {
                               textAlign: 'left'
                             }}
                           >
-                            Date {expenseSortField === 'createdAt' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                            Date {expenseSortField === 'dateAndTime' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             onClick={() => handleExpenseSort('company.name')}
@@ -1451,7 +1524,7 @@ function IncomeExpense() {
                               width: '20%'
                             }}
                           >
-                            Amount (SAR) {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                            Amount {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             sx={{ 
@@ -1470,12 +1543,20 @@ function IncomeExpense() {
                           <TableRow key={expense._id}>
                             <TableCell 
                               sx={{ 
-                                whiteSpace: 'pre-line',
-                                textAlign: 'left',
-                                width: '10%'
+                                width: '10%',
+                                p: 1
                               }}
                             >
-                              {formatDate(expense.createdAt)}
+                              <Typography
+                                sx={{
+                                  whiteSpace: 'pre-line',
+                                  textAlign: 'left',
+                                  display: 'block',
+                                  lineHeight: 1.2
+                                }}
+                              >
+                                {formatDate(expense.createdAt)}
+                              </Typography>
                             </TableCell>
                             <TableCell>
                               {expense.company ? (
