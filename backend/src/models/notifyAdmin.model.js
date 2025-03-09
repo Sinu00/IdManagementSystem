@@ -19,7 +19,6 @@ const notifyAdminSchema = new mongoose.Schema(
     iqamaNumber: {
       type: String,
       required: [true, 'Iqama number is required'],
-      unique: true,
       trim: true
     },
     expiryDate: {
@@ -108,7 +107,6 @@ const notifyAdminSchema = new mongoose.Schema(
 
 // Add index for better query performance
 notifyAdminSchema.index({ company: 1 });
-notifyAdminSchema.index({ iqamaNumber: 1 }, { unique: true });
 
 // Add virtual for status calculation
 notifyAdminSchema.virtual('status').get(function() {
