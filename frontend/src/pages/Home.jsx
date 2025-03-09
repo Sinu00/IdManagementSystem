@@ -18,7 +18,8 @@ import {
   Button,
   Stack,
   Skeleton,
-  Tooltip
+  Tooltip,
+  Badge
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -36,17 +37,19 @@ import {
   MonetizationOn as MonetizationIcon,
   NotificationsActive as NotificationsIcon
 } from '@mui/icons-material';
-import { mainPersonApi, notificationApi, companyApi } from '../services/api';
+import { mainPersonApi, notificationApi, companyApi, notifyAdminApi, notifyCompanyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
 import { StatCardSkeletonList } from '../components/skeletons/StatCardSkeleton';
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
+import axios from 'axios';
 
 function Home() {
   const [mainPersons, setMainPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   const navigate = useNavigate();
   const theme = useTheme();
   const { user, logout } = useAuth();
@@ -59,10 +62,14 @@ function Home() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [mainPersonsRes, expiringRes, companiesRes] = await Promise.all([
+        const [mainPersonsRes, expiringRes, companiesRes, notificationsRes] = await Promise.all([
           mainPersonApi.getAll(),
           notificationApi.getExpiring(30),
-          companyApi.getStats()
+          companyApi.getStats(),
+          Promise.all([
+            notifyAdminApi.getAll(),
+            notifyCompanyAdminApi.getAll()
+          ])
         ]);
         
         setMainPersons(mainPersonsRes.data);
@@ -72,6 +79,14 @@ function Home() {
           totalIndividuals: companiesRes.data.totalIndividuals,
           urgentExpiring: expiringRes.data.length
         });
+
+        // Calculate total notifications
+        const totalNotifications = (
+          Array.isArray(notificationsRes[0].data) ? notificationsRes[0].data.length : 0
+        ) + (
+          Array.isArray(notificationsRes[1].data) ? notificationsRes[1].data.length : 0
+        );
+        setNotificationCount(totalNotifications);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data. Please try again later.');
@@ -639,7 +654,7 @@ function Home() {
               </Tooltip>
             )}
 
-{user?.isAdmin && (
+            {user?.isAdmin && (
               <Tooltip title="Admin Notifications">
                 <IconButton
                   onClick={() => navigate('/admin-notifications')}
@@ -652,9 +667,29 @@ function Home() {
                     }
                   }}
                 >
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
-                    <NotificationsIcon />
-                  </Avatar>
+                  <Badge 
+                    badgeContent={loading ? (
+                      <Skeleton 
+                        variant="circular" 
+                        width={16} 
+                        height={16} 
+                        sx={{ bgcolor: 'warning.main' }} 
+                      />
+                    ) : notificationCount}
+                    color="error"
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        right: -3,
+                        top: 3,
+                        border: '2px solid #fff',
+                        padding: '0 4px',
+                      }
+                    }}
+                  >
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
+                      <NotificationsIcon />
+                    </Avatar>
+                  </Badge>
                 </IconButton>
               </Tooltip>
             )}

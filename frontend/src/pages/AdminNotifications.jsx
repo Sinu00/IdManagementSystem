@@ -28,7 +28,8 @@ import {
   Tooltip,
   Tabs,
   Tab,
-  Skeleton
+  Skeleton,
+  Badge
 } from '@mui/material';
 import {
   Check as CheckIcon,
@@ -45,12 +46,10 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import axios from 'axios';
+import { notifyAdminApi, notifyCompanyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -159,8 +158,8 @@ function AdminNotifications() {
       };
       
       const [individualRes, companyRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/notify-admin`, config),
-        axios.get(`${API_BASE_URL}/api/notify-company-admin`, config)
+        notifyAdminApi.getAll(),
+        notifyCompanyAdminApi.getAll()
       ]);
 
       console.log('Raw company notifications:', companyRes.data);
@@ -257,31 +256,23 @@ function AdminNotifications() {
 
         console.log('Approval payload:', payload);
 
-        const response = await axios.post(
-          `${API_BASE_URL}${endpoint}/${selectedNotification._id}/approve`, 
-          payload,
-          config
-        );
+        await notifyAdminApi.approve(selectedNotification._id, payload, config);
         
-        if (response.status === 200) {
-          toast.success(`${selectedNotification.type === 'individual' ? 'Individual' : 'Company'} approved successfully`);
+        if (selectedNotification.type === 'individual') {
+          toast.success('Individual approved successfully');
+        } else {
+          toast.success('Company approved successfully');
         }
       } else if (dialogAction === 'reject') {
-        const response = await axios.post(
-          `${API_BASE_URL}${endpoint}/${selectedNotification._id}/reject`, 
-          {}, 
-          config
-        );
+        await notifyCompanyAdminApi.reject(selectedNotification._id, {}, config);
         
-        if (response.status === 200) {
-          toast.success(`${selectedNotification.type === 'individual' ? 'Individual' : 'Company'} rejected successfully`);
-        }
+        toast.success('Notification rejected successfully');
       }
       
       // Refresh notifications
       const [individualRes, companyRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/notify-admin`, config),
-        axios.get(`${API_BASE_URL}/api/notify-company-admin`, config)
+        notifyAdminApi.getAll(),
+        notifyCompanyAdminApi.getAll()
       ]);
       
       // Process company notifications to include company details
@@ -673,10 +664,11 @@ function AdminNotifications() {
                         <Skeleton width={80} />
                       </Box>
                     ) : (
-                      `Individual (${individualNotifications.length})`
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PersonIcon />
+                        <span>Individual ({individualNotifications.length})</span>
+                      </Box>
                     )}
-                    icon={<PersonIcon />}
-                    iconPosition="start"
                   />
                   <Tab 
                     label={loading ? (
@@ -685,10 +677,11 @@ function AdminNotifications() {
                         <Skeleton width={80} />
                       </Box>
                     ) : (
-                      `Company (${companyNotifications.length})`
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <BusinessIcon />
+                        <span>Company ({companyNotifications.length})</span>
+                      </Box>
                     )}
-                    icon={<BusinessIcon />}
-                    iconPosition="start"
                   />
                 </Tabs>
 
