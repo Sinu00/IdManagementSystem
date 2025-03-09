@@ -10,6 +10,7 @@ import expenseRoutes from './routes/expense.routes.js';
 import iqamaPriceRoutes from './routes/iqamaPrice.routes.js';
 import userRoutes from './routes/user.routes.js';
 import notifyAdminRoutes from './routes/notifyAdmin.routes.js';
+import notifyCompanyAdminRoutes from './routes/notifyCompanyAdmin.routes.js';
 
 const app = express();
 
@@ -55,5 +56,6 @@ app.use('/api/expense', expenseRoutes);
 app.use('/api/iqama-price', iqamaPriceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notify-admin', notifyAdminRoutes);
+app.use('/api/notify-company-admin', notifyCompanyAdminRoutes);
 
 export default app; 

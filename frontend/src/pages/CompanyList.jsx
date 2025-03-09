@@ -48,7 +48,7 @@ import {
   Cached as CachedIcon,
   Payment as PaymentIcon,
 } from '@mui/icons-material';
-import { companyApi } from '../services/api';
+import { companyApi, notifyCompanyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
@@ -59,6 +59,7 @@ import CompanySaudiPaymentDialog from '../components/dialogs/CompanySaudiPayment
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
 import LoadingScreen from '../components/common/LoadingScreen';
 import { expenseApi } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 function calculateTotalCounts(companies) {
   return companies.reduce((totals, company) => {
@@ -116,15 +117,15 @@ function CompanyList() {
 
   const filteredAndSortedCompanies = useMemo(() => {
     return companies
-    .filter(company => {
+      .filter(company => {
         if (filter === 'withExpiring') {
           return (company.orangeCards || 0) > 0;
         }
         if (filter === 'withExpired') {
           return (company.redCards || 0) > 0;
         }
-      return true;
-    })
+        return true;
+      })
       .filter(company => {
         if (!search) return true;
         
@@ -140,24 +141,20 @@ function CompanyList() {
           company.makthabNumber?.toLowerCase().includes(searchTerm)
         );
       })
-    .sort((a, b) => {
+      .sort((a, b) => {
         switch (sort) {
           case 'name':
-            return a.name.localeCompare(b.name, ['ar', 'en']);
+            return (a.name || '').localeCompare((b.name || ''), ['ar', 'en']);
           case 'expiringCount':
-            const aExpiring = (a.orangeCards || 0);
-            const bExpiring = (b.orangeCards || 0);
-            return bExpiring - aExpiring;
+            return (b.orangeCards || 0) - (a.orangeCards || 0);
           case 'expiredCount':
-            const aExpired = (a.redCards || 0);
-            const bExpired = (b.redCards || 0);
-            return bExpired - aExpired;
+            return (b.redCards || 0) - (a.redCards || 0);
           case 'totalCount':
             const aTotal = (a.redCards || 0) + (a.orangeCards || 0) + (a.greenCards || 0);
             const bTotal = (b.redCards || 0) + (b.orangeCards || 0) + (b.greenCards || 0);
             return bTotal - aTotal;
           default:
-      return 0;
+            return 0;
         }
       });
   }, [companies, filter, search, sort]);
@@ -214,9 +211,10 @@ function CompanyList() {
       const response = await companyApi.getByMainPerson(mainPersonId);
       setCompanies(response.data);
       setConfirmDialogOpen(false);
+      toast.success('Company deleted successfully');
     } catch (error) {
       console.error('Error deleting company:', error);
-      setError('Failed to delete company');
+      toast.error(error.response?.data?.message || 'Failed to delete company');
     }
   };
 
@@ -232,8 +230,10 @@ function CompanyList() {
         try {
           if (dialogMode === 'add') {
             await companyApi.create({ ...formData, mainPerson: mainPersonId });
+            toast.success('Company added successfully');
           } else {
             await companyApi.update(selectedCompany._id, formData);
+            toast.success('Company updated successfully');
           }
           
           const response = await companyApi.getByMainPerson(mainPersonId);
@@ -244,84 +244,81 @@ function CompanyList() {
         } catch (error) {
           console.error('Error saving company:', error);
           setDialogError(error.response?.data?.message || 'Failed to save company');
+          toast.error(error.response?.data?.message || 'Failed to save company');
           setConfirmDialogOpen(false);
         }
       });
-
-      // Clear any existing keypress handlers before showing confirm dialog
-      window.removeEventListener('keypress', handleConfirmKeyPress);
       setConfirmDialogOpen(true);
-      
-      // Focus the confirm button in the confirmation dialog
-      setTimeout(() => {
-        const confirmButton = document.querySelector('[data-confirm-action="true"]');
-        if (confirmButton) {
-          confirmButton.focus();
-        }
-      }, 100);
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      setDialogError(error.message || 'An error occurred');
+      console.error('Error:', error);
+      toast.error('An unexpected error occurred');
     }
   };
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      // Process the payment and get updated company
-      const response = await companyApi.processPayment(selectedCompany._id, {
-        paymentType: paymentData.paymentType,
-        paymentAmount: paymentData.paymentAmount,
-        resetPayments: paymentData.resetPayments || false
-      });
-      
-      // Create expense entry for the payment
-      await expenseApi.create({
-        name: paymentData.resetPayments 
-          ? `CR Renewal for ${selectedCompany.name}`
-          : `${paymentData.paymentType.charAt(0).toUpperCase() + paymentData.paymentType.slice(1)} Payment for ${selectedCompany.name}`,
-        amount: paymentData.paymentAmount,
-        company: selectedCompany._id,
-        mainPerson: selectedCompany.mainPerson,
-        expenseType: paymentData.resetPayments ? 'cr' : paymentData.paymentType
-      });
-      
-      // Update the company in the list
-      setCompanies(companies.map(company => 
-        company._id === selectedCompany._id ? response.data : company
-      ));
-      
+      const response = await companyApi.processPayment(selectedCompany._id, paymentData);
+      const updatedCompanies = await companyApi.getByMainPerson(mainPersonId);
+      setCompanies(updatedCompanies.data);
       setPaymentDialogOpen(false);
-      setRenewDialogOpen(false);
-      setSelectedCompany(null);
+      toast.success('Payment processed successfully');
     } catch (error) {
       console.error('Error processing payment:', error);
-      setDialogError(error.response?.data?.message || 'Failed to process payment');
+      toast.error(error.response?.data?.message || 'Failed to process payment');
+    }
+  };
+
+  const handleRenewSubmit = async (renewData) => {
+    try {
+      if (!user?.isAdmin) {
+        // For regular users, create a notification
+        const notificationData = {
+          name: selectedCompany.name,
+          crNumber: selectedCompany.crNumber,
+          sponserId: selectedCompany.sponserId,
+          gosiNumber: selectedCompany.gosiNumber,
+          molNumber: selectedCompany.molNumber,
+          mainPerson: selectedCompany.mainPerson,
+          requestType: 'PAYMENT',
+          paymentType: 'cr',
+          amount: renewData.amount,
+          originalCompany: selectedCompany._id
+        };
+        
+        await notifyCompanyAdminApi.create(notificationData);
+        toast.success('Renewal request sent to admin for approval');
+        setRenewDialogOpen(false);
+        return;
+      }
+
+      // For admin users, process directly
+      const response = await companyApi.processPayment(selectedCompany._id, {
+        paymentType: 'cr',
+        paymentAmount: renewData.amount,
+        isRenewal: true,
+        resetPayments: true
+      });
+      
+      const updatedCompanies = await companyApi.getByMainPerson(mainPersonId);
+      setCompanies(updatedCompanies.data);
+      setRenewDialogOpen(false);
+      toast.success('Company renewed successfully');
+    } catch (error) {
+      console.error('Error renewing company:', error);
+      toast.error(error.response?.data?.message || 'Failed to renew company');
     }
   };
 
   const handleSaudiPaymentSubmit = async (paymentData) => {
     try {
       const response = await companyApi.processSaudiPayment(selectedCompany._id, paymentData);
-      
-      // Create expense entry for the Saudi payment
-      await expenseApi.create({
-        name: `Saudi Payment for ${selectedCompany.name}`,
-        amount: paymentData.amount,
-        company: selectedCompany._id,
-        mainPerson: selectedCompany.mainPerson,
-        expenseType: 'saudi'
-      });
-      
-      // Update the company in the list
-      setCompanies(companies.map(company => 
-        company._id === selectedCompany._id ? response.data : company
-      ));
-      
+      const updatedCompanies = await companyApi.getByMainPerson(mainPersonId);
+      setCompanies(updatedCompanies.data);
       setSaudiPaymentDialogOpen(false);
-      setSelectedCompany(null);
+      toast.success('Saudi payment processed successfully');
     } catch (error) {
       console.error('Error processing Saudi payment:', error);
-      setDialogError(error.response?.data?.message || 'Failed to process Saudi payment');
+      toast.error(error.response?.data?.message || 'Failed to process Saudi payment');
     }
   };
 
@@ -749,7 +746,6 @@ function CompanyList() {
                             </Grid>
                           </Grid>
 
-
                           {/* Status Cards */}
                           <Box sx={{ mt: 3 }}>
                             <Grid container spacing={2}>
@@ -899,124 +895,124 @@ function CompanyList() {
                             </Grid>
                           </Box>
 
-                          {/* Admin Actions */}
-                          {user?.isAdmin && (
-                            <Box 
-                              sx={{ 
-                                mt: 2,
-                                display: 'flex',
-                                gap: 0.75,
-                                '& .MuiButton-root': {
-                                  flex: 1,
-                                  minWidth: 'auto',
-                                  textTransform: 'none',
-                                  fontSize: '0.7rem',
-                                  py: 0.5,
-                                  px: 1,
-                                  '& .MuiButton-startIcon': {
-                                    marginRight: 0.5,
-                                    '& .MuiSvgIcon-root': {
-                                      fontSize: 16
-                                    }
+                          {/* Action Buttons */}
+                          <Box 
+                            sx={{ 
+                              mt: 2,
+                              display: 'flex',
+                              gap: 0.75,
+                              '& .MuiButton-root': {
+                                flex: 1,
+                                minWidth: 'auto',
+                                textTransform: 'none',
+                                fontSize: '0.7rem',
+                                py: 0.5,
+                                px: 1,
+                                '& .MuiButton-startIcon': {
+                                  marginRight: 0.5,
+                                  '& .MuiSvgIcon-root': {
+                                    fontSize: 16
                                   }
                                 }
-                              }}
-                            >
-
+                              }
+                            }}
+                          >
+                            {user?.isAdmin && (
+                              <>
                                 <Tooltip title="Delete Company">
-                                <Button
-                                  size="small"
-                                  color="error"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(company);
-                                  }}
-                                  startIcon={<DeleteIcon />}
-                                  sx={{ 
-                                    bgcolor: 'background.paper',
-                                    boxShadow: 1,
-                                    '&:hover': {
-                                      transform: 'translateY(-1px)',
-                                      bgcolor: 'error.lighter'
-                                    }
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </Tooltip>
+                                  <Button
+                                    size="small"
+                                    color="error"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(company);
+                                    }}
+                                    startIcon={<DeleteIcon />}
+                                    sx={{ 
+                                      bgcolor: 'background.paper',
+                                      boxShadow: 1,
+                                      '&:hover': {
+                                        transform: 'translateY(-1px)',
+                                        bgcolor: 'error.lighter'
+                                      }
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                </Tooltip>
 
-                              <Tooltip title="Edit Company">
-                                <Button
-                                  size="small"
-                                  color="primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEdit(company);
-                                  }}
-                                  startIcon={<EditIcon />}
-                                  sx={{ 
-                                    bgcolor: 'background.paper',
-                                    boxShadow: 1,
-                                    '&:hover': {
-                                      transform: 'translateY(-1px)',
-                                      bgcolor: 'primary.lighter'
-                                    }
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                              </Tooltip>
+                                <Tooltip title="Edit Company">
+                                  <Button
+                                    size="small"
+                                    color="primary"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEdit(company);
+                                    }}
+                                    startIcon={<EditIcon />}
+                                    sx={{ 
+                                      bgcolor: 'background.paper',
+                                      boxShadow: 1,
+                                      '&:hover': {
+                                        transform: 'translateY(-1px)',
+                                        bgcolor: 'primary.lighter'
+                                      }
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                </Tooltip>
+                              </>
+                            )}
 
-                              <Tooltip title={company.paymentStatus === 'fully_paid' ? "Renew Company" : "Process Payment"}>
-                                <Button
-                                  size="small"
-                                  color={company.paymentStatus === 'fully_paid' ? "success" : "info"}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (company.paymentStatus === 'fully_paid') {
-                                      handleRenewClick(company);
-                                    } else {
-                                      handlePaymentClick(company);
-                                    }
-                                  }}
-                                  startIcon={company.paymentStatus === 'fully_paid' ? <CachedIcon /> : <PaymentIcon />}
-                                  sx={{ 
-                                    bgcolor: 'background.paper',
-                                    boxShadow: 1,
-                                    '&:hover': {
-                                      transform: 'translateY(-1px)',
-                                      bgcolor: company.paymentStatus === 'fully_paid' ? 'success.lighter' : 'info.lighter'
-                                    }
-                                  }}
-                                >
-                                  {company.paymentStatus === 'fully_paid' ? 'Renew' : 'Pay'}
-                                </Button>
-                              </Tooltip>
+                            <Tooltip title={company.paymentStatus === 'fully_paid' ? "Renew Company" : "Process Payment"}>
+                              <Button
+                                size="small"
+                                color={company.paymentStatus === 'fully_paid' ? "success" : "info"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (company.paymentStatus === 'fully_paid') {
+                                    handleRenewClick(company);
+                                  } else {
+                                    handlePaymentClick(company);
+                                  }
+                                }}
+                                startIcon={company.paymentStatus === 'fully_paid' ? <CachedIcon /> : <PaymentIcon />}
+                                sx={{ 
+                                  bgcolor: 'background.paper',
+                                  boxShadow: 1,
+                                  '&:hover': {
+                                    transform: 'translateY(-1px)',
+                                    bgcolor: company.paymentStatus === 'fully_paid' ? 'success.lighter' : 'info.lighter'
+                                  }
+                                }}
+                              >
+                                {company.paymentStatus === 'fully_paid' ? 'Renew' : 'Pay'}
+                              </Button>
+                            </Tooltip>
 
-                              <Tooltip title="Saudi Payment">
-                                <Button
-                                  size="small"
-                                  color="secondary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSaudiPaymentClick(company);
-                                  }}
-                                  startIcon={<PaymentIcon />}
-                                  sx={{ 
-                                    bgcolor: 'background.paper',
-                                    boxShadow: 1,
-                                    '&:hover': {
-                                      transform: 'translateY(-1px)',
-                                      bgcolor: 'secondary.lighter'
-                                    }
-                                  }}
-                                >
-                                  Saudi
-                                </Button>
-                              </Tooltip>
-
-                            </Box>
-                          )}
+                            <Tooltip title="Saudi Payment">
+                              <Button
+                                size="small"
+                                color="secondary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSaudiPaymentClick(company);
+                                }}
+                                startIcon={<PaymentIcon />}
+                                sx={{ 
+                                  bgcolor: 'background.paper',
+                                  boxShadow: 1,
+                                  '&:hover': {
+                                    transform: 'translateY(-1px)',
+                                    bgcolor: 'secondary.lighter'
+                                  }
+                                }}
+                              >
+                                Saudi
+                              </Button>
+                            </Tooltip>
+                          </Box>
                         </CardContent>
                       </Card>
                     </Grid>
@@ -1049,19 +1045,17 @@ function CompanyList() {
           </Box>
         </Fade>
 
-        {user?.isAdmin && (
-          <Fab
-            color="primary"
-            sx={{
-              position: 'fixed',
-              bottom: 24,
-              right: 24
-            }}
-            onClick={handleAdd}
-          >
-            <AddIcon />
-          </Fab>
-        )}
+        <Fab
+          color="primary"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24
+          }}
+          onClick={handleAdd}
+        >
+          <AddIcon />
+        </Fab>
       </Container>
 
       <CompanyDialog
@@ -1092,7 +1086,7 @@ function CompanyList() {
           setRenewDialogOpen(false);
           setSelectedCompany(null);
         }}
-        onSubmit={handlePaymentSubmit}
+        onSubmit={handleRenewSubmit}
         company={selectedCompany}
       />
 

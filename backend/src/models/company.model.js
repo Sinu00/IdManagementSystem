@@ -90,6 +90,27 @@ companySchema.pre('save', async function(next) {
   next();
 });
 
+// Add middleware to update payment status before save
+companySchema.pre('save', function(next) {
+  const hasQiwa = this.qiwaAmount > 0;
+  const hasMuqeem = this.muqeemAmount > 0;
+  const hasEfa = this.efaAmount > 0;
+
+  // Only update payment status if it's not being explicitly set
+  if (!this.isModified('paymentStatus')) {
+    // Check if all required payments are made
+    if (hasQiwa && hasMuqeem && hasEfa) {
+      this.paymentStatus = 'fully_paid';
+    } else if (hasQiwa || hasMuqeem || hasEfa) {
+      this.paymentStatus = 'partially_paid';
+    } else {
+      this.paymentStatus = 'none_paid';
+    }
+  }
+
+  next();
+});
+
 // Virtual for card counts
 companySchema.virtual('cardCounts').get(async function() {
   const today = new Date();

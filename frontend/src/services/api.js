@@ -98,6 +98,13 @@ export const notifyAdminApi = {
   approve: (id) => api.post(`/api/notify-admin/${id}/approve`),
 };
 
+export const notifyCompanyAdminApi = {
+  getAll: () => api.get('/api/notify-company-admin'),
+  create: (data) => api.post('/api/notify-company-admin', data),
+  approve: (id) => api.post(`/api/notify-company-admin/${id}/approve`),
+  reject: (id) => api.post(`/api/notify-company-admin/${id}/reject`),
+};
+
 export const incomeApi = {
   getAll: () => api.get('/api/income'),
   getById: (id) => api.get(`/api/income/${id}`),

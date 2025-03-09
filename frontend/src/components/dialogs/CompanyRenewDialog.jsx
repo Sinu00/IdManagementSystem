@@ -25,8 +25,11 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
     try {
       // Create payment data for renewal
       const paymentData = {
-        paymentType: 'qiwa',
+        paymentType: 'cr',
         paymentAmount: Number(amount),
+        expenseType: 'cr',
+        amount: Number(amount),
+        isRenewal: true,
         resetPayments: true
       };
 
@@ -47,6 +50,8 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
       maxWidth="sm" 
       fullWidth
       PaperProps={{ sx: { borderRadius: 2 } }}
+      disableEnforceFocus
+      disableRestoreFocus
     >
       <DialogTitle>
         <Box display="flex" alignItems="center">

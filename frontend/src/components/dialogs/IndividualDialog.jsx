@@ -292,6 +292,8 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         sx: { borderRadius: 2 },
         onKeyPress: handleKeyPress
       }}
+      disableEnforceFocus
+      disableRestoreFocus
     >
       <DialogTitle>
         {isAddMode ? 'Add Individual' : isRenewMode ? 'Renew ID' : 'Edit Individual'}

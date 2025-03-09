@@ -94,6 +94,8 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
         },
         onKeyPress: handleKeyPress
       }}
+      disableEnforceFocus
+      disableRestoreFocus
     >
       <DialogTitle>
         {mode === 'add' ? 'Add Company' : 'Edit Company'}

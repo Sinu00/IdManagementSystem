@@ -66,6 +66,8 @@ function CompanySaudiPaymentDialog({ open, onClose, onSubmit, company }) {
       maxWidth="sm" 
       fullWidth
       PaperProps={{ sx: { borderRadius: 2 } }}
+      disableEnforceFocus
+      disableRestoreFocus
     >
       <DialogTitle>
         <Box display="flex" alignItems="center">

@@ -1,9 +1,10 @@
 import express from 'express';
-import { adminProtect } from '../middleware/auth.middleware.js';
+import { adminProtect, protect } from '../middleware/auth.middleware.js';
 import Company from '../models/company.model.js';
 import mongoose from 'mongoose';
 import Individual from '../models/individual.model.js';
 import Expense from '../models/expense.model.js';
+import NotifyCompanyAdmin from '../models/notifyCompanyAdmin.model.js';
 
 const router = express.Router();
 
@@ -49,7 +50,6 @@ router.get('/stats', async (req, res) => {
       }
     });
 
-
     res.json(stats);
   } catch (error) {
     console.error('Error fetching company stats:', error);
@@ -58,7 +58,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // Get companies by main person (Public)
-router.get('/', async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
     const { mainPersonId } = req.query;
     const companies = await Company.find({ mainPerson: mainPersonId });
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get company by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const company = await Company.findById(req.params.id)
       .populate('mainPerson');
@@ -85,7 +85,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create company
-router.post('/', adminProtect, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { mainPerson, crNumber, crAmount } = req.body;
 
@@ -103,29 +103,49 @@ router.post('/', adminProtect, async (req, res) => {
       }
     }
 
-    // Create the company
-    const company = new Company({
-      ...req.body,
-      paymentStatus: 'none_paid' // Set initial payment status
-    });
-    await company.save();
-    
-    // Create expense entry for CR amount if provided
-    if (crAmount > 0) {
-      const expense = new Expense({
-        name: `CR Amount for ${company.name}`,
-        amount: crAmount,
-        company: company._id,
-        mainPerson: company.mainPerson,
-        expenseType: 'cr'
+    // If user is admin, create company directly
+    if (req.user.isAdmin) {
+      const company = new Company({
+        ...req.body,
+        paymentStatus: 'none_paid'
       });
-      await expense.save();
+      await company.save();
+      
+      // Create expense entry for CR amount if provided
+      if (crAmount > 0) {
+        const expense = new Expense({
+          name: `CR Amount for ${company.name}`,
+          amount: crAmount,
+          company: company._id,
+          mainPerson: company.mainPerson,
+          expenseType: 'cr'
+        });
+        await expense.save();
+      }
+      
+      const populatedCompany = await Company.findById(company._id)
+        .populate('mainPerson', 'name email contactNumber');
+      
+      return res.status(201).json(populatedCompany);
     }
-    
-    const populatedCompany = await Company.findById(company._id)
-      .populate('mainPerson', 'name email contactNumber');
-    
-    res.status(201).json(populatedCompany);
+
+    // For normal users, create a notification
+    const notification = new NotifyCompanyAdmin({
+      ...req.body,
+      requestType: 'ADD',
+      addedBy: req.user._id,
+      amount: crAmount || 0
+    });
+
+    await notification.save();
+    const populatedNotification = await NotifyCompanyAdmin.findById(notification._id)
+      .populate('mainPerson', 'name email contactNumber')
+      .populate('addedBy', 'username');
+
+    res.status(201).json({
+      message: 'Company creation request sent for approval',
+      notification: populatedNotification
+    });
   } catch (error) {
     console.error('Error creating company:', error);
     res.status(400).json({ 
@@ -135,7 +155,7 @@ router.post('/', adminProtect, async (req, res) => {
 });
 
 // Update company
-router.put('/:id', adminProtect, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: 'Invalid company ID' });
@@ -158,6 +178,11 @@ router.put('/:id', adminProtect, async (req, res) => {
       }
     }
 
+    // Only admin can update company details
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Only admin can update company details' });
+    }
+
     const company = await Company.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -178,13 +203,13 @@ router.put('/:id', adminProtect, async (req, res) => {
 });
 
 // Process company payment
-router.post('/:id/payment', adminProtect, async (req, res) => {
+router.post('/:id/payment', protect, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: 'Invalid company ID' });
     }
 
-    const { paymentType, paymentAmount, resetPayments } = req.body;
+    const { paymentType, paymentAmount, isRenewal, resetPayments } = req.body;
     
     // Find the company
     const company = await Company.findById(req.params.id);
@@ -192,53 +217,98 @@ router.post('/:id/payment', adminProtect, async (req, res) => {
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });
     }
-    
-    // Update based on payment type
-    if (resetPayments) {
-      // For renewal, reset all payment amounts and set status to none_paid
-      company.qiwaAmount = 0;
-      company.muqeemAmount = 0;
-      company.efaAmount = 0;
-      company.crAmount = paymentAmount; // Set new CR amount
-      company.paymentStatus = 'none_paid';
-    } else {
-      // For regular payments, update the specific amount
-      switch (paymentType) {
-        case 'qiwa':
-          company.qiwaAmount = paymentAmount;
-          break;
-        case 'muqeem':
-          company.muqeemAmount = paymentAmount;
-          break;
-        case 'efa':
-          company.efaAmount = paymentAmount;
-          break;
-        default:
-          return res.status(400).json({ message: 'Invalid payment type' });
-      }
-      
-      // Check payment status
-      const hasQiwa = company.qiwaAmount > 0;
-      const hasMuqeem = company.muqeemAmount > 0;
-      const hasEfa = company.efaAmount > 0;
-      
-      if (hasQiwa && hasMuqeem && hasEfa) {
-        company.paymentStatus = 'fully_paid';
-      } else if (hasQiwa || hasMuqeem || hasEfa) {
-        company.paymentStatus = 'partially_paid';
+
+    // If user is admin, process payment directly
+    if (req.user.isAdmin) {
+      // Handle renewal case
+      if (isRenewal && paymentType === 'cr') {
+        company.crAmount = paymentAmount;
+        if (resetPayments) {
+          company.qiwaAmount = 0;
+          company.muqeemAmount = 0;
+          company.efaAmount = 0;
+          company.paymentStatus = 'none_paid';
+        }
       } else {
-        company.paymentStatus = 'none_paid';
+        // Regular payment update
+        switch (paymentType) {
+          case 'qiwa':
+            company.qiwaAmount = paymentAmount;
+            break;
+          case 'muqeem':
+            company.muqeemAmount = paymentAmount;
+            break;
+          case 'efa':
+            company.efaAmount = paymentAmount;
+            break;
+          case 'saudi':
+            company.saudiAmount = (company.saudiAmount || 0) + paymentAmount;
+            company.saudiCount = (company.saudiCount || 0) + 1;
+            break;
+          case 'cr':
+            company.crAmount = paymentAmount;
+            break;
+          default:
+            return res.status(400).json({ message: 'Invalid payment type' });
+        }
+        
+        // Check payment status for non-saudi payments
+        if (paymentType !== 'saudi') {
+          const hasQiwa = company.qiwaAmount > 0;
+          const hasMuqeem = company.muqeemAmount > 0;
+          const hasEfa = company.efaAmount > 0;
+          
+          if (hasQiwa && hasMuqeem && hasEfa) {
+            company.paymentStatus = 'fully_paid';
+          } else if (hasQiwa || hasMuqeem || hasEfa) {
+            company.paymentStatus = 'partially_paid';
+          }
+        }
       }
+      
+      await company.save();
+
+      // Create expense entry
+      const expense = new Expense({
+        name: isRenewal 
+          ? `CR Renewal Payment for ${company.name}`
+          : `${paymentType.toUpperCase()} Payment for ${company.name}`,
+        amount: paymentAmount,
+        company: company._id,
+        mainPerson: company.mainPerson,
+        expenseType: paymentType,
+        specification: isRenewal ? 'Renewal Payment' : `Regular ${paymentType.toUpperCase()} Payment`
+      });
+      await expense.save();
+      
+      // Return the updated company
+      const updatedCompany = await Company.findById(req.params.id)
+        .populate('mainPerson', 'name email contactNumber');
+      
+      return res.json(updatedCompany);
     }
-    
-    // Save the updated company
-    await company.save();
-    
-    // Return the updated company
-    const updatedCompany = await Company.findById(req.params.id)
-      .populate('mainPerson', 'name email contactNumber');
-    
-    res.json(updatedCompany);
+
+    // For normal users, create a payment notification
+    const notification = new NotifyCompanyAdmin({
+      name: company.name,
+      mainPerson: company.mainPerson,
+      requestType: 'PAYMENT',
+      paymentType,
+      amount: paymentAmount,
+      addedBy: req.user._id,
+      originalCompany: company._id
+    });
+
+    await notification.save();
+    const populatedNotification = await NotifyCompanyAdmin.findById(notification._id)
+      .populate('mainPerson', 'name email contactNumber')
+      .populate('addedBy', 'username')
+      .populate('originalCompany', 'name');
+
+    res.json({
+      message: 'Payment request sent for approval',
+      notification: populatedNotification
+    });
   } catch (error) {
     console.error('Error processing payment:', error);
     res.status(400).json({ 
@@ -248,7 +318,7 @@ router.post('/:id/payment', adminProtect, async (req, res) => {
 });
 
 // Process Saudi payment
-router.post('/:id/saudi-payment', async (req, res) => {
+router.post('/:id/saudi-payment', protect, async (req, res) => {
   try {
     const { amount, clear } = req.body;
     const company = await Company.findById(req.params.id);
@@ -257,17 +327,41 @@ router.post('/:id/saudi-payment', async (req, res) => {
       return res.status(404).json({ message: 'Company not found' });
     }
 
-    if (clear) {
-      company.saudiAmount = 0;
-      company.saudiCount = 0;
-    } else {
-      company.saudiAmount += amount;
-      company.saudiCount += 1;
+    // If user is admin, process payment directly
+    if (req.user.isAdmin) {
+      if (clear) {
+        company.saudiAmount = 0;
+        company.saudiCount = 0;
+      } else {
+        company.saudiAmount += amount;
+        company.saudiCount += 1;
+      }
+      
+      await company.save();
+      return res.json(company);
     }
-    
-    await company.save();
 
-    res.json(company);
+    // For normal users, create a payment notification
+    const notification = new NotifyCompanyAdmin({
+      name: company.name,
+      mainPerson: company.mainPerson,
+      requestType: 'PAYMENT',
+      paymentType: 'saudi',
+      amount: amount,
+      addedBy: req.user._id,
+      originalCompany: company._id
+    });
+
+    await notification.save();
+    const populatedNotification = await NotifyCompanyAdmin.findById(notification._id)
+      .populate('mainPerson', 'name email contactNumber')
+      .populate('addedBy', 'username')
+      .populate('originalCompany', 'name');
+
+    res.json({
+      message: 'Saudi payment request sent for approval',
+      notification: populatedNotification
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -296,7 +390,7 @@ router.delete('/:id', adminProtect, async (req, res) => {
 });
 
 // Update the existing route or add a new one for getting companies by main person
-router.get('/main-person/:mainPersonId', async (req, res) => {
+router.get('/main-person/:mainPersonId', protect, async (req, res) => {
   try {
     const { mainPersonId } = req.params;
     
@@ -323,7 +417,7 @@ router.get('/main-person/:mainPersonId', async (req, res) => {
         
         if (daysUntilExpiry <= 0) {
           counts.redCards++;
-        } else if (daysUntilExpiry <= 30) { // Changed from 10 to 30
+        } else if (daysUntilExpiry <= 30) {
           counts.orangeCards++;
         } else {
           counts.greenCards++;
@@ -342,4 +436,5 @@ router.get('/main-person/:mainPersonId', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 export default router; 
