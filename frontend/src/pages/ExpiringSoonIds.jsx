@@ -385,6 +385,16 @@ function ExpiringSoonIds() {
                             </Typography>
                           </Stack>
                           <Stack direction="row" alignItems="center" spacing={1}>
+                            <PersonIcon sx={{ fontSize: { xs: 18, sm: 24 } }} color="action" />
+                            <Typography 
+                              variant="body1" 
+                              color="text.primary"
+                              sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
+                            >
+                              Referred by: {individual.referredBy || 'N/A'}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={1}>
                             <CalendarIcon sx={{ fontSize: { xs: 18, sm: 24 } }} color="warning" />
                             <Typography 
                               variant="body1" 

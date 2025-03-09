@@ -361,6 +361,12 @@ function ExpiredIds() {
                             </Typography>
                           </Stack>
                           <Stack direction="row" alignItems="center" spacing={1}>
+                            <PersonIcon color="action" />
+                            <Typography variant="body1" color="text.primary">
+                              Referred by: {individual.referredBy || 'N/A'}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={1}>
                             <CalendarIcon color="error" />
                             <Typography variant="body1" color="error.main" fontWeight="medium">
                               Expired on {format(new Date(individual.expiryDate), 'dd MMM yyyy')}
