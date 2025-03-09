@@ -350,6 +350,7 @@ function IncomeExpense() {
 
         await incomeApi.create({
           ...formData,
+          referredBy: user.username,
           mainPerson: individual.company.mainPerson
         });
       } else {
@@ -357,9 +358,9 @@ function IncomeExpense() {
         const { company, ...expenseData } = formData; // Remove company field
         await expenseApi.create({
           ...expenseData,
-          name: 'General Purpose', // Set default name for general expenses
-          expenseType: 'other', // Always set expenseType as 'other' for custom types
-          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType // Store the actual type in specification
+          name: 'General Purpose',
+          expenseType: 'other',
+          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType
         });
       }
 
@@ -1668,13 +1669,6 @@ function IncomeExpense() {
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   required
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Referred By"
-                  value={formData.referredBy}
-                  onChange={(e) => setFormData({ ...formData, referredBy: e.target.value })}
                   margin="normal"
                 />
               </>

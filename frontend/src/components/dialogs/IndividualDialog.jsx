@@ -26,7 +26,6 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     phoneNumber: '',
     iqamaNumber: '',
     expiryDate: null,
-    referredBy: '',
     amount: '',
   };
 
@@ -239,7 +238,6 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         phoneNumber: individual.phoneNumber || '',
         iqamaNumber: individual.iqamaNumber || '',
         expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
-        referredBy: individual.referredBy || '',
         amount: individual.amount?.toString() || '',
       });
     } else {
@@ -320,39 +318,6 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     />
                   </Grid>
                 ))}
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    freeSolo
-                    options={referredByOptions}
-                    value={formData.referredBy}
-                    onChange={(event, newValue) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        referredBy: newValue || ''
-                      }));
-                    }}
-                    onInputChange={(event, newInputValue) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        referredBy: newInputValue
-                      }));
-                    }}
-                    openOnFocus
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        label="Referred By"
-                        name="referredBy"
-                        error={!!validationErrors.referredBy}
-                        helperText={validationErrors.referredBy}
-                        onFocus={(event) => {
-                          event.target.click();
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
                 {isAddMode && (
                   <>
                     <Grid item xs={12} sm={6}>

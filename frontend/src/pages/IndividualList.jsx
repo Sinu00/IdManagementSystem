@@ -259,7 +259,8 @@ function IndividualList() {
           originalIndividual: selectedIndividual?._id,
           amount: Number(formData.amount) || 0,
           iqamaPrice: selectedIndividual?.iqamaPrice || 5000,
-          totalPaidAmount: selectedIndividual?.totalPaidAmount || 0
+          totalPaidAmount: selectedIndividual?.totalPaidAmount || 0,
+          referredBy: user.username
         };
         
         await notifyAdminApi.create(notificationData);

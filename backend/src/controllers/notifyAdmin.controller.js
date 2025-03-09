@@ -164,6 +164,7 @@ export const approveNotification = async (req, res) => {
         individualData.isFullyPaid = isFullyPaid;
         individualData.lastUpdateDate = new Date();
         individualData.lastUpdatedBy = req.user.username;
+        individualData.referredBy = notification.referredBy;
         
         // Add payment history if there's an initial payment
         individualData.paymentHistory = initialPayment > 0 ? [{

@@ -1,6 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import Income from '../models/income.model.js';
+import User from '../models/user.model.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -70,11 +71,9 @@ router.get('/', protect, async (req, res) => {
 // Get unique referred by list
 router.get('/referred-by', protect, async (req, res) => {
   try {
-    const uniqueReferredBy = await Income.distinct('referredBy', {
-      mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID },
-      referredBy: { $exists: true, $ne: '' }
-    });
-    res.json(uniqueReferredBy.filter(Boolean));
+    const users = await User.find({}, 'username');
+    const usernames = users.map(user => user.username);
+    res.json(usernames);
   } catch (error) {
     console.error('Error in referred-by:', error);
     res.status(500).json({ message: error.message });

@@ -62,15 +62,22 @@ function Home() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [mainPersonsRes, expiringRes, companiesRes, notificationsRes] = await Promise.all([
+        const promises = [
           mainPersonApi.getAll(),
           notificationApi.getExpiring(30),
           companyApi.getStats(),
-          Promise.all([
+        ];
+
+        // Only fetch admin notifications if user is admin
+        if (user.isAdmin) {
+          promises.push(Promise.all([
             notifyAdminApi.getAll(),
             notifyCompanyAdminApi.getAll()
-          ])
-        ]);
+          ]));
+        }
+
+        const responses = await Promise.all(promises);
+        const [mainPersonsRes, expiringRes, companiesRes, ...rest] = responses;
         
         setMainPersons(mainPersonsRes.data);
         setStats({
@@ -80,13 +87,16 @@ function Home() {
           urgentExpiring: expiringRes.data.length
         });
 
-        // Calculate total notifications
-        const totalNotifications = (
-          Array.isArray(notificationsRes[0].data) ? notificationsRes[0].data.length : 0
-        ) + (
-          Array.isArray(notificationsRes[1].data) ? notificationsRes[1].data.length : 0
-        );
-        setNotificationCount(totalNotifications);
+        // Calculate total notifications only if user is admin
+        if (user.isAdmin && rest.length > 0) {
+          const notificationsRes = rest[0];
+          const totalNotifications = (
+            Array.isArray(notificationsRes[0].data) ? notificationsRes[0].data.length : 0
+          ) + (
+            Array.isArray(notificationsRes[1].data) ? notificationsRes[1].data.length : 0
+          );
+          setNotificationCount(totalNotifications);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data. Please try again later.');

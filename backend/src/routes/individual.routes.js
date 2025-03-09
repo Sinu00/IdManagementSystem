@@ -136,7 +136,7 @@ router.post('/', protect, async (req, res) => {
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
         amount: initialPayment,
-        referredBy: req.body.referredBy || '',
+        referredBy: req.user.username,
         addedBy: req.user.username,
         dateAndTime: new Date(),
         notes: 'Initial payment for new individual',
