@@ -40,7 +40,8 @@ import {
   Add as AddIcon,
   Autorenew as RenewIcon,
   MonetizationOn as PaymentIcon,
-  Business as BusinessIcon
+  Business as BusinessIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import axios from 'axios';
@@ -74,6 +75,7 @@ function AdminNotifications() {
   const [individualNotifications, setIndividualNotifications] = useState([]);
   const [companyNotifications, setCompanyNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -89,39 +91,65 @@ function AdminNotifications() {
     }
   }, [user, navigate]);
 
-  // Fetch notifications
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true);
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        };
-        
-        const [individualRes, companyRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/notify-admin`, config),
-          axios.get(`${API_BASE_URL}/api/notify-company-admin`, config)
-        ]);
-        
-        setIndividualNotifications(Array.isArray(individualRes.data) ? individualRes.data : []);
-        setCompanyNotifications(Array.isArray(companyRes.data) ? companyRes.data : []);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        setError('Failed to load notifications');
-        setLoading(false);
-        
-        if (error.response?.status === 401) {
-          logout();
+  const fetchNotifications = async () => {
+    try {
+      setRefreshing(true);
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-      }
-    };
+      };
+      
+      const [individualRes, companyRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/notify-admin`, config),
+        axios.get(`${API_BASE_URL}/api/notify-company-admin`, config)
+      ]);
 
+      console.log('Raw company notifications:', companyRes.data);
+
+      // For company notifications, if it's a payment request, get the details from originalCompany
+      const processedCompanyNotifications = companyRes.data.map(notification => {
+        if (notification.requestType === 'PAYMENT') {
+          const originalCompany = notification.originalCompany;
+          console.log('Original company data:', originalCompany);
+          
+          return {
+            ...notification,
+            crNumber: originalCompany?.crNumber || '-',
+            sponserId: originalCompany?.sponserId || '-',
+            gosiNumber: originalCompany?.gosiNumber || '-',
+            molNumber: originalCompany?.molNumber || '-'
+          };
+        }
+        return notification;
+      });
+
+      console.log('Processed notifications:', processedCompanyNotifications);
+      
+      setIndividualNotifications(Array.isArray(individualRes.data) ? individualRes.data : []);
+      setCompanyNotifications(Array.isArray(processedCompanyNotifications) ? processedCompanyNotifications : []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setError('Failed to load notifications');
+      
+      if (error.response?.status === 401) {
+        logout();
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
     fetchNotifications();
   }, [logout]);
+
+  const handleRefresh = async () => {
+    await fetchNotifications();
+  };
 
   const handleApprove = (notification, type) => {
     setSelectedNotification({ ...notification, type });
@@ -149,16 +177,32 @@ function AdminNotifications() {
         : '/api/notify-company-admin';
 
       if (dialogAction === 'approve') {
+        // Send all the necessary data for company creation
+        const payload = selectedNotification.type === 'company' ? {
+          name: selectedNotification.name,
+          crNumber: selectedNotification.crNumber,
+          sponserId: selectedNotification.sponserId,
+          gosiNumber: selectedNotification.gosiNumber,
+          molNumber: selectedNotification.molNumber,
+          mainPerson: selectedNotification.mainPerson?._id,
+          amount: selectedNotification.amount,
+          requestType: selectedNotification.requestType,
+          paymentType: selectedNotification.paymentType,
+          originalCompany: selectedNotification.originalCompany?._id
+        } : {
+          name: selectedNotification.name,
+          email: selectedNotification.email,
+          crNumber: selectedNotification.crNumber,
+          contactPerson: selectedNotification.contactPerson,
+          amount: selectedNotification.amount,
+          requestType: selectedNotification.requestType
+        };
+
+        console.log('Approval payload:', payload);
+
         const response = await axios.post(
           `${API_BASE_URL}${endpoint}/${selectedNotification._id}/approve`, 
-          {
-            name: selectedNotification.name,
-            email: selectedNotification.email,
-            crNumber: selectedNotification.crNumber,
-            contactPerson: selectedNotification.contactPerson,
-            amount: selectedNotification.amount,
-            requestType: selectedNotification.requestType
-          }, 
+          payload,
           config
         );
         
@@ -183,8 +227,23 @@ function AdminNotifications() {
         axios.get(`${API_BASE_URL}/api/notify-company-admin`, config)
       ]);
       
+      // Process company notifications to include company details
+      const processedCompanyNotifications = companyRes.data.map(notification => {
+        if (notification.requestType === 'PAYMENT') {
+          const originalCompany = notification.originalCompany;
+          return {
+            ...notification,
+            crNumber: originalCompany?.crNumber || '-',
+            sponserId: originalCompany?.sponserId || '-',
+            gosiNumber: originalCompany?.gosiNumber || '-',
+            molNumber: originalCompany?.molNumber || '-'
+          };
+        }
+        return notification;
+      });
+      
       setIndividualNotifications(Array.isArray(individualRes.data) ? individualRes.data : []);
-      setCompanyNotifications(Array.isArray(companyRes.data) ? companyRes.data : []);
+      setCompanyNotifications(Array.isArray(processedCompanyNotifications) ? processedCompanyNotifications : []);
       
       setConfirmDialogOpen(false);
       setSelectedNotification(null);
@@ -205,35 +264,42 @@ function AdminNotifications() {
     return format(new Date(date), 'dd MMM yyyy');
   };
 
-  const getRequestTypeChip = (requestType) => {
+  const getRequestTypeChip = (requestType, paymentType) => {
     let color;
     let icon;
-    switch (requestType) {
-      case 'ADD':
-        color = 'primary';
-        icon = <AddIcon />;
-        break;
-      case 'RENEW':
-        color = 'success';
-        icon = <RenewIcon />;
-        break;
-      case 'PAYMENT':
-        color = 'warning';
-        icon = <PaymentIcon />;
-        break;
-      default:
-        color = 'default';
-        icon = <NotificationsIcon />;
+    let label = requestType;
+
+    // If it's a payment request, combine the payment type
+    if (requestType === 'PAYMENT' && paymentType) {
+      label = `${paymentType.toUpperCase()} PAYMENT`;
+      color = 'warning';
+      icon = <PaymentIcon />;
+    } else {
+      switch (requestType) {
+        case 'ADD':
+          color = 'primary';
+          icon = <AddIcon />;
+          break;
+        case 'RENEW':
+          color = 'success';
+          icon = <RenewIcon />;
+          break;
+        default:
+          color = 'default';
+          icon = <NotificationsIcon />;
+      }
     }
+
     return (
       <Chip
         icon={icon}
-        label={requestType}
+        label={label}
         color={color}
         size="small"
         sx={{ 
           '& .MuiChip-icon': { fontSize: 16 },
-          fontWeight: 'medium'
+          fontWeight: 'medium',
+          fontSize: '0.75rem'
         }}
       />
     );
@@ -260,10 +326,10 @@ function AdminNotifications() {
           <TableHead>
             <TableRow>
               <TableCell>Type</TableCell>
-              <TableCell>{type === 'individual' ? 'Individual' : 'Company'}</TableCell>
-              <TableCell>{type === 'individual' ? 'Company' : 'Contact Person'}</TableCell>
-              <TableCell>Details</TableCell>
               <TableCell>Requested By</TableCell>
+              <TableCell>{type === 'individual' ? 'Individual' : 'Company'}</TableCell>
+              <TableCell>Details</TableCell>
+              <TableCell>Amount</TableCell>
               <TableCell>Date</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -281,7 +347,24 @@ function AdminNotifications() {
                 }}
               >
                 <TableCell>
-                  {getRequestTypeChip(notification.requestType)}
+                  {getRequestTypeChip(notification.requestType, notification.paymentType)}
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar 
+                      sx={{ 
+                        width: 24, 
+                        height: 24,
+                        bgcolor: '#e3f2fd',
+                        color: '#1976d2'
+                      }}
+                    >
+                      <PersonIcon sx={{ fontSize: 16 }} />
+                    </Avatar>
+                    <Typography variant="body2">
+                      {(notification.addedBy?.username?.charAt(0).toUpperCase() + notification.addedBy?.username?.slice(1)) || 'Unknown'}
+                    </Typography>
+                  </Box>
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -289,50 +372,120 @@ function AdminNotifications() {
                       sx={{ 
                         width: 32, 
                         height: 32,
-                        bgcolor: 'primary.lighter',
-                        color: 'primary.main'
+                        bgcolor: '#e3f2fd',
+                        color: '#1976d2'
                       }}
                     >
-                      {notification.name?.charAt(0)}
+                      {type === 'individual' ? (
+                        notification.name?.charAt(0).toUpperCase()
+                      ) : (
+                        <BusinessIcon sx={{ fontSize: 20 }} />
+                      )}
                     </Avatar>
                     <Box>
-                      <Typography variant="subtitle2">
-                        {notification.name}
+                      <Typography 
+                        variant="subtitle2"
+                        sx={{ 
+                          direction: type === 'individual' ? 'ltr' : 'rtl',
+                          textAlign: type === 'individual' ? 'left' : 'right',
+                          fontFamily: type === 'individual' ? 'inherit' : 'Noto Sans Arabic, Arial, sans-serif',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        {type === 'individual' 
+                          ? notification.name?.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+                          : notification.name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary"
+                        sx={{
+                          display: 'block',
+                          direction: 'ltr',
+                          textAlign: 'left'
+                        }}
+                      >
                         {type === 'individual' ? notification.nationality : notification.email}
                       </Typography>
                     </Box>
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <BusinessIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                    <Typography variant="body2">
-                      {type === 'individual' 
-                        ? (notification.company?.name || 'N/A')
-                        : (notification.contactPerson || 'N/A')}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
                   <Stack spacing={0.5}>
-                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                      {type === 'individual' ? `Iqama: ${notification.iqamaNumber}` : `CR: ${notification.crNumber}`}
-                    </Typography>
-                    {notification.amount && (
-                      <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <PaymentIcon sx={{ fontSize: 16, color: 'warning.main' }} />
-                        Amount: SAR {notification.amount}
-                      </Typography>
+                    {type === 'individual' ? (
+                      <>
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                          Iqama: {notification.iqamaNumber}
+                        </Typography>
+                        {notification.company?.name && (
+                          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <BusinessIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                            Company: {notification.company.name}
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <Stack spacing={0.5}>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 0.5,
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <BadgeIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                          CR Number: {notification.crNumber || '-'}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 0.5,
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <BusinessIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                          GOSI Number: {notification.gosiNumber || '-'}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 0.5,
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <PersonIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                          Sponsor ID: {notification.sponserId || '-'}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 0.5,
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <BadgeIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                          MOL Number: {notification.molNumber || '-'}
+                        </Typography>
+                      </Stack>
                     )}
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2">
-                    {notification.addedBy?.username || 'Unknown'}
-                  </Typography>
+                  {notification.amount ? (
+                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <PaymentIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                      SAR {notification.amount}
+                    </Typography>
+                  ) : '-'}
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">
@@ -408,47 +561,104 @@ function AdminNotifications() {
           >
             <Box sx={{ 
               display: 'flex', 
-              alignItems: 'center',
-              gap: 2
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { xs: 'stretch', md: 'center' },
+              gap: { xs: 2, md: 0 },
+              justifyContent: 'space-between'
             }}>
-              <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
-                <NotificationsIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h5" fontWeight="bold" color="warning.dark">
-                  Admin Notifications
-                </Typography>
-                <Typography variant="body2" color="warning.dark">
-                  {totalNotifications} pending approval{totalNotifications !== 1 ? 's' : ''}
-                </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: 2
+              }}>
+                <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
+                  <NotificationsIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" fontWeight="bold" color="warning.dark">
+                    Approval Requests
+                  </Typography>
+                  <Typography variant="body2" color="warning.dark">
+                    {totalNotifications} pending approval{totalNotifications !== 1 ? 's' : ''}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2,
+                width: { xs: '100%', md: 'auto' },
+                justifyContent: { xs: 'center', md: 'flex-end' }
+              }}>
+                <Tabs 
+                  value={tabValue} 
+                  onChange={handleTabChange}
+                  sx={{
+                    '& .MuiTab-root': {
+                      minWidth: 120,
+                      fontWeight: 'medium',
+                      color: 'warning.dark',
+                      opacity: 0.7,
+                      '&.Mui-selected': {
+                        color: '#fff',
+                        opacity: 1
+                      },
+                      '&:focus': {
+                        outline: 'none'
+                      },
+                      '&.MuiTab-root': {
+                        border: 'none'
+                      }
+                    },
+                    '& .MuiTabs-indicator': {
+                      backgroundColor: '#fff'
+                    }
+                  }}
+                >
+                  <Tab 
+                    label={`Individual (${individualNotifications.length})`}
+                    icon={<PersonIcon />}
+                    iconPosition="start"
+                  />
+                  <Tab 
+                    label={`Company (${companyNotifications.length})`}
+                    icon={<BusinessIcon />}
+                    iconPosition="start"
+                  />
+                </Tabs>
+
+                <Tooltip title="Refresh">
+                  <IconButton 
+                    onClick={handleRefresh}
+                    sx={{ 
+                      bgcolor: 'warning.main',
+                      color: '#fff',
+                      '&:hover': { 
+                        bgcolor: 'warning.dark', 
+                        color: '#fff' 
+                      }
+                    }}
+                  >
+                    <RefreshIcon 
+                      sx={{ 
+                        animation: refreshing ? 'spin 1s linear infinite' : 'none',
+                        '@keyframes spin': {
+                          '0%': {
+                            transform: 'rotate(0deg)',
+                          },
+                          '100%': {
+                            transform: 'rotate(360deg)',
+                          },
+                        },
+                      }}
+                    />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </Box>
           </Paper>
         </Fade>
-
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange}
-            sx={{
-              '& .MuiTab-root': {
-                minWidth: 120,
-                fontWeight: 'medium'
-              }
-            }}
-          >
-            <Tab 
-              label={`Individual (${individualNotifications.length})`}
-              icon={<PersonIcon />}
-              iconPosition="start"
-            />
-            <Tab 
-              label={`Company (${companyNotifications.length})`}
-              icon={<BusinessIcon />}
-              iconPosition="start"
-            />
-          </Tabs>
-        </Box>
 
         <Fade in timeout={1000}>
           <Box>
@@ -496,6 +706,11 @@ function AdminNotifications() {
               {selectedNotification.type === 'individual' && selectedNotification.company?.name && (
                 <Typography variant="subtitle1">
                   <strong>Company:</strong> {selectedNotification.company.name}
+                </Typography>
+              )}
+              {selectedNotification.amount && (
+                <Typography variant="subtitle1">
+                  <strong>Amount:</strong> SAR {selectedNotification.amount}
                 </Typography>
               )}
             </Box>

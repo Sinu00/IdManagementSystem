@@ -13,7 +13,7 @@ router.get('/', protect, async (req, res) => {
     const notifications = await NotifyCompanyAdmin.find()
       .populate('mainPerson', 'name email contactNumber')
       .populate('addedBy', 'username')
-      .populate('originalCompany', 'name')
+      .populate('originalCompany', 'name crNumber sponserId gosiNumber molNumber')
       .sort({ createdAt: -1 });
     res.json(notifications);
   } catch (error) {
