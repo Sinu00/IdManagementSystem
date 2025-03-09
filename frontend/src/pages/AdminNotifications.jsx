@@ -71,8 +71,8 @@ function TabPanel(props) {
   );
 }
 
-const renderSkeletonRow = () => (
-  <TableRow>
+const renderSkeletonRow = (index) => (
+  <TableRow key={`loading-row-${index}`}>
     <TableCell><Skeleton variant="rounded" width={100} height={24} /></TableCell>
     <TableCell>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -121,7 +121,7 @@ const renderLoadingTable = () => (
         </TableRow>
       </TableHead>
       <TableBody>
-        {[...Array(5)].map((_, index) => renderSkeletonRow())}
+        {[...Array(5)].map((_, index) => renderSkeletonRow(index))}
       </TableBody>
     </Table>
   </TableContainer>
@@ -221,86 +221,31 @@ function AdminNotifications() {
 
   const handleConfirmAction = async () => {
     try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      };
-
-      const endpoint = selectedNotification.type === 'individual' 
-        ? '/api/notify-admin' 
-        : '/api/notify-company-admin';
-
+      const notificationId = selectedNotification._id;
+      
       if (dialogAction === 'approve') {
-        // Send all the necessary data for company creation
-        const payload = selectedNotification.type === 'company' ? {
-          name: selectedNotification.name,
-          crNumber: selectedNotification.crNumber,
-          sponserId: selectedNotification.sponserId,
-          gosiNumber: selectedNotification.gosiNumber,
-          molNumber: selectedNotification.molNumber,
-          mainPerson: selectedNotification.mainPerson?._id,
-          amount: selectedNotification.amount,
-          requestType: selectedNotification.requestType,
-          paymentType: selectedNotification.paymentType,
-          originalCompany: selectedNotification.originalCompany?._id
-        } : {
-          name: selectedNotification.name,
-          email: selectedNotification.email,
-          crNumber: selectedNotification.crNumber,
-          contactPerson: selectedNotification.contactPerson,
-          amount: selectedNotification.amount,
-          requestType: selectedNotification.requestType
-        };
-
-        console.log('Approval payload:', payload);
-
-        await notifyAdminApi.approve(selectedNotification._id, payload, config);
-        
-        if (selectedNotification.type === 'individual') {
-          toast.success('Individual approved successfully');
+        if (selectedNotification.type === 'company') {
+          await notifyCompanyAdminApi.approve(notificationId);
         } else {
-          toast.success('Company approved successfully');
+          await notifyAdminApi.approve(notificationId);
         }
-      } else if (dialogAction === 'reject') {
-        await notifyCompanyAdminApi.reject(selectedNotification._id, {}, config);
         
-        toast.success('Notification rejected successfully');
-      }
-      
-      // Refresh notifications
-      const [individualRes, companyRes] = await Promise.all([
-        notifyAdminApi.getAll(),
-        notifyCompanyAdminApi.getAll()
-      ]);
-      
-      // Process company notifications to include company details
-      const processedCompanyNotifications = companyRes.data.map(notification => {
-        if (notification.requestType === 'PAYMENT') {
-          const originalCompany = notification.originalCompany;
-          return {
-            ...notification,
-            crNumber: originalCompany?.crNumber || '-',
-            sponserId: originalCompany?.sponserId || '-',
-            gosiNumber: originalCompany?.gosiNumber || '-',
-            molNumber: originalCompany?.molNumber || '-'
-          };
+        toast.success(`${selectedNotification.type === 'company' ? 'Company' : 'Individual'} request approved successfully`);
+      } else {
+        if (selectedNotification.type === 'company') {
+          await notifyCompanyAdminApi.reject(notificationId);
+        } else {
+          await notifyAdminApi.reject(notificationId);
         }
-        return notification;
-      });
-      
-      setIndividualNotifications(Array.isArray(individualRes.data) ? individualRes.data : []);
-      setCompanyNotifications(Array.isArray(processedCompanyNotifications) ? processedCompanyNotifications : []);
-      
+        
+        toast.success(`${selectedNotification.type === 'company' ? 'Company' : 'Individual'} request rejected successfully`);
+      }
+
       setConfirmDialogOpen(false);
-      setSelectedNotification(null);
+      fetchNotifications();
     } catch (error) {
-      console.error('Error processing notification:', error.response?.data || error.message);
-      toast.error(
-        error.response?.data?.message || 
-        `Failed to ${dialogAction} ${selectedNotification?.type} notification. Please try again.`
-      );
+      console.error('Error processing notification:', error);
+      toast.error('Failed to process the request. Please try again.');
     }
   };
 
@@ -547,30 +492,34 @@ function AdminNotifications() {
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
                     <Tooltip title="Approve">
-                      <IconButton
-                        size="small"
-                        color="success"
-                        onClick={() => handleApprove(notification, type)}
-                        sx={{ 
-                          bgcolor: 'success.lighter',
-                          '&:hover': { bgcolor: 'success.light' }
-                        }}
-                      >
-                        <CheckIcon fontSize="small" />
-                      </IconButton>
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => handleApprove(notification, type)}
+                          sx={{ 
+                            bgcolor: 'success.lighter',
+                            '&:hover': { bgcolor: 'success.light' }
+                          }}
+                        >
+                          <CheckIcon fontSize="small" />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                     <Tooltip title="Reject">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleReject(notification, type)}
-                        sx={{ 
-                          bgcolor: 'error.lighter',
-                          '&:hover': { bgcolor: 'error.light' }
-                        }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleReject(notification, type)}
+                          sx={{ 
+                            bgcolor: 'error.lighter',
+                            '&:hover': { bgcolor: 'error.light' }
+                          }}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </Stack>
                 </TableCell>
@@ -686,36 +635,38 @@ function AdminNotifications() {
                 </Tabs>
 
                 <Tooltip title="Refresh">
-                  <IconButton 
-                    onClick={handleRefresh}
-                    disabled={loading || refreshing}
-                    sx={{ 
-                      bgcolor: 'warning.main',
-                      color: '#fff',
-                      '&:hover': { 
-                        bgcolor: 'warning.dark', 
-                        color: '#fff' 
-                      },
-                      '&.Mui-disabled': {
-                        bgcolor: 'warning.main',
-                        opacity: 0.5
-                      }
-                    }}
-                  >
-                    <RefreshIcon 
+                  <span>
+                    <IconButton 
+                      onClick={handleRefresh}
+                      disabled={loading || refreshing}
                       sx={{ 
-                        animation: (loading || refreshing) ? 'spin 1s linear infinite' : 'none',
-                        '@keyframes spin': {
-                          '0%': {
-                            transform: 'rotate(0deg)',
-                          },
-                          '100%': {
-                            transform: 'rotate(360deg)',
-                          },
+                        bgcolor: 'warning.main',
+                        color: '#fff',
+                        '&:hover': { 
+                          bgcolor: 'warning.dark', 
+                          color: '#fff' 
                         },
+                        '&.Mui-disabled': {
+                          bgcolor: 'warning.main',
+                          opacity: 0.5
+                        }
                       }}
-                    />
-                  </IconButton>
+                    >
+                      <RefreshIcon 
+                        sx={{ 
+                          animation: (loading || refreshing) ? 'spin 1s linear infinite' : 'none',
+                          '@keyframes spin': {
+                            '0%': {
+                              transform: 'rotate(0deg)',
+                            },
+                            '100%': {
+                              transform: 'rotate(360deg)',
+                            },
+                          },
+                        }}
+                      />
+                    </IconButton>
+                  </span>
                 </Tooltip>
               </Box>
             </Box>

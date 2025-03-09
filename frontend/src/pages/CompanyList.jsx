@@ -229,8 +229,20 @@ function CompanyList() {
       setConfirmAction(() => async () => {
         try {
           if (dialogMode === 'add') {
-            await companyApi.create({ ...formData, mainPerson: mainPersonId });
-            toast.success('Company added successfully');
+            if (!user?.isAdmin) {
+              // For regular users, create a notification
+              await notifyCompanyAdminApi.create({
+                ...formData,
+                mainPerson: mainPersonId,
+                requestType: 'ADD',
+                amount: formData.crAmount || 0,
+                paymentType: 'cr'
+              });
+              toast.success('Company request sent to admin for approval');
+            } else {
+              await companyApi.create({ ...formData, mainPerson: mainPersonId });
+              toast.success('Company added successfully');
+            }
           } else {
             await companyApi.update(selectedCompany._id, formData);
             toast.success('Company updated successfully');

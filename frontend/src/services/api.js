@@ -96,11 +96,15 @@ export const notifyAdminApi = {
   update: (id, data) => api.put(`/api/notify-admin/${id}`, data),
   delete: (id) => api.delete(`/api/notify-admin/${id}`),
   approve: (id) => api.post(`/api/notify-admin/${id}/approve`),
+  reject: (id) => api.post(`/api/notify-admin/${id}/reject`),
 };
 
 export const notifyCompanyAdminApi = {
   getAll: () => api.get('/api/notify-company-admin'),
+  getById: (id) => api.get(`/api/notify-company-admin/${id}`),
   create: (data) => api.post('/api/notify-company-admin', data),
+  update: (id, data) => api.put(`/api/notify-company-admin/${id}`, data),
+  delete: (id) => api.delete(`/api/notify-company-admin/${id}`),
   approve: (id) => api.post(`/api/notify-company-admin/${id}/approve`),
   reject: (id) => api.post(`/api/notify-company-admin/${id}/reject`),
 };
