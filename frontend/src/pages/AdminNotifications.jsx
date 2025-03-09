@@ -27,7 +27,8 @@ import {
   Stack,
   Tooltip,
   Tabs,
-  Tab
+  Tab,
+  Skeleton
 } from '@mui/material';
 import {
   Check as CheckIcon,
@@ -70,6 +71,62 @@ function TabPanel(props) {
     </div>
   );
 }
+
+const renderSkeletonRow = () => (
+  <TableRow>
+    <TableCell><Skeleton variant="rounded" width={100} height={24} /></TableCell>
+    <TableCell>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Skeleton variant="circular" width={24} height={24} />
+        <Skeleton variant="text" width={100} />
+      </Box>
+    </TableCell>
+    <TableCell>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Skeleton variant="circular" width={32} height={32} />
+        <Box>
+          <Skeleton variant="text" width={120} />
+          <Skeleton variant="text" width={80} />
+        </Box>
+      </Box>
+    </TableCell>
+    <TableCell>
+      <Stack spacing={0.5}>
+        <Skeleton variant="text" width={150} />
+        <Skeleton variant="text" width={130} />
+      </Stack>
+    </TableCell>
+    <TableCell><Skeleton variant="text" width={80} /></TableCell>
+    <TableCell><Skeleton variant="text" width={90} /></TableCell>
+    <TableCell align="right">
+      <Stack direction="row" spacing={1} justifyContent="flex-end">
+        <Skeleton variant="circular" width={32} height={32} />
+        <Skeleton variant="circular" width={32} height={32} />
+      </Stack>
+    </TableCell>
+  </TableRow>
+);
+
+const renderLoadingTable = () => (
+  <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 2 }}>
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>Type</TableCell>
+          <TableCell>Requested By</TableCell>
+          <TableCell>Individual/Company</TableCell>
+          <TableCell>Details</TableCell>
+          <TableCell>Amount</TableCell>
+          <TableCell>Date</TableCell>
+          <TableCell align="right">Actions</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {[...Array(5)].map((_, index) => renderSkeletonRow())}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
 
 function AdminNotifications() {
   const [individualNotifications, setIndividualNotifications] = useState([]);
@@ -306,6 +363,10 @@ function AdminNotifications() {
   };
 
   const renderNotificationsTable = (notifications, type) => {
+    if (loading) {
+      return renderLoadingTable();
+    }
+
     if (notifications.length === 0) {
       return (
         <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
@@ -530,21 +591,6 @@ function AdminNotifications() {
     );
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        minHeight: '100vh'
-      }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  const totalNotifications = individualNotifications.length + companyNotifications.length;
-
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 4, pb: 6 }}>
       <Container maxWidth="lg">
@@ -579,7 +625,11 @@ function AdminNotifications() {
                     Approval Requests
                   </Typography>
                   <Typography variant="body2" color="warning.dark">
-                    {totalNotifications} pending approval{totalNotifications !== 1 ? 's' : ''}
+                    {loading ? (
+                      <Skeleton width={100} />
+                    ) : (
+                      `${individualNotifications.length + companyNotifications.length} pending approval${individualNotifications.length + companyNotifications.length !== 1 ? 's' : ''}`
+                    )}
                   </Typography>
                 </Box>
               </Box>
@@ -617,12 +667,26 @@ function AdminNotifications() {
                   }}
                 >
                   <Tab 
-                    label={`Individual (${individualNotifications.length})`}
+                    label={loading ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PersonIcon />
+                        <Skeleton width={80} />
+                      </Box>
+                    ) : (
+                      `Individual (${individualNotifications.length})`
+                    )}
                     icon={<PersonIcon />}
                     iconPosition="start"
                   />
                   <Tab 
-                    label={`Company (${companyNotifications.length})`}
+                    label={loading ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <BusinessIcon />
+                        <Skeleton width={80} />
+                      </Box>
+                    ) : (
+                      `Company (${companyNotifications.length})`
+                    )}
                     icon={<BusinessIcon />}
                     iconPosition="start"
                   />
@@ -631,18 +695,23 @@ function AdminNotifications() {
                 <Tooltip title="Refresh">
                   <IconButton 
                     onClick={handleRefresh}
+                    disabled={loading || refreshing}
                     sx={{ 
                       bgcolor: 'warning.main',
                       color: '#fff',
                       '&:hover': { 
                         bgcolor: 'warning.dark', 
                         color: '#fff' 
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: 'warning.main',
+                        opacity: 0.5
                       }
                     }}
                   >
                     <RefreshIcon 
                       sx={{ 
-                        animation: refreshing ? 'spin 1s linear infinite' : 'none',
+                        animation: (loading || refreshing) ? 'spin 1s linear infinite' : 'none',
                         '@keyframes spin': {
                           '0%': {
                             transform: 'rotate(0deg)',
