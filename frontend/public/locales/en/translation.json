@@ -177,6 +177,12 @@
       "currentCount": "Current Count",
       "clearRecords": "Clear Records",
       "processing": "Processing Payment..."
+    },
+    "iqamaPrice": {
+      "title": "Update IQAMA Price",
+      "price": "Price",
+      "cancel": "Cancel",
+      "submit": "Submit"
     }
   },
   "toast": {
@@ -432,6 +438,67 @@
       "refresh": "Refresh",
       "companyDetails": "Company Details",
       "filter": "Show Filters"
+    },
+    "iqamaPriceDialog": {
+      "title": "Update IQAMA Price",
+      "currentPrice": "Current Price: SAR {{price}}",
+      "newPrice": "New Price",
+      "enterPrice": "Enter new IQAMA price",
+      "updateSuccess": "IQAMA price updated successfully",
+      "updateError": "Failed to update IQAMA price"
+    }
+  },
+  "userManagement": {
+    "title": "User Management",
+    "subtitle": "Manage user accounts and their permissions",
+    "noPermission": "You don't have permission to access this page",
+    "buttons": {
+      "addUser": "Add User",
+      "cancel": "Cancel",
+      "retry": "Retry"
+    },
+    "table": {
+      "username": "Username",
+      "role": "Role",
+      "incomeAccess": "Income Access",
+      "allowedMainPersons": "Allowed Main Persons",
+      "actions": "Actions",
+      "noAccess": "No access assigned"
+    },
+    "roles": {
+      "admin": "Admin",
+      "user": "User"
+    },
+    "access": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "dialog": {
+      "add": {
+        "title": "Add New User",
+        "button": "Add User"
+      },
+      "edit": {
+        "title": "Edit User",
+        "button": "Update User",
+        "passwordHelp": "Leave blank to keep current password"
+      },
+      "delete": {
+        "title": "Delete User",
+        "message": "Are you sure you want to delete user {{username}}?",
+        "button": "Delete"
+      },
+      "fields": {
+        "username": "Username",
+        "password": "Password",
+        "role": "Role",
+        "incomeAccess": "Income Access",
+        "allowedMainPersons": "Allowed Main Persons"
+      }
+    },
+    "tooltips": {
+      "edit": "Edit User",
+      "delete": "Delete User"
     }
   }
 } 
