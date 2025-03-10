@@ -50,6 +50,7 @@ import { notifyAdminApi, notifyCompanyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -128,6 +129,7 @@ const renderLoadingTable = () => (
 );
 
 function AdminNotifications() {
+  const { t } = useTranslation();
   const [individualNotifications, setIndividualNotifications] = useState([]);
   const [companyNotifications, setCompanyNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -230,7 +232,7 @@ function AdminNotifications() {
           await notifyAdminApi.approve(notificationId);
         }
         
-        toast.success(`${selectedNotification.type === 'company' ? 'Company' : 'Individual'} request approved successfully`);
+        toast.success(t(`adminNotifications.toast.${selectedNotification.type}RequestApproved`));
       } else {
         if (selectedNotification.type === 'company') {
           await notifyCompanyAdminApi.reject(notificationId);
@@ -238,14 +240,14 @@ function AdminNotifications() {
           await notifyAdminApi.reject(notificationId);
         }
         
-        toast.success(`${selectedNotification.type === 'company' ? 'Company' : 'Individual'} request rejected successfully`);
+        toast.success(t(`adminNotifications.toast.${selectedNotification.type}RequestRejected`));
       }
 
       setConfirmDialogOpen(false);
       fetchNotifications();
     } catch (error) {
       console.error('Error processing notification:', error);
-      toast.error('Failed to process the request. Please try again.');
+      toast.error(t('adminNotifications.toast.processingError'));
     }
   };
 
@@ -260,14 +262,15 @@ function AdminNotifications() {
   const getRequestTypeChip = (requestType, paymentType) => {
     let color;
     let icon;
-    let label = requestType;
+    let label;
 
     // If it's a payment request, combine the payment type
     if (requestType === 'PAYMENT' && paymentType) {
-      label = `${paymentType.toUpperCase()} PAYMENT`;
+      label = t(`adminNotifications.paymentTypes.${paymentType.toLowerCase()}`);
       color = 'warning';
       icon = <PaymentIcon />;
     } else {
+      label = t(`adminNotifications.requestTypes.${requestType}`);
       switch (requestType) {
         case 'ADD':
           color = 'primary';
@@ -308,10 +311,10 @@ function AdminNotifications() {
         <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
           <NotificationsIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" color="text.secondary">
-            No pending notifications
+            {t('adminNotifications.noResults.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            All {type} requests have been processed
+            {t(`adminNotifications.noResults.${type}`)}
           </Typography>
         </Paper>
       );
@@ -322,13 +325,13 @@ function AdminNotifications() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Type</TableCell>
-              <TableCell>Requested By</TableCell>
-              <TableCell>{type === 'individual' ? 'Individual' : 'Company'}</TableCell>
-              <TableCell>Details</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('adminNotifications.table.type')}</TableCell>
+              <TableCell>{t('adminNotifications.table.requestedBy')}</TableCell>
+              <TableCell>{t(`adminNotifications.table.${type}`)}</TableCell>
+              <TableCell>{t('adminNotifications.table.details')}</TableCell>
+              <TableCell>{t('adminNotifications.table.amount')}</TableCell>
+              <TableCell>{t('adminNotifications.table.date')}</TableCell>
+              <TableCell align="right">{t('adminNotifications.table.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -413,64 +416,32 @@ function AdminNotifications() {
                       <>
                         <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                          Iqama: {notification.iqamaNumber}
+                          {t('adminNotifications.details.iqama')}: {notification.iqamaNumber}
                         </Typography>
                         {notification.company?.name && (
                           <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <BusinessIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                            Company: {notification.company.name}
+                            {t('adminNotifications.details.company')}: {notification.company.name}
                           </Typography>
                         )}
                       </>
                     ) : (
                       <Stack spacing={0.5}>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 0.5,
-                            fontSize: '0.8rem'
-                          }}
-                        >
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.8rem' }}>
                           <BadgeIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                          CR Number: {notification.crNumber || '-'}
+                          {t('adminNotifications.details.crNumber')}: {notification.crNumber || '-'}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 0.5,
-                            fontSize: '0.8rem'
-                          }}
-                        >
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.8rem' }}>
                           <BusinessIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                          GOSI Number: {notification.gosiNumber || '-'}
+                          {t('adminNotifications.details.gosiNumber')}: {notification.gosiNumber || '-'}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 0.5,
-                            fontSize: '0.8rem'
-                          }}
-                        >
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.8rem' }}>
                           <PersonIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                          Sponsor ID: {notification.sponserId || '-'}
+                          {t('adminNotifications.details.sponserId')}: {notification.sponserId || '-'}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 0.5,
-                            fontSize: '0.8rem'
-                          }}
-                        >
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.8rem' }}>
                           <BadgeIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                          MOL Number: {notification.molNumber || '-'}
+                          {t('adminNotifications.details.molNumber')}: {notification.molNumber || '-'}
                         </Typography>
                       </Stack>
                     )}
@@ -491,7 +462,7 @@ function AdminNotifications() {
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
-                    <Tooltip title="Approve">
+                    <Tooltip title={t('adminNotifications.actions.approve')}>
                       <span>
                         <IconButton
                           size="small"
@@ -506,7 +477,7 @@ function AdminNotifications() {
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <Tooltip title="Reject">
+                    <Tooltip title={t('adminNotifications.actions.reject')}>
                       <span>
                         <IconButton
                           size="small"
@@ -562,13 +533,13 @@ function AdminNotifications() {
                 </Avatar>
                 <Box>
                   <Typography variant="h5" fontWeight="bold" color="warning.dark">
-                    Approval Requests
+                    {t('adminNotifications.title')}
                   </Typography>
                   <Typography variant="body2" color="warning.dark">
                     {loading ? (
                       <Skeleton width={100} />
                     ) : (
-                      `${individualNotifications.length + companyNotifications.length} pending approval${individualNotifications.length + companyNotifications.length !== 1 ? 's' : ''}`
+                      t('adminNotifications.pendingCount', { count: individualNotifications.length + companyNotifications.length })
                     )}
                   </Typography>
                 </Box>
@@ -593,12 +564,6 @@ function AdminNotifications() {
                       '&.Mui-selected': {
                         color: '#fff',
                         opacity: 1
-                      },
-                      '&:focus': {
-                        outline: 'none'
-                      },
-                      '&.MuiTab-root': {
-                        border: 'none'
                       }
                     },
                     '& .MuiTabs-indicator': {
@@ -615,7 +580,7 @@ function AdminNotifications() {
                     ) : (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <PersonIcon />
-                        <span>Individual ({individualNotifications.length})</span>
+                        {t('adminNotifications.tabs.individual', { count: individualNotifications.length })}
                       </Box>
                     )}
                   />
@@ -628,13 +593,13 @@ function AdminNotifications() {
                     ) : (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <BusinessIcon />
-                        <span>Company ({companyNotifications.length})</span>
+                        {t('adminNotifications.tabs.company', { count: companyNotifications.length })}
                       </Box>
                     )}
                   />
                 </Tabs>
 
-                <Tooltip title="Refresh">
+                <Tooltip title={t('adminNotifications.refresh')}>
                   <span>
                     <IconButton 
                       onClick={handleRefresh}
@@ -698,32 +663,40 @@ function AdminNotifications() {
           color: dialogAction === 'approve' ? 'success.dark' : 'error.dark',
           py: 2
         }}>
-          {dialogAction === 'approve' ? `Approve ${selectedNotification?.type}` : `Reject ${selectedNotification?.type}`}
+          {dialogAction === 'approve' 
+            ? t(`adminNotifications.dialog.approve.${selectedNotification?.type}`)
+            : t(`adminNotifications.dialog.reject.${selectedNotification?.type}`)}
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <DialogContentText>
-            {dialogAction === 'approve' 
-              ? `Are you sure you want to approve this ${selectedNotification?.type}? This will add them to the system.`
-              : `Are you sure you want to reject this ${selectedNotification?.type}? This will delete the notification.`}
+            {dialogAction === 'approve'
+              ? t('adminNotifications.dialog.approve.message')
+              : t('adminNotifications.dialog.reject.message')}
           </DialogContentText>
           {selectedNotification && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Name:</strong> {selectedNotification.name}
+                <strong>{t('adminNotifications.dialog.details.name')}:</strong> {selectedNotification.name}
               </Typography>
               <Typography variant="subtitle1">
-                <strong>{selectedNotification.type === 'individual' ? 'Iqama Number' : 'CR Number'}:</strong> {
-                  selectedNotification.type === 'individual' ? selectedNotification.iqamaNumber : selectedNotification.crNumber
+                <strong>
+                  {selectedNotification.type === 'individual' 
+                    ? t('adminNotifications.dialog.details.iqamaNumber')
+                    : t('adminNotifications.dialog.details.crNumber')}:
+                </strong> {
+                  selectedNotification.type === 'individual' 
+                    ? selectedNotification.iqamaNumber 
+                    : selectedNotification.crNumber
                 }
               </Typography>
               {selectedNotification.type === 'individual' && selectedNotification.company?.name && (
                 <Typography variant="subtitle1">
-                  <strong>Company:</strong> {selectedNotification.company.name}
+                  <strong>{t('adminNotifications.dialog.details.company')}:</strong> {selectedNotification.company.name}
                 </Typography>
               )}
               {selectedNotification.amount && (
                 <Typography variant="subtitle1">
-                  <strong>Amount:</strong> SAR {selectedNotification.amount}
+                  <strong>{t('adminNotifications.dialog.details.amount')}:</strong> SAR {selectedNotification.amount}
                 </Typography>
               )}
             </Box>
@@ -735,7 +708,7 @@ function AdminNotifications() {
             variant="outlined"
             color="inherit"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button 
             onClick={handleConfirmAction} 
@@ -743,7 +716,7 @@ function AdminNotifications() {
             color={dialogAction === 'approve' ? 'success' : 'error'}
             autoFocus
           >
-            {dialogAction === 'approve' ? 'Approve' : 'Reject'}
+            {dialogAction === 'approve' ? t('adminNotifications.actions.approve') : t('adminNotifications.actions.reject')}
           </Button>
         </DialogActions>
       </Dialog>

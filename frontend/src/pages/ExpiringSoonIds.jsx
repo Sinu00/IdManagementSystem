@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container, Typography, Box, Fade, Paper, IconButton, Alert,
   TextField, Stack, Avatar, LinearProgress, Tooltip,
@@ -84,6 +85,7 @@ function ExpiringSoonIds() {
   const [newExpiryDate, setNewExpiryDate] = useState(null);
   const [dialogError, setDialogError] = useState('');
   const { admin } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchExpiringIds = async () => {
@@ -134,7 +136,7 @@ function ExpiringSoonIds() {
         <Paper elevation={0} sx={{ p: 3, bgcolor: 'warning.lighter', borderRadius: 3 }}>
           <Typography color="warning.main">{error}</Typography>
           <Button onClick={() => window.location.reload()} sx={{ mt: 2 }}>
-            Try Again
+            {t('common.tryAgain')}
           </Button>
         </Paper>
       </Container>
@@ -156,10 +158,17 @@ function ExpiringSoonIds() {
       >
         <Container maxWidth="lg">
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-            <IconButton onClick={() => navigate(-1)} sx={{ color: 'white' }}>
+            <IconButton 
+              onClick={() => navigate(-1)} 
+              sx={{ 
+                color: 'white',
+                transform: { xs: 'none', sm: 'none' },
+                mr: { xs: 1, sm: 1 }
+              }}
+            >
               <ArrowBackIcon />
             </IconButton>
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Typography 
                 variant="h4" 
                 fontWeight="bold"
@@ -167,20 +176,20 @@ function ExpiringSoonIds() {
                   fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
                 }}
               >
-                Upcoming ID Expiry Center
+                {t('expiringSoonIds.title')}
               </Typography>
             </Box>
           </Stack>
-              <Typography 
-                variant="subtitle1" 
-                sx={{ 
-                  opacity: 0.9, 
-                  mt: 0.5,
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                }}
-              >
-              All the ID's that are going to expire in 30 days are listed here. Click to view detailed information and take action
-              </Typography>
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              opacity: 0.9, 
+              mt: 0.5,
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}
+          >
+            {t('expiringSoonIds.subtitle')}
+          </Typography>
 
           {/* Stats Card - Position it to overlap */}
           <Card
@@ -221,7 +230,7 @@ function ExpiringSoonIds() {
                         color="text.secondary"
                         sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
                       >
-                        IDs Expiring Soon
+                        {t('expiringSoonIds.stats.totalExpiring')}
                       </Typography>
                     </Box>
                   </Stack>
@@ -250,7 +259,7 @@ function ExpiringSoonIds() {
                         color="text.secondary"
                         sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
                       >
-                        Days Until Next Expiry
+                        {t('expiringSoonIds.stats.daysUntilNext')}
                       </Typography>
                     </Box>
                   </Stack>
@@ -279,7 +288,7 @@ function ExpiringSoonIds() {
                         color="text.secondary"
                         sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
                       >
-                        Companies Affected
+                        {t('expiringSoonIds.stats.companiesAffected')}
                       </Typography>
                     </Box>
                   </Stack>
@@ -313,7 +322,7 @@ function ExpiringSoonIds() {
                   </StyledCard>
                 </Grid>
               ))
-            ) : (
+            ) : expiringIds.length > 0 ? (
               expiringIds.map((individual) => (
                 <Grid item xs={12} sm={6} lg={4} key={individual._id}>
                   <StyledCard
@@ -332,7 +341,7 @@ function ExpiringSoonIds() {
                       fontSize: { xs: '0.7rem', sm: '0.75rem' }
                     }}>
                       <AccessTimeIcon sx={{ fontSize: 16 }} />
-                      {individual.daysUntilExpiry} days until expiry
+                      {individual.daysUntilExpiry} {t('expiringSoonIds.status.daysUntilExpiry')}
                     </StatusBadge>
                     
                     <Box sx={{ p: { xs: 2, sm: 3 } }}>
@@ -391,7 +400,7 @@ function ExpiringSoonIds() {
                               color="text.primary"
                               sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
                             >
-                              Referred by: {individual.referredBy || 'N/A'}
+                              {t('expiringSoonIds.cardInfo.referredBy')}: {individual.referredBy || t('common.na')}
                             </Typography>
                           </Stack>
                           <Stack direction="row" alignItems="center" spacing={1}>
@@ -402,7 +411,7 @@ function ExpiringSoonIds() {
                               fontWeight="medium"
                               sx={{ fontSize: { xs: '0.8rem', sm: '1rem' } }}
                             >
-                              Expires on {format(new Date(individual.expiryDate), 'dd MMM yyyy')}
+                              {t('expiringSoonIds.cardInfo.expiresOn')} {format(new Date(individual.expiryDate), 'dd MMM yyyy')}
                             </Typography>
                           </Stack>
                         </Stack>
@@ -411,6 +420,27 @@ function ExpiringSoonIds() {
                   </StyledCard>
                 </Grid>
               ))
+            ) : (
+              <Grid item xs={12}>
+                <Paper 
+                  sx={{ 
+                    p: 4, 
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    bgcolor: 'background.paper'
+                  }}
+                >
+                  <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                    <PersonIcon sx={{ fontSize: 64, color: 'text.disabled' }} />
+                    <Typography color="textSecondary" variant="h6">
+                      {t('expiringSoonIds.noResults.title')}
+                    </Typography>
+                    <Typography color="textSecondary" variant="body2">
+                      {t('expiringSoonIds.noResults.subtitle')}
+                    </Typography>
+                  </Box>
+                </Paper>
+              </Grid>
             )}
           </Grid>
         </Fade>
@@ -429,7 +459,7 @@ function ExpiringSoonIds() {
           }}
         >
           <DialogTitle sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-            Modify Expiry Date
+            {t('expiringSoonIds.modifyExpiry.title')}
           </DialogTitle>
           <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Box sx={{ mt: 2 }}>
@@ -440,7 +470,7 @@ function ExpiringSoonIds() {
               )}
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="New Expiry Date"
+                  label={t('expiringSoonIds.modifyExpiry.newDate')}
                   value={newExpiryDate}
                   onChange={(newValue) => setNewExpiryDate(newValue)}
                   renderInput={(params) => <TextField {...params} fullWidth />}
@@ -458,14 +488,14 @@ function ExpiringSoonIds() {
                   borderColor: 'grey.200'
                 }}
               >
-                Updating expiry date for <b>{selectedIndividual?.name}</b>'s ID
+                {t('expiringSoonIds.modifyExpiry.updating')} <b>{selectedIndividual?.name}</b>
               </Typography>
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} variant="contained" color="primary">
-              Save
+              {t('common.save')}
             </Button>
           </DialogActions>
         </Dialog>

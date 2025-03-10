@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   IconButton,
   Menu,
@@ -19,6 +20,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 function ProfileMenu({ username, onLogout }) {
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { user } = useAuth();
@@ -48,7 +50,7 @@ function ProfileMenu({ username, onLogout }) {
         }
       }}
     >
-      <Tooltip title="Account settings">
+      <Tooltip title={t('home.accountSettings')}>
         <IconButton
           onClick={handleClick}
           size="small"
@@ -132,7 +134,7 @@ function ProfileMenu({ username, onLogout }) {
               ml: 3.5
             }}
           >
-            {user?.isAdmin ? 'Administrator' : 'Regular User'}
+            {user?.isAdmin ? t('auth.admin') : t('auth.regularUser')}
           </Typography>
         </Box>
         <Divider sx={{ 
@@ -153,7 +155,7 @@ function ProfileMenu({ username, onLogout }) {
               color: user?.isAdmin ? 'error.dark' : 'primary.dark' 
             }} />
           </ListItemIcon>
-          <ListItemText>Logout</ListItemText>
+          <ListItemText>{t('auth.logout')}</ListItemText>
         </MenuItem>
       </Menu>
     </Stack>

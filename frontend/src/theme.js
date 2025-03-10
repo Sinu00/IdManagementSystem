@@ -1,6 +1,9 @@
 import { createTheme } from '@mui/material/styles';
+import { prefixer } from 'stylis';
+import rtlPlugin from 'stylis-plugin-rtl';
 
 const theme = createTheme({
+  direction: 'ltr', // This will be dynamically changed
   palette: {
     primary: {
       main: '#1976d2',
@@ -51,5 +54,10 @@ const theme = createTheme({
     },
   },
 });
+
+export const rtlCache = {
+  key: 'muirtl',
+  stylisPlugins: [prefixer, rtlPlugin],
+};
 
 export default theme; 

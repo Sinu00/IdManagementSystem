@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -8,8 +9,10 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-function ConfirmDialog({ open, onClose, onConfirm, title, message }) {
+function ConfirmDialog({ open, onClose, onConfirm, title, message, messageData }) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = async () => {
@@ -32,37 +35,37 @@ function ConfirmDialog({ open, onClose, onConfirm, title, message }) {
     }
   };
 
+  const translatedMessage = messageData ? t(message, messageData) : message;
+
   return (
     <Dialog 
       open={open} 
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          borderRadius: 2
-        }
+      PaperProps={{ 
+        sx: { borderRadius: 2 },
+        onKeyDown: handleKeyDown
       }}
-      onKeyDown={handleKeyDown}
     >
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle>
+        {t('dialogs.confirm.title')}
+      </DialogTitle>
       <DialogContent>
-        <Typography>{message}</Typography>
+        <Typography>
+          {translatedMessage}
+        </Typography>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button 
-          onClick={onClose} 
-          variant="outlined"
-          disabled={isSubmitting}
-        >
-          Cancel
+      <DialogActions>
+        <Button onClick={onClose}>
+          {t('dialogs.confirm.cancel')}
         </Button>
         <Button 
           onClick={handleConfirm} 
           variant="contained" 
           color="primary"
           disabled={isSubmitting}
-          startIcon={isSubmitting && <CircularProgress size={20} />}
+          data-confirm-action="true"
         >
-          {isSubmitting ? 'Processing...' : 'Confirm'}
+          {isSubmitting ? t('dialogs.confirm.processing') : t('dialogs.confirm.confirm')}
         </Button>
       </DialogActions>
     </Dialog>

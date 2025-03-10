@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -11,12 +12,15 @@ import {
   Paper,
   Grid,
   Stack,
-  CircularProgress
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { MonetizationOn as MonetizationIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
+  const { t } = useTranslation();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,35 +94,44 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           <MonetizationIcon color="primary" />
-          <Typography variant="h6">Pay Pending Amount</Typography>
+          <Typography variant="h6">{t('dialogs.titles.processPayment')}</Typography>
         </Stack>
       </DialogTitle>
       <DialogContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <Box sx={{ mt: 2 }}>
           <Paper sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Payment Details for {individual.name}
+                  {t('individual.iqamaNumber')}: {individual.iqamaNumber}
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.primary" gutterBottom>
-                  Paid Amount: SAR {individual.totalPaidAmount || 0}
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  {t('individual.name')}: {individual.name}
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.primary" gutterBottom>
-                  Pending Amount: SAR {individual.pendingAmount || 0}
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  {t('individual.iqamaPrice')}: {individual.iqamaPrice} SAR
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  {t('individual.pendingAmount')}: {individual.pendingAmount} SAR
                 </Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="caption" color="text.secondary">
-                  Last updated by {individual?.lastUpdatedBy}
+                  {t('individual.lastUpdatedBy')} {individual?.lastUpdatedBy}
                   {individual?.lastUpdateDate && (
                     <>
-                      {' '}on{' '}
-                      {format(new Date(individual.lastUpdateDate), 'dd MMM yyyy')}
+                      {' '}{t('individual.lastUpdateDate')} {format(new Date(individual.lastUpdateDate), 'dd MMM yyyy')}
                     </>
                   )}
                 </Typography>
@@ -128,7 +141,7 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
 
           <TextField
             fullWidth
-            label="Payment Amount"
+            label={t('dialogs.payment.amount')}
             type="number"
             name="paymentAmount"
             value={paymentAmount}
@@ -150,7 +163,7 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
           onClick={handleClose}
           disabled={isSubmitting}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button 
           onClick={handleSubmit}
@@ -159,7 +172,7 @@ function PaymentDialog({ open, onClose, individual, onSubmit, error }) {
           disabled={!paymentAmount || !!paymentError || isSubmitting}
           startIcon={isSubmitting ? <CircularProgress size={20} /> : <MonetizationIcon />}
         >
-          {isSubmitting ? 'Processing...' : 'Make Payment'}
+          {isSubmitting ? t('dialogs.payment.processing') : t('common.submit')}
         </Button>
       </DialogActions>
     </Dialog>

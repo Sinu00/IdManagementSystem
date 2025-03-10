@@ -1,0 +1,437 @@
+{
+  "common": {
+    "language": "Language",
+    "english": "English",
+    "arabic": "Arabic",
+    "search": "Search",
+    "filter": "Filter Status",
+    "sortBy": "Sort By",
+    "actions": "Actions",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "na": "N/A",
+    "managing": "Managing",
+    "edit": "Edit",
+    "delete": "Delete",
+    "process": "Process",
+    "renew": "Renew",
+    "print": "Print",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "amount": "Amount",
+    "paymentAmount": "Payment Amount (SAR)",
+    "currentStatus": "Current Status",
+    "totalAmount": "Total Amount"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "admin": "Administrator",
+    "regularUser": "Regular User",
+    "welcomeBack": "Welcome Back",
+    "pleaseSignIn": "Please sign in to continue",
+    "enterUsername": "Enter username",
+    "enterPassword": "Enter password",
+    "signingIn": "Signing in...",
+    "signIn": "Sign In",
+    "loginFailed": "Login failed"
+  },
+  "navigation": {
+    "home": "Home",
+    "companies": "Companies",
+    "individuals": "Individuals",
+    "notifications": "Notifications",
+    "expiredIds": "Expired IDs",
+    "expiringSoonIds": "Expiring Soon IDs",
+    "incomeExpense": "Income & Expense",
+    "adminNotifications": "Admin Notifications",
+    "userManagement": "User Management"
+  },
+  "home": {
+    "sponsors": "Sponsors",
+    "totalIds": "Total IDs",
+    "expiringSoon": "Expiring Soon",
+    "printPdf": "Print PDF",
+    "accountSettings": "Account Settings",
+    "incomeAndExpense": "Income & Expense",
+    "adminNotifications": "Admin Notifications"
+  },
+  "company": {
+    "search": "Search companies...",
+    "filterAll": "All Companies",
+    "filterExpiring": "With Expiring IDs",
+    "filterExpired": "With Expired IDs",
+    "sortName": "Company Name",
+    "sortExpiring": "Expiring IDs",
+    "sortExpired": "Expired IDs",
+    "sortTotal": "Total IDs",
+    "name": "Company Name",
+    "cr": "CR Number",
+    "gosi": "GOSI",
+    "sponsor": "Sponsor",
+    "mol": "MOL",
+    "totalIndividuals": "Total Individuals",
+    "expired": "Expired",
+    "active": "Active",
+    "warning": "Warning",
+    "saudiPayment": "Saudi",
+    "viewExpiring": "View Expiring IDs",
+    "viewExpired": "View Expired IDs",
+    "nonePaid": "None Paid",
+    "partiallyPaid": "Partially Paid",
+    "fullyPaid": "Fully Paid",
+    "renewed": "Renewed"
+  },
+  "individual": {
+    "search": "Search individuals...",
+    "filterAll": "All Individuals",
+    "filterExpired": "Expired",
+    "filterWarning": "Warning",
+    "filterActive": "Active",
+    "sortName": "Name",
+    "sortExpiry": "Expiry Date",
+    "sortNationality": "Nationality",
+    "daysUntilExpiry": "days until expiry",
+    "expired": "Expired",
+    "daysAgo": "days ago",
+    "name": "Name",
+    "nationality": "Nationality",
+    "profession": "Profession",
+    "iqamaNumber": "Iqama Number",
+    "passportNumber": "Passport Number",
+    "phoneNumber": "Phone Number",
+    "expiryDate": "Expiry Date",
+    "newExpiryDate": "New Expiry Date",
+    "iqamaPrice": "Iqama Price",
+    "referredBy": "Referred By",
+    "pending": "Pending",
+    "renewalInfo": "Renewal Information for",
+    "fullIqamaAmount": "Full IQAMA Amount",
+    "lastUpdatedBy": "Last updated by",
+    "lastUpdateDate": "on",
+    "pendingAmount": "Pending Amount",
+    "remainingAmount": "Remaining amount will be {{amount}} SAR",
+    "currentExpiry": "Current expiry: {{date}}",
+    "placeholders": {
+      "name": "Enter individual name",
+      "nationality": "Enter nationality",
+      "profession": "Enter profession",
+      "iqamaNumber": "Enter iqama number",
+      "passportNumber": "Enter passport number",
+      "phoneNumber": "Enter phone number",
+      "expiryDate": "Select expiry date",
+      "iqamaPrice": "Enter iqama price",
+      "amount": "Enter amount",
+      "referredBy": "Select who referred"
+    },
+    "errors": {
+      "required": "This field is required",
+      "iqamaLength": "Iqama number must be exactly 10 digits",
+      "iqamaNumbers": "Iqama number must contain only numbers",
+      "phoneLength": "Phone number must be exactly 10 digits",
+      "phoneNumbers": "Phone number must contain only numbers",
+      "nameRequired": "Name is required",
+      "nationalityRequired": "Nationality is required",
+      "iqamaRequired": "Iqama number is required",
+      "expiryRequired": "Expiry date is required",
+      "paymentRequired": "Payment amount is required",
+      "validAmount": "Please enter a valid amount",
+      "amountExceeded": "Amount cannot exceed {{amount}} SAR"
+    }
+  },
+  "dialogs": {
+    "titles": {
+      "addCompany": "Add Company",
+      "editCompany": "Edit Company",
+      "addIndividual": "Add New Individual",
+      "editIndividual": "Edit Individual",
+      "renewIndividual": "Renew Individual",
+      "processPayment": "Process Payment",
+      "renewCompany": "Renew Company",
+      "saudiPayment": "Saudi Payment",
+      "setIqamaPrice": "Set Iqama Price"
+    },
+    "confirm": {
+      "title": "Confirm Action",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "deleteCompany": "Are you sure you want to delete the company {{name}}?",
+      "addCompany": "Are you sure you want to add this company?",
+      "editCompany": "Are you sure you want to update {{name}}'s information?",
+      "deleteIndividual": "Are you sure you want to delete {{name}}?",
+      "addIndividual": "Are you sure you want to add this individual?",
+      "editIndividual": "Are you sure you want to update {{name}}'s information?",
+      "renewIndividual": "Are you sure you want to renew {{name}}'s ID?"
+    },
+    "payment": {
+      "amount": "Payment Amount",
+      "paymentType": "Payment Type",
+      "qiwaAmount": "Qiwa Amount",
+      "muqeemAmount": "Muqeem Amount",
+      "efaAmount": "EFA Amount",
+      "crAmount": "CR Amount",
+      "currentCount": "Current Count",
+      "clearRecords": "Clear Records",
+      "processing": "Processing Payment..."
+    }
+  },
+  "toast": {
+    "companyDeleted": "Company deleted successfully",
+    "companyDeleteError": "Failed to delete company",
+    "companySaved": "Company saved successfully",
+    "companySaveError": "Failed to save company",
+    "companyRequestSent": "Company request sent to admin for approval",
+    "paymentProcessed": "Payment processed successfully",
+    "paymentError": "Failed to process payment",
+    "companyRenewed": "Company renewed successfully",
+    "renewalError": "Failed to renew company",
+    "renewalRequestSent": "Renewal request sent to admin for approval",
+    "saudiPaymentProcessed": "Saudi payment processed successfully",
+    "saudiPaymentError": "Failed to process Saudi payment",
+    "unexpectedError": "An unexpected error occurred",
+    "individualDeleted": "Individual deleted successfully",
+    "individualDeleteError": "Failed to delete individual",
+    "individualSaved": "Individual saved successfully",
+    "individualSaveError": "Failed to save individual",
+    "individualRequestSent": "Individual request sent successfully",
+    "individualRenewed": "Individual renewed successfully",
+    "individualRenewalError": "Failed to renew individual",
+    "paymentRequestSent": "Payment request sent successfully",
+    "individualUpdated": "Individual updated successfully",
+    "individualUpdateError": "Failed to update individual"
+  },
+  "expiredIds": {
+    "title": "ID Expiry Alert Center",
+    "subtitle": "All the IDs that have already expired are listed here. Click to view detailed information and take action",
+    "stats": {
+      "totalExpired": "Total Expired IDs",
+      "maxDaysExpired": "Max Days Expired",
+      "companiesAffected": "Companies Affected"
+    },
+    "status": {
+      "daysOverdue": "days overdue"
+    },
+    "noResults": {
+      "title": "No IDs Found",
+      "subtitle": "Try adjusting your search or filter"
+    },
+    "modifyExpiry": {
+      "title": "Modify Expiry Date",
+      "newDate": "New Expiry Date",
+      "updating": "Updating ID expiry for"
+    },
+    "cardInfo": {
+      "referredBy": "Referred by",
+      "expiresOn": "Expired on"
+    }
+  },
+  "expiringSoonIds": {
+    "title": "Upcoming ID Expiry Center",
+    "subtitle": "All the IDs that are going to expire in 30 days are listed here. Click to view detailed information and take action",
+    "stats": {
+      "totalExpiring": "IDs Expiring Soon",
+      "daysUntilNext": "Days Until Next Expiry",
+      "companiesAffected": "Companies Affected"
+    },
+    "status": {
+      "daysUntilExpiry": "days until expiry"
+    },
+    "noResults": {
+      "title": "No IDs Found",
+      "subtitle": "No IDs are expiring soon"
+    },
+    "modifyExpiry": {
+      "title": "Modify Expiry Date",
+      "newDate": "New Expiry Date",
+      "updating": "Updating ID expiry for"
+    },
+    "cardInfo": {
+      "referredBy": "Referred by",
+      "expiresOn": "Expires on"
+    }
+  },
+  "adminNotifications": {
+    "title": "Approval Requests",
+    "pendingCount": "{{count}} Pending Approvals",
+    "refresh": "Refresh",
+    "tabs": {
+      "individual": "Individuals ({{count}})",
+      "company": "Companies ({{count}})"
+    },
+    "table": {
+      "type": "Type",
+      "requestedBy": "Requested By",
+      "individual": "Individual",
+      "company": "Company",
+      "details": "Details",
+      "amount": "Amount",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "requestTypes": {
+      "ADD": "Add",
+      "RENEW": "Renew",
+      "PAYMENT": "Payment"
+    },
+    "paymentTypes": {
+      "cr": "CR Payment",
+      "qiwa": "Qiwa Payment",
+      "muqeem": "Muqeem Payment",
+      "efa": "EFA Payment"
+    },
+    "details": {
+      "iqama": "Iqama Number",
+      "company": "Company",
+      "crNumber": "CR Number",
+      "gosiNumber": "GOSI Number",
+      "sponserId": "Sponsor ID",
+      "molNumber": "MOL Number"
+    },
+    "noResults": {
+      "title": "No Pending Notifications",
+      "individual": "All individual requests have been processed",
+      "company": "All company requests have been processed"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "dialog": {
+      "approve": {
+        "individual": "Approve Individual Request",
+        "company": "Approve Company Request",
+        "message": "Are you sure you want to approve this request? It will be added to the system."
+      },
+      "reject": {
+        "individual": "Reject Individual Request",
+        "company": "Reject Company Request",
+        "message": "Are you sure you want to reject this request? The notification will be removed."
+      },
+      "details": {
+        "name": "Name",
+        "iqamaNumber": "Iqama Number",
+        "crNumber": "CR Number",
+        "company": "Company",
+        "amount": "Amount"
+      }
+    },
+    "toast": {
+      "approveSuccess": {
+        "individual": "Individual request approved successfully",
+        "company": "Company request approved successfully"
+      },
+      "rejectSuccess": {
+        "individual": "Individual request rejected successfully",
+        "company": "Company request rejected successfully"
+      },
+      "error": "Failed to process request. Please try again.",
+      "individualRequestApproved": "Individual request approved successfully",
+      "companyRequestApproved": "Company request approved successfully",
+      "individualRequestRejected": "Individual request rejected successfully",
+      "companyRequestRejected": "Company request rejected successfully",
+      "processingError": "Error processing request. Please try again."
+    }
+  },
+  "incomeExpense": {
+    "title": "Financial Overview",
+    "subtitle": "Track your income and expenses",
+    "stats": {
+      "totalIncome": "Total Income",
+      "totalExpense": "Total Expense",
+      "netBalance": "Net Balance",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "noChange": "No change from last month",
+      "percentageChange": "{{value}}% from last month",
+      "currentMonth": "Current month"
+    },
+    "income": {
+      "title": "Income Details",
+      "noRecords": "No income records",
+      "addFirst": "Add your first income transaction",
+      "table": {
+        "date": "Date",
+        "name": "Name",
+        "iqama": "Iqama",
+        "amount": "Amount",
+        "actions": "Actions",
+        "referredBy": "Referred by"
+      }
+    },
+    "expense": {
+      "title": "Expense Details",
+      "noRecords": "No expense records",
+      "addFirst": "Add your first expense transaction",
+      "table": {
+        "date": "Date",
+        "company": "Company",
+        "paidFor": "Paid For",
+        "amount": "Amount",
+        "actions": "Actions"
+      },
+      "types": {
+        "cr": "CR Amount",
+        "qiwa": "Qiwa Amount",
+        "muqeem": "Muqeem Amount",
+        "saudi": "Saudi Amount",
+        "efa": "EFA Amount",
+        "other": "Other"
+      }
+    },
+    "buttons": {
+      "manageUsers": "Manage Users",
+      "iqamaPrice": "IQAMA Price: SAR {{price}}",
+      "add": "Add",
+      "export": "Export",
+      "refresh": "Refresh"
+    },
+    "filters": {
+      "searchName": "Search by name",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "referredBy": "Referred By",
+      "expenseType": "Expense Type",
+      "allTypes": "All Types"
+    },
+    "dialog": {
+      "add": {
+        "income": "Add New Income",
+        "expense": "Add New Expense"
+      },
+      "edit": {
+        "income": "Edit Income",
+        "expense": "Edit Expense"
+      },
+      "delete": {
+        "title": "Confirm Delete",
+        "message": "Are you sure you want to delete this {{type}}?"
+      },
+      "export": {
+        "title": "Export {{type}} Report",
+        "dateRange": "Date Range",
+        "specificDate": "Specific Date",
+        "selectDate": "Select Date",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "referredBy": "Referred By",
+        "allReferrers": "All"
+      },
+      "fields": {
+        "name": "Name",
+        "iqamaNumber": "Iqama Number",
+        "amount": "Amount",
+        "paidFor": "Paid For",
+        "specifyOther": "Specify Other"
+      }
+    },
+    "tooltips": {
+      "refresh": "Refresh",
+      "companyDetails": "Company Details",
+      "filter": "Show Filters"
+    }
+  }
+} 

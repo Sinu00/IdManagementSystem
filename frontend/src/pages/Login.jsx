@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Paper,
@@ -23,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/api';
 
 function Login() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -41,7 +43,7 @@ function Login() {
       login(response.data.token);
       navigate('/');
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed');
+      setError(error.response?.data?.message || t('auth.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ function Login() {
                 fontSize: { xs: '1.5rem', sm: '1.8rem' }
               }}
             >
-              Welcome Back
+              {t('auth.welcomeBack')}
             </Typography>
 
             <Typography 
@@ -100,7 +102,7 @@ function Login() {
               color="text.secondary" 
               sx={{ mb: { xs: 2, sm: 3 } }}
             >
-              Please sign in to continue
+              {t('auth.pleaseSignIn')}
             </Typography>
 
             {error && (
@@ -121,11 +123,11 @@ function Login() {
             <form onSubmit={handleSubmit} style={{ width: '100%' }}>
               <TextField
                 fullWidth
-                label="Username"
+                label={t('auth.username')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 margin="normal"
-                placeholder="Enter your username"
+                placeholder={t('auth.enterUsername')}
                 required
                 InputProps={{
                   startAdornment: (
@@ -147,12 +149,12 @@ function Login() {
 
               <TextField
                 fullWidth
-                label="Password"
+                label={t('auth.password')}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 margin="normal"
-                placeholder="Enter your password"
+                placeholder={t('auth.enterPassword')}
                 required
                 InputProps={{
                   startAdornment: (
@@ -195,7 +197,7 @@ function Login() {
                   fontSize: { xs: '0.9rem', sm: '1rem' }
                 }}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
             </form>
           </Paper>

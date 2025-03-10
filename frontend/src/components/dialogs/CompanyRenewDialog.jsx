@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import {
   Dialog,
@@ -15,10 +16,18 @@ import {
   Divider
 } from '@mui/material';
 import CachedIcon from '@mui/icons-material/Cached';
+import { useTranslation } from 'react-i18next';
 
 function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState(company?.crAmount || 0);
   const [error, setError] = useState('');
+
+  React.useEffect(() => {
+    if (open) {
+      setAmount('');
+    }
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,7 +65,7 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
       <DialogTitle>
         <Box display="flex" alignItems="center">
           <CachedIcon sx={{ mr: 1 }} />
-          Renew Company
+          {t('dialogs.titles.renewCompany')}
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -77,34 +86,34 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
               }}
             >
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Current Payment Status
+                {t('common.currentStatus')}
               </Typography>
               
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="body2">
-                    CR Amount: <strong>{company.crAmount} SAR</strong>
+                    {t('dialogs.payment.crAmount')}: <strong>{company.crAmount} SAR</strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="body2">
-                    Qiwa Amount: <strong>{company.qiwaAmount} SAR</strong>
+                    {t('dialogs.payment.qiwaAmount')}: <strong>{company.qiwaAmount} SAR</strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="body2">
-                    Muqeem Amount: <strong>{company.muqeemAmount} SAR</strong>
+                    {t('dialogs.payment.muqeemAmount')}: <strong>{company.muqeemAmount} SAR</strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
                   <Typography variant="body2">
-                    EFA Amount: <strong>{company.efaAmount} SAR</strong>
+                    {t('dialogs.payment.efaAmount')}: <strong>{company.efaAmount} SAR</strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={12}>
                   <Divider sx={{ my: 1 }} />
                   <Typography variant="subtitle1" color="primary" fontWeight="bold">
-                    Total Amount: <strong>{company.totalAmount} SAR</strong>
+                    {t('common.totalAmount')}: <strong>{company.totalAmount} SAR</strong>
                   </Typography>
                 </Grid>
               </Grid>
@@ -112,7 +121,7 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
             
             <TextField
               fullWidth
-              label="CR Renewal Amount"
+              label={t('common.paymentAmount')}
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -120,19 +129,23 @@ function CompanyRenewDialog({ open, onClose, onSubmit, company }) {
                 startAdornment: <InputAdornment position="start">SAR</InputAdornment>,
               }}
               sx={{ mb: 2 }}
+              required
             />
           </Box>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} color="inherit">
+          {t('common.cancel')}
+        </Button>
         <Button 
           onClick={handleSubmit} 
           variant="contained" 
           color="primary"
           startIcon={<CachedIcon />}
+          disabled={!amount}
         >
-          Renew Company
+          {t('common.submit')}
         </Button>
       </DialogActions>
     </Dialog>

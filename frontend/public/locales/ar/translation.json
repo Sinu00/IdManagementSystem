@@ -1,0 +1,496 @@
+{
+  "common": {
+    "language": "اللغة",
+    "english": "الإنجليزية",
+    "arabic": "العربية",
+    "search": "بحث",
+    "filter": "تصفية الحالة",
+    "sortBy": "ترتيب حسب",
+    "actions": "إجراءات",
+    "copy": "نسخ",
+    "copied": "تم النسخ!",
+    "na": "غير متوفر",
+    "managing": "إدارة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "process": "معالجة",
+    "renew": "تجديد",
+    "print": "طباعة",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "submit": "تأكيد",
+    "amount": "المبلغ",
+    "paymentAmount": "مبلغ الدفع (ريال)",
+    "currentStatus": "الحالة الحالية",
+    "totalAmount": "المبلغ الإجمالي",
+    "namora": "نمرة للمقاولات"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "admin": "مدير النظام",
+    "regularUser": "مستخدم عادي",
+    "welcomeBack": "مرحباً بعودتك",
+    "pleaseSignIn": "الرجاء تسجيل الدخول للمتابعة",
+    "enterUsername": "أدخل اسم المستخدم",
+    "enterPassword": "أدخل كلمة المرور",
+    "signingIn": "جاري تسجيل الدخول...",
+    "signIn": "تسجيل الدخول",
+    "loginFailed": "فشل تسجيل الدخول"
+  },
+  "navigation": {
+    "home": "الرئيسية",
+    "companies": "الشركات",
+    "individuals": "الأفراد",
+    "notifications": "الإشعارات",
+    "expiredIds": "الهويات المنتهية",
+    "expiringSoonIds": "الهويات التي ستنتهي قريباً",
+    "incomeExpense": "الدخل والمصروفات",
+    "adminNotifications": "إشعارات المسؤول",
+    "userManagement": "إدارة المستخدمين"
+  },
+  "home": {
+    "sponsors": "الكفلاء",
+    "totalIds": "إجمالي الهويات",
+    "expiringSoon": "تنتهي قريباً",
+    "printPdf": "طباعة PDF",
+    "accountSettings": "إعدادات الحساب",
+    "incomeAndExpense": "الدخل والمصروفات",
+    "adminNotifications": "إشعارات المسؤول"
+  },
+  "company": {
+    "search": "البحث عن الشركات...",
+    "filterAll": "جميع الشركات",
+    "filterExpiring": "لديها هويات ستنتهي قريباً",
+    "filterExpired": "لديها هويات منتهية",
+    "sortName": "اسم الشركة",
+    "sortExpiring": "الهويات التي ستنتهي",
+    "sortExpired": "الهويات المنتهية",
+    "sortTotal": "إجمالي الهويات",
+    "name": "اسم الشركة",
+    "cr": "السجل التجاري",
+    "gosi": "التأمينات",
+    "sponsor": "رقم الموحد",
+    "mol": "رقم المنشأة",
+    "totalIndividuals": "إجمالي الأفراد",
+    "expired": "منتهي",
+    "active": "نشط",
+    "warning": "تحذير",
+    "saudiPayment": "السعودي",
+    "viewExpiring": "عرض الهويات التي ستنتهي",
+    "viewExpired": "عرض الهويات المنتهية",
+    "nonePaid": "غير مدفوع",
+    "partiallyPaid": "مدفوع جزئياً",
+    "fullyPaid": "مدفوع بالكامل",
+    "renewed": "تم التجديد"
+  },
+  "individual": {
+    "search": "البحث عن الأفراد...",
+    "filterAll": "جميع الأفراد",
+    "filterExpired": "منتهي",
+    "filterWarning": "تحذير",
+    "filterActive": "نشط",
+    "sortName": "الاسم",
+    "sortExpiry": "تاريخ الانتهاء",
+    "sortNationality": "الجنسية",
+    "daysUntilExpiry": "يوماً حتى الانتهاء",
+    "expired": "منتهية منذ",
+    "daysAgo": "يوماً",
+    "name": "الاسم",
+    "nationality": "الجنسية",
+    "profession": "المهنة",
+    "iqamaNumber": "رقم الإقامة",
+    "passportNumber": "رقم الجواز",
+    "phoneNumber": "رقم الجوال",
+    "expiryDate": "تاريخ الانتهاء",
+    "newExpiryDate": "تاريخ الانتهاء الجديد",
+    "iqamaPrice": "سعر الإقامة",
+    "referredBy": "تمت الإحالة بواسطة",
+    "pending": "المبلغ المتبقي",
+    "renewalInfo": "معلومات التجديد لـ",
+    "fullIqamaAmount": "المبلغ الكامل للإقامة",
+    "lastUpdatedBy": "آخر تحديث بواسطة",
+    "lastUpdateDate": "في",
+    "pendingAmount": "المبلغ المتبقي",
+    "remainingAmount": "المبلغ المتبقي سيكون {{amount}} ريال",
+    "currentExpiry": "تاريخ الانتهاء الحالي: {{date}}",
+    "placeholders": {
+      "name": "أدخل الاسم",
+      "nationality": "أدخل الجنسية",
+      "profession": "أدخل المهنة",
+      "iqamaNumber": "أدخل رقم الإقامة",
+      "passportNumber": "أدخل رقم الجواز",
+      "phoneNumber": "أدخل رقم الجوال",
+      "expiryDate": "اختر تاريخ الانتهاء",
+      "iqamaPrice": "أدخل سعر الإقامة",
+      "amount": "أدخل المبلغ",
+      "referredBy": "اختر من قام بالإحالة"
+    },
+    "errors": {
+      "required": "هذا الحقل مطلوب",
+      "iqamaLength": "يجب أن يكون رقم الإقامة 10 أرقام بالضبط",
+      "iqamaNumbers": "يجب أن يحتوي رقم الإقامة على أرقام فقط",
+      "phoneLength": "يجب أن يكون رقم الجوال 10 أرقام بالضبط",
+      "phoneNumbers": "يجب أن يحتوي رقم الجوال على أرقام فقط",
+      "nameRequired": "الاسم مطلوب",
+      "nationalityRequired": "الجنسية مطلوبة",
+      "iqamaRequired": "رقم الإقامة مطلوب",
+      "expiryRequired": "تاريخ الانتهاء مطلوب",
+      "paymentRequired": "مبلغ الدفع مطلوب",
+      "validAmount": "الرجاء إدخال مبلغ صحيح",
+      "amountExceeded": "لا يمكن أن يتجاوز المبلغ {{amount}} ريال"
+    }
+  },
+  "dialogs": {
+    "titles": {
+      "addCompany": "إضافة شركة",
+      "editCompany": "تعديل الشركة",
+      "addIndividual": "إضافة فرد جديد",
+      "editIndividual": "تعديل الفرد",
+      "renewIndividual": "تجديد الفرد",
+      "processPayment": "معالجة الدفع",
+      "renewCompany": "تجديد الشركة",
+      "saudiPayment": "الدفع السعودي",
+      "setIqamaPrice": "تحديد سعر الإقامة"
+    },
+    "confirm": {
+      "title": "تأكيد الإجراء",
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "processing": "جاري المعالجة...",
+      "deleteCompany": "هل أنت متأكد من حذف الشركة {{name}}؟",
+      "addCompany": "هل أنت متأكد من إضافة هذه الشركة؟",
+      "editCompany": "هل أنت متأكد من تحديث بيانات الشركة {{name}}؟",
+      "deleteIndividual": "هل أنت متأكد من حذف {{name}}؟",
+      "addIndividual": "هل أنت متأكد من إضافة هذا الفرد؟",
+      "editIndividual": "هل أنت متأكد من تحديث بيانات {{name}}؟",
+      "renewIndividual": "هل أنت متأكد من تجديد هوية {{name}}؟"
+    },
+    "payment": {
+      "amount": "مبلغ الدفع",
+      "paymentType": "نوع الدفع",
+      "qiwaAmount": "مبلغ قوى",
+      "muqeemAmount": "مبلغ مقيم",
+      "efaAmount": "مبلغ منصة أفراد",
+      "crAmount": "مبلغ السجل التجاري",
+      "currentCount": "العدد الحالي",
+      "clearRecords": "مسح السجلات",
+      "processing": "جاري معالجة الدفع..."
+    },
+    "iqamaPrice": {
+      "title": "تحديث سعر الإقامة",
+      "price": "سعر الإقامة (ريال)",
+      "cancel": "إلغاء",
+      "submit": "تحديث"
+    }
+  },
+  "toast": {
+    "companyDeleted": "تم حذف الشركة بنجاح",
+    "companyDeleteError": "فشل في حذف الشركة",
+    "companySaved": "تم حفظ الشركة بنجاح",
+    "companySaveError": "فشل في حفظ الشركة",
+    "companyRequestSent": "تم إرسال طلب الشركة إلى المسؤول للموافقة",
+    "paymentProcessed": "تمت معالجة الدفع بنجاح",
+    "paymentError": "فشل في معالجة الدفع",
+    "companyRenewed": "تم تجديد الشركة بنجاح",
+    "renewalError": "فشل في تجديد الشركة",
+    "renewalRequestSent": "تم إرسال طلب التجديد إلى المسؤول للموافقة",
+    "saudiPaymentProcessed": "تمت معالجة الدفع السعودي بنجاح",
+    "saudiPaymentError": "فشل في معالجة الدفع السعودي",
+    "unexpectedError": "حدث خطأ غير متوقع",
+    "individualAdded": "تم إضافة الفرد بنجاح",
+    "individualUpdated": "تم تحديث بيانات الفرد بنجاح",
+    "individualRenewed": "تم تجديد الفرد بنجاح",
+    "individualDeleted": "تم حذف الفرد بنجاح",
+    "individualDeleteError": "فشل في حذف الفرد",
+    "individualSaveError": "فشل في حفظ بيانات الفرد",
+    "individualRequestSent": "تم إرسال طلب الفرد إلى المسؤول للموافقة",
+    "paymentRequestSent": "تم إرسال طلب الدفع إلى المسؤول للموافقة"
+  },
+  "expiredIds": {
+    "title": "مركز تنبيه انتهاء الهوية",
+    "subtitle": "جميع الهويات المنتهية مدرجة هنا. انقر لعرض معلومات مفصلة واتخاذ إجراء",
+    "stats": {
+      "totalExpired": "إجمالي الهويات المنتهية",
+      "maxDaysExpired": "أقصى أيام انتهاء",
+      "companiesAffected": "الشركات المتأثرة"
+    },
+    "noResults": {
+      "title": "لم يتم العثور على هويات",
+      "subtitle": "حاول تعديل البحث أو الفلتر"
+    },
+    "modifyExpiry": {
+      "title": "تعديل تاريخ الانتهاء",
+      "newDate": "تاريخ الانتهاء الجديد",
+      "updating": "تحديث تاريخ انتهاء هوية"
+    },
+    "status": {
+      "daysOverdue": "يوم متأخر",
+      "daysAgo": "منذ يوم"
+    },
+    "cardInfo": {
+      "referredBy": "تمت الإحالة بواسطة",
+      "expiresOn": "انتهى في"
+    }
+  },
+  "expiringSoonIds": {
+    "title": "مركز تنبيه الهويات التي ستنتهي قريباً",
+    "subtitle": "جميع الهويات التي ستنتهي خلال 30 يوم مدرجة هنا. انقر لعرض معلومات مفصلة واتخاذ إجراء",
+    "stats": {
+      "totalExpiring": "الهويات التي ستنتهي قريباً",
+      "daysUntilNext": "الأيام حتى الانتهاء التالي",
+      "companiesAffected": "الشركات المتأثرة"
+    },
+    "noResults": {
+      "title": "لم يتم العثور على هويات",
+      "subtitle": "لا توجد هويات ستنتهي قريباً"
+    },
+    "modifyExpiry": {
+      "title": "تعديل تاريخ الانتهاء",
+      "newDate": "تاريخ الانتهاء الجديد",
+      "updating": "تحديث تاريخ انتهاء هوية"
+    },
+    "status": {
+      "daysUntilExpiry": "يوم حتى الانتهاء"
+    },
+    "cardInfo": {
+      "referredBy": "تمت الإحالة بواسطة",
+      "expiresOn": "ينتهي في"
+    }
+  },
+  "adminNotifications": {
+    "title": "طلبات الموافقة",
+    "pendingCount": "{{count}} في انتظار الموافقة",
+    "refresh": "تحديث",
+    "tabs": {
+      "individual": "الأفراد ({{count}})",
+      "company": "الشركات ({{count}})"
+    },
+    "table": {
+      "type": "النوع",
+      "requestedBy": "مقدم الطلب",
+      "individual": "الفرد",
+      "company": "الشركة",
+      "details": "التفاصيل",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "actions": "الإجراءات"
+    },
+    "requestTypes": {
+      "ADD": "إضافة",
+      "RENEW": "تجديد",
+      "PAYMENT": "دفع"
+    },
+    "paymentTypes": {
+      "cr": "دفع السجل التجاري",
+      "qiwa": "دفع قوى",
+      "muqeem": "دفع مقيم",
+      "efa": "دفع منصة أفراد"
+    },
+    "details": {
+      "iqama": "رقم الإقامة",
+      "company": "الشركة",
+      "crNumber": "رقم السجل التجاري",
+      "gosiNumber": "رقم التأمينات",
+      "sponserId": "رقم الموحد",
+      "molNumber": "رقم المنشأة"
+    },
+    "noResults": {
+      "title": "لا توجد إشعارات معلقة",
+      "individual": "تم معالجة جميع طلبات الأفراد",
+      "company": "تم معالجة جميع طلبات الشركات"
+    },
+    "actions": {
+      "approve": "موافقة",
+      "reject": "رفض"
+    },
+    "dialog": {
+      "approve": {
+        "individual": "موافقة طلب الفرد",
+        "company": "موافقة طلب الشركة",
+        "message": "هل أنت متأكد من الموافقة على هذا الطلب؟ سيتم إضافته إلى النظام."
+      },
+      "reject": {
+        "individual": "رفض طلب الفرد",
+        "company": "رفض طلب الشركة",
+        "message": "هل أنت متأكد من رفض هذا الطلب؟ سيتم حذف الإشعار."
+      },
+      "details": {
+        "name": "الاسم",
+        "iqamaNumber": "رقم الإقامة",
+        "crNumber": "رقم السجل التجاري",
+        "company": "الشركة",
+        "amount": "المبلغ"
+      }
+    },
+    "toast": {
+      "approveSuccess": {
+        "individual": "تمت الموافقة على طلب الفرد بنجاح",
+        "company": "تمت الموافقة على طلب الشركة بنجاح"
+      },
+      "rejectSuccess": {
+        "individual": "تم رفض طلب الفرد بنجاح",
+        "company": "تم رفض طلب الشركة بنجاح"
+      },
+      "error": "فشل في معالجة الطلب. الرجاء المحاولة مرة أخرى.",
+      "individualRequestApproved": "تمت الموافقة على طلب الفرد بنجاح",
+      "companyRequestApproved": "تمت الموافقة على طلب الشركة بنجاح",
+      "individualRequestRejected": "تم رفض طلب الفرد بنجاح",
+      "companyRequestRejected": "تم رفض طلب الشركة بنجاح",
+      "processingError": "حدث خطأ أثناء معالجة الطلب. يرجى المحاولة مرة أخرى"
+    }
+  },
+  "incomeExpense": {
+    "title": "النظرة المالية العامة",
+    "subtitle": "تتبع الدخل والمصروفات",
+    "stats": {
+      "totalIncome": "إجمالي الدخل",
+      "totalExpense": "إجمالي المصروفات",
+      "netBalance": "الرصيد الصافي",
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي",
+      "noChange": "لا تغيير عن الشهر الماضي",
+      "percentageChange": "{{value}}% عن الشهر الماضي",
+      "currentMonth": "الشهر الحالي"
+    },
+    "income": {
+      "title": "تفاصيل الدخل",
+      "noRecords": "لا توجد سجلات دخل",
+      "addFirst": "أضف أول معاملة دخل",
+      "table": {
+        "date": "التاريخ",
+        "name": "الاسم",
+        "iqama": "الإقامة",
+        "amount": "المبلغ",
+        "actions": "الإجراءات",
+        "referredBy": "تمت الإحالة بواسطة"
+      }
+    },
+    "expense": {
+      "title": "تفاصيل المصروفات",
+      "noRecords": "لا توجد سجلات مصروفات",
+      "addFirst": "أضف أول معاملة مصروفات",
+      "table": {
+        "date": "التاريخ",
+        "company": "الشركة",
+        "paidFor": "دفع لـ",
+        "amount": "المبلغ",
+        "actions": "الإجراءات"
+      },
+      "types": {
+        "cr": "مبلغ السجل التجاري",
+        "qiwa": "مبلغ قوى",
+        "muqeem": "مبلغ مقيم",
+        "saudi": "مبلغ سعودي",
+        "efa": "مبلغ منصة أفراد",
+        "other": "أخرى"
+      }
+    },
+    "buttons": {
+      "manageUsers": "إدارة المستخدمين",
+      "iqamaPrice": "سعر الإقامة: {{price}} ريال",
+      "add": "إضافة",
+      "export": "تصدير",
+      "refresh": "تحديث"
+    },
+    "filters": {
+      "searchName": "البحث بالاسم",
+      "fromDate": "من تاريخ",
+      "toDate": "إلى تاريخ",
+      "referredBy": "تمت الإحالة بواسطة",
+      "expenseType": "نوع المصروف",
+      "allTypes": "جميع الأنواع"
+    },
+    "dialog": {
+      "add": {
+        "income": "إضافة دخل جديد",
+        "expense": "إضافة مصروف جديد"
+      },
+      "edit": {
+        "income": "تعديل الدخل",
+        "expense": "تعديل المصروف"
+      },
+      "delete": {
+        "title": "تأكيد الحذف",
+        "message": "هل أنت متأكد من حذف هذا {{type}}؟"
+      },
+      "export": {
+        "title": "تصدير تقرير {{type}}",
+        "dateRange": "نطاق التاريخ",
+        "specificDate": "تاريخ محدد",
+        "selectDate": "اختر التاريخ",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
+        "referredBy": "تمت الإحالة بواسطة",
+        "allReferrers": "الكل"
+      },
+      "fields": {
+        "name": "الاسم",
+        "iqamaNumber": "رقم الإقامة",
+        "amount": "المبلغ",
+        "paidFor": "دفع لـ",
+        "specifyOther": "حدد آخر"
+      }
+    },
+    "tooltips": {
+      "refresh": "تحديث",
+      "companyDetails": "تفاصيل الشركة",
+      "filter": "إظهار الفلاتر"
+    }
+  },
+  "userManagement": {
+    "title": "إدارة المستخدمين",
+    "subtitle": "إدارة مستخدمي النظام وصلاحياتهم",
+    "noPermission": "ليس لديك صلاحية للوصول إلى هذه الصفحة",
+    "table": {
+      "username": "اسم المستخدم",
+      "role": "الدور",
+      "incomeAccess": "صلاحية الدخل",
+      "allowedMainPersons": "الأشخاص المسموح بهم",
+      "actions": "الإجراءات",
+      "noAccess": "لا يوجد صلاحية"
+    },
+    "roles": {
+      "admin": "مدير",
+      "user": "مستخدم"
+    },
+    "access": {
+      "yes": "نعم",
+      "no": "لا"
+    },
+    "dialog": {
+      "add": {
+        "title": "إضافة مستخدم جديد",
+        "button": "إضافة مستخدم"
+      },
+      "edit": {
+        "title": "تعديل المستخدم",
+        "button": "حفظ التغييرات",
+        "passwordHelp": "اتركه فارغاً للاحتفاظ بكلمة المرور الحالية"
+      },
+      "delete": {
+        "title": "تأكيد الحذف",
+        "message": "هل أنت متأكد من حذف المستخدم \"{{username}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+        "button": "حذف"
+      },
+      "fields": {
+        "username": "اسم المستخدم",
+        "password": "كلمة المرور",
+        "role": "الدور",
+        "incomeAccess": "صلاحية الدخل",
+        "allowedMainPersons": "الأشخاص المسموح بهم"
+      }
+    },
+    "buttons": {
+      "addUser": "إضافة مستخدم",
+      "cancel": "إلغاء",
+      "retry": "إعادة المحاولة"
+    },
+    "tooltips": {
+      "edit": "تعديل المستخدم",
+      "delete": "حذف المستخدم"
+    }
+  }
+} 

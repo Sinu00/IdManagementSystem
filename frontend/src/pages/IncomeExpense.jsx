@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Typography,
@@ -66,105 +67,109 @@ import autoTable from 'jspdf-autotable';
 import IqamaPriceDialog from '../components/dialogs/IqamaPriceDialog';
 
 // Create a memoized FilterSection component outside the main component
-const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [] }) => (
-  <Box sx={{ 
-    mb: 3,
-    display: visible ? 'block' : 'none'
-  }}>
-    <Paper sx={{ p: 2 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Search by name"
-            value={filters.nameSearch}
-            onChange={(e) => onFilterChange(type, 'nameSearch', e.target.value)}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="From Date"
-              value={filters.dateRange.start}
-              onChange={(newValue) => onFilterChange(type, 'dateRange', { 
-                ...filters.dateRange, 
-                start: newValue 
-              })}
-              slotProps={{ 
-                textField: { 
-                  size: 'small', 
-                  fullWidth: true
-                }
-              }}
-              format="dd/MM/yyyy"
-            />
-          </LocalizationProvider>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="To Date"
-              value={filters.dateRange.end}
-              onChange={(newValue) => onFilterChange(type, 'dateRange', { 
-                ...filters.dateRange, 
-                end: newValue 
-              })}
-              slotProps={{ 
-                textField: { 
-                  size: 'small', 
-                  fullWidth: true
-                }
-              }}
-              format="dd/MM/yyyy"
-            />
-          </LocalizationProvider>
-        </Grid>
-        {type === 'income' && (
+const FilterSection = memo(({ type, visible, filters, onFilterChange, referredByList = [] }) => {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ 
+      mb: 3,
+      display: visible ? 'block' : 'none'
+    }}>
+      <Paper sx={{ p: 2 }}>
+        <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Referred By</InputLabel>
-              <Select
-                value={filters.referredBy}
-                label="Referred By"
-                onChange={(e) => onFilterChange(type, 'referredBy', e.target.value)}
-              >
-                <MenuItem value="all">All</MenuItem>
-                {referredByList.map((ref) => (
-                  <MenuItem key={ref} value={ref}>{ref}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              fullWidth
+              size="small"
+              label={t('incomeExpense.filters.searchName')}
+              value={filters.nameSearch}
+              onChange={(e) => onFilterChange(type, 'nameSearch', e.target.value)}
+            />
           </Grid>
-        )}
-        {type === 'expense' && (
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Expense Type</InputLabel>
-              <Select
-                value={filters.expenseType}
-                label="Expense Type"
-                onChange={(e) => onFilterChange(type, 'expenseType', e.target.value)}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="cr">CR Amount</MenuItem>
-                <MenuItem value="qiwa">Qiwa Amount</MenuItem>
-                <MenuItem value="muqeem">Muqeem Amount</MenuItem>
-                <MenuItem value="saudi">Saudi Amount</MenuItem>
-                <MenuItem value="efa">EFA Amount</MenuItem>
-                <MenuItem value="other">Other</MenuItem>
-              </Select>
-            </FormControl>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label={t('incomeExpense.filters.fromDate')}
+                value={filters.dateRange.start}
+                onChange={(newValue) => onFilterChange(type, 'dateRange', { 
+                  ...filters.dateRange, 
+                  start: newValue 
+                })}
+                slotProps={{ 
+                  textField: { 
+                    size: 'small', 
+                    fullWidth: true
+                  }
+                }}
+                format="dd/MM/yyyy"
+              />
+            </LocalizationProvider>
           </Grid>
-        )}
-      </Grid>
-    </Paper>
-  </Box>
-));
+          <Grid item xs={12} md={4}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label={t('incomeExpense.filters.toDate')}
+                value={filters.dateRange.end}
+                onChange={(newValue) => onFilterChange(type, 'dateRange', { 
+                  ...filters.dateRange, 
+                  end: newValue 
+                })}
+                slotProps={{ 
+                  textField: { 
+                    size: 'small', 
+                    fullWidth: true
+                  }
+                }}
+                format="dd/MM/yyyy"
+              />
+            </LocalizationProvider>
+          </Grid>
+          {type === 'income' && (
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{t('incomeExpense.filters.referredBy')}</InputLabel>
+                <Select
+                  value={filters.referredBy}
+                  label={t('incomeExpense.filters.referredBy')}
+                  onChange={(e) => onFilterChange(type, 'referredBy', e.target.value)}
+                >
+                  <MenuItem value="all">{t('incomeExpense.dialog.export.allReferrers')}</MenuItem>
+                  {referredByList.map((ref) => (
+                    <MenuItem key={ref} value={ref}>{ref}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+          {type === 'expense' && (
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{t('incomeExpense.filters.expenseType')}</InputLabel>
+                <Select
+                  value={filters.expenseType}
+                  label={t('incomeExpense.filters.expenseType')}
+                  onChange={(e) => onFilterChange(type, 'expenseType', e.target.value)}
+                >
+                  <MenuItem value="all">{t('incomeExpense.filters.allTypes')}</MenuItem>
+                  <MenuItem value="cr">{t('incomeExpense.expense.types.cr')}</MenuItem>
+                  <MenuItem value="qiwa">{t('incomeExpense.expense.types.qiwa')}</MenuItem>
+                  <MenuItem value="muqeem">{t('incomeExpense.expense.types.muqeem')}</MenuItem>
+                  <MenuItem value="saudi">{t('incomeExpense.expense.types.saudi')}</MenuItem>
+                  <MenuItem value="efa">{t('incomeExpense.expense.types.efa')}</MenuItem>
+                  <MenuItem value="other">{t('incomeExpense.expense.types.other')}</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+        </Grid>
+      </Paper>
+    </Box>
+  );
+});
 
 function IncomeExpense() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const [incomes, setIncomes] = useState([]);
@@ -691,7 +696,9 @@ function IncomeExpense() {
       fullWidth
     >
       <DialogTitle>
-        Export {exportType === 'income' ? 'Income' : 'Expense'} Report
+        {t('incomeExpense.dialog.export.title', { 
+          type: exportType === 'income' ? t('incomeExpense.income.title') : t('incomeExpense.expense.title') 
+        })}
       </DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 2 }}>
@@ -700,8 +707,16 @@ function IncomeExpense() {
               value={dateFilterType}
               onChange={(e) => setDateFilterType(e.target.value)}
             >
-              <FormControlLabel value="range" control={<Radio />} label="Date Range" />
-              <FormControlLabel value="specific" control={<Radio />} label="Specific Date" />
+              <FormControlLabel 
+                value="range" 
+                control={<Radio />} 
+                label={t('incomeExpense.dialog.export.dateRange')} 
+              />
+              <FormControlLabel 
+                value="specific" 
+                control={<Radio />} 
+                label={t('incomeExpense.dialog.export.specificDate')} 
+              />
             </RadioGroup>
           </FormControl>
 
@@ -710,7 +725,7 @@ function IncomeExpense() {
               <Grid item xs={6}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
-                    label="Start Date"
+                    label={t('incomeExpense.dialog.export.startDate')}
                     value={exportStartDate}
                     onChange={setExportStartDate}
                   />
@@ -719,7 +734,7 @@ function IncomeExpense() {
               <Grid item xs={6}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
-                    label="End Date"
+                    label={t('incomeExpense.dialog.export.endDate')}
                     value={exportEndDate}
                     onChange={setExportEndDate}
                   />
@@ -729,7 +744,7 @@ function IncomeExpense() {
           ) : (
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
-                label="Select Date"
+                label={t('incomeExpense.dialog.export.selectDate')}
                 value={exportSpecificDate}
                 onChange={setExportSpecificDate}
               />
@@ -738,13 +753,13 @@ function IncomeExpense() {
 
           {exportType === 'income' && (
             <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Referred By</InputLabel>
+              <InputLabel>{t('incomeExpense.dialog.export.referredBy')}</InputLabel>
               <Select
                 value={selectedReferredBy}
                 onChange={(e) => setSelectedReferredBy(e.target.value)}
-                label="Referred By"
+                label={t('incomeExpense.dialog.export.referredBy')}
               >
-                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="all">{t('incomeExpense.dialog.export.allReferrers')}</MenuItem>
                 {referredByList.map((referredBy) => (
                   <MenuItem key={referredBy} value={referredBy}>
                     {referredBy}
@@ -756,16 +771,15 @@ function IncomeExpense() {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+        <Button onClick={() => setExportDialogOpen(false)}>
+          {t('common.cancel')}
+        </Button>
         <Button 
-          onClick={() => {
-            console.log('Generate PDF button clicked');
-            generatePDF();
-          }} 
+          onClick={generatePDF} 
           variant="contained" 
           color="primary"
         >
-          Generate PDF
+          {t('incomeExpense.buttons.export')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -853,10 +867,10 @@ function IncomeExpense() {
             </IconButton>
             <Box>
               <Typography variant="h4" fontWeight="bold">
-                Financial Overview
+                {t('incomeExpense.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Track your income and expenses
+                {t('incomeExpense.subtitle')}
               </Typography>
             </Box>
           </Box>
@@ -876,7 +890,7 @@ function IncomeExpense() {
                   }
                 }}
               >
-                IQAMA Price: SAR {iqamaPrice}
+                {t('incomeExpense.buttons.iqamaPrice', { price: iqamaPrice })}
               </Button>
             )}
 
@@ -892,7 +906,7 @@ function IncomeExpense() {
                 }
               }}
             >
-              Manage Users
+              {t('incomeExpense.buttons.manageUsers')}
             </Button>
           </Box>
         </Box>
@@ -932,19 +946,18 @@ function IncomeExpense() {
                   <IncomeIcon />
                 </Avatar>
                 <Typography variant="h6" color="white" gutterBottom>
-                  Total Income
+                  {t('incomeExpense.stats.totalIncome')}
                 </Typography>
                 <Typography variant="h3" fontWeight="bold" color="white">
                   SR {totalIncome}
                 </Typography>
                 <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
                   {lastMonthIncome === 0 && totalIncome === 0 ? (
-                    'No change from last month'
+                    t('incomeExpense.stats.noChange')
                   ) : (
-                    <>
-                      {calculatePercentageChange(totalIncome, lastMonthIncome) >= 0 ? '+' : ''}
-                      {calculatePercentageChange(totalIncome, lastMonthIncome).toFixed(1)}% from last month
-                    </>
+                    t('incomeExpense.stats.percentageChange', {
+                      value: calculatePercentageChange(totalIncome, lastMonthIncome).toFixed(1)
+                    })
                   )}
                 </Typography>
               </CardContent>
@@ -984,19 +997,18 @@ function IncomeExpense() {
                   <ExpenseIcon />
                 </Avatar>
                 <Typography variant="h6" color="white" gutterBottom>
-                  Total Expense
+                  {t('incomeExpense.stats.totalExpense')}
                 </Typography>
                 <Typography variant="h3" fontWeight="bold" color="white">
                   SR {totalExpense}
                 </Typography>
                 <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
                   {lastMonthExpense === 0 && totalExpense === 0 ? (
-                    'No change from last month'
+                    t('incomeExpense.stats.noChange')
                   ) : (
-                    <>
-                      {calculatePercentageChange(totalExpense, lastMonthExpense) >= 0 ? '+' : ''}
-                      {calculatePercentageChange(totalExpense, lastMonthExpense).toFixed(1)}% from last month
-                    </>
+                    t('incomeExpense.stats.percentageChange', {
+                      value: calculatePercentageChange(totalExpense, lastMonthExpense).toFixed(1)
+                    })
                   )}
                 </Typography>
               </CardContent>
@@ -1036,13 +1048,13 @@ function IncomeExpense() {
                   <MoneyIcon />
                 </Avatar>
                 <Typography variant="h6" color="white" gutterBottom>
-                  Net Balance
+                  {t('incomeExpense.stats.netBalance')}
                 </Typography>
                 <Typography variant="h3" fontWeight="bold" color="white">
                   SR {totalIncome - totalExpense}
                 </Typography>
                 <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
-                  Current month
+                  {t('incomeExpense.stats.currentMonth')}
                 </Typography>
               </CardContent>
             </Card>
@@ -1084,7 +1096,7 @@ function IncomeExpense() {
                     <IncomeIcon />
                   </Avatar>
                   <Typography variant="h6" fontWeight="bold">
-                    Income Details
+                    {t('incomeExpense.income.title')}
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
@@ -1097,7 +1109,7 @@ function IncomeExpense() {
                   >
                     <FilterIcon />
                   </IconButton>
-                  <Tooltip title="Refresh">
+                  <Tooltip title={t('incomeExpense.buttons.refresh')}>
                     <IconButton 
                       onClick={fetchData}
                       disabled={loading}
@@ -1142,7 +1154,7 @@ function IncomeExpense() {
                       }
                     }}
                   >
-                    Add
+                    {t('incomeExpense.buttons.add')}
                   </Button>
                   <Button 
                     startIcon={<ReceiptIcon />}
@@ -1159,7 +1171,7 @@ function IncomeExpense() {
                       }
                     }}
                   >
-                    Export
+                    {t('incomeExpense.buttons.export')}
                   </Button>
                 </Stack>
               </Box>
@@ -1169,13 +1181,13 @@ function IncomeExpense() {
               <Grid container spacing={2} mb={3}>
                 <Grid item xs={6}>
                   <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-                    <Typography variant="body2" color="success.main">This Month</Typography>
+                    <Typography variant="body2" color="success.main">{t('incomeExpense.stats.thisMonth')}</Typography>
                     <Typography variant="h6" fontWeight="bold">SAR {totalIncome.toFixed(2)}</Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={6}>
                   <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-                    <Typography variant="body2" color="success.main">Last Month</Typography>
+                    <Typography variant="body2" color="success.main">{t('incomeExpense.stats.lastMonth')}</Typography>
                     <Typography variant="h6" fontWeight="bold">SAR {lastMonthIncome.toFixed(2)}</Typography>
                   </Box>
                 </Grid>
@@ -1211,7 +1223,7 @@ function IncomeExpense() {
                               textAlign: 'left'
                             }}
                           >
-                            Date {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.income.table.date')} {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             onClick={() => handleSort('name')}
@@ -1221,10 +1233,10 @@ function IncomeExpense() {
                               width: '35%'
                             }}
                           >
-                            Name {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.income.table.name')} {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell sx={{ width: '25%' }}>
-                            Iqama
+                            {t('incomeExpense.income.table.iqama')}
                           </TableCell>
                           <TableCell 
                             onClick={() => handleSort('amount')}
@@ -1234,7 +1246,7 @@ function IncomeExpense() {
                               width: '25%'
                             }}
                           >
-                            Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.income.table.amount')} {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             sx={{ 
@@ -1242,7 +1254,7 @@ function IncomeExpense() {
                               textAlign: 'center'
                             }}
                           >
-                            Actions
+                            {t('incomeExpense.income.table.actions')}
                           </TableCell>
                         </TableRow>
                       </TableHead>
@@ -1278,7 +1290,7 @@ function IncomeExpense() {
                                 <Typography variant="body2">{income.name}</Typography>
                                 {income.referredBy && (
                                   <Typography variant="caption" color="text.secondary">
-                                    Referred by: {income.referredBy}
+                                    {t('incomeExpense.income.table.referredBy')} {income.referredBy}
                                   </Typography>
                                 )}
                               </TableCell>
@@ -1324,10 +1336,10 @@ function IncomeExpense() {
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <IncomeIcon sx={{ fontSize: 48, color: 'success.light', mb: 2 }} />
                   <Typography color="text.secondary" variant="h6">
-                    No income records
+                    {t('incomeExpense.noIncomeRecords')}
                   </Typography>
                   <Typography color="text.disabled" variant="body2">
-                    Add your first income transaction
+                    {t('incomeExpense.addFirstIncomeTransaction')}
                   </Typography>
                 </Box>
               )}
@@ -1367,7 +1379,7 @@ function IncomeExpense() {
                     <ExpenseIcon />
                   </Avatar>
                   <Typography variant="h6" fontWeight="bold">
-                    Expense Details
+                    {t('incomeExpense.expense.title')}
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1}>
@@ -1380,7 +1392,7 @@ function IncomeExpense() {
                   >
                     <FilterIcon />
                   </IconButton>
-                  <Tooltip title="Refresh">
+                  <Tooltip title={t('incomeExpense.buttons.refresh')}>
                     <IconButton 
                       onClick={fetchData}
                       disabled={loading}
@@ -1425,7 +1437,7 @@ function IncomeExpense() {
                       }
                     }}
                   >
-                    Add
+                    {t('incomeExpense.buttons.add')}
                   </Button>
                   <Button 
                     startIcon={<ReceiptIcon />}
@@ -1442,7 +1454,7 @@ function IncomeExpense() {
                       }
                     }}
                   >
-                    Export
+                    {t('incomeExpense.buttons.export')}
                   </Button>
                 </Stack>
               </Box>
@@ -1453,13 +1465,13 @@ function IncomeExpense() {
               <Grid container spacing={2} mb={3}>
                 <Grid item xs={6}>
                   <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-                    <Typography variant="body2" color="error.main">This Month</Typography>
+                    <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
                     <Typography variant="h6" fontWeight="bold">SAR {totalExpense.toFixed(2)}</Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={6}>
                   <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-                    <Typography variant="body2" color="error.main">Last Month</Typography>
+                    <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
                     <Typography variant="h6" fontWeight="bold">SAR {lastMonthExpense.toFixed(2)}</Typography>
                   </Box>
                 </Grid>
@@ -1495,7 +1507,7 @@ function IncomeExpense() {
                               textAlign: 'left'
                             }}
                           >
-                            Date {expenseSortField === 'dateAndTime' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.expense.table.date')} {expenseSortField === 'dateAndTime' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             onClick={() => handleExpenseSort('company.name')}
@@ -1505,7 +1517,7 @@ function IncomeExpense() {
                               width: '25%'
                             }}
                           >
-                            Company {expenseSortField === 'company.name' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.expense.table.company')} {expenseSortField === 'company.name' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             onClick={() => handleExpenseSort('expenseType')}
@@ -1515,7 +1527,7 @@ function IncomeExpense() {
                               width: '20%'
                             }}
                           >
-                            Paid For {expenseSortField === 'expenseType' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.expense.table.paidFor')} {expenseSortField === 'expenseType' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             onClick={() => handleExpenseSort('amount')}
@@ -1525,7 +1537,7 @@ function IncomeExpense() {
                               width: '20%'
                             }}
                           >
-                            Amount {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
+                            {t('incomeExpense.expense.table.amount')} {expenseSortField === 'amount' && (expenseSortOrder === 'asc' ? '↑' : '↓')}
                           </TableCell>
                           <TableCell 
                             sx={{ 
@@ -1533,7 +1545,7 @@ function IncomeExpense() {
                               textAlign: 'center'
                             }}
                           >
-                            Actions
+                            {t('incomeExpense.expense.table.actions')}
                           </TableCell>
                         </TableRow>
                       </TableHead>
@@ -1564,13 +1576,13 @@ function IncomeExpense() {
                                 <Tooltip
                                   title={
                                     <Box sx={{ whiteSpace: 'pre-line' }}>
-                                      CR: {expense.company?.crNumber || '-'}
+                                      {t('company.cr')} {expense.company?.crNumber || '-'}
                                       {'\n'}
-                                      Sponsor ID: {expense.company?.sponserId || '-'}
+                                      {t('company.sponsor')} {expense.company?.sponserId || '-'}
                                       {'\n'}
-                                      GOSI: {expense.company?.gosiNumber || '-'}
+                                      {t('company.gosi')} {expense.company?.gosiNumber || '-'}
                                       {'\n'}
-                                      MOL: {expense.company?.molNumber || '-'}
+                                      {t('company.mol')} {expense.company?.molNumber || '-'}
                                     </Box>
                                   }
                                   arrow
@@ -1578,10 +1590,10 @@ function IncomeExpense() {
                                   <Typography sx={{ cursor: 'pointer' }}>{expense.company.name}</Typography>
                                 </Tooltip>
                               ) : (
-                                <Typography>Namora</Typography>
+                                <Typography>{t('common.namora')}</Typography>
                               )}
                             </TableCell>
-                            <TableCell>{expense.specification || (expense.expenseType ? expense.expenseType.replace('_', ' ') : 'Other')}</TableCell>
+                            <TableCell>{expense.specification || (expense.expenseType ? expense.expenseType.replace('_', ' ') : t('incomeExpense.table.other'))}</TableCell>
                             <TableCell sx={{ color: 'error.main' }}>{expense.amount.toFixed(2)}</TableCell>
                             <TableCell>
                               <IconButton
@@ -1621,10 +1633,10 @@ function IncomeExpense() {
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <ExpenseIcon sx={{ fontSize: 48, color: 'error.light', mb: 2 }} />
                   <Typography color="text.secondary" variant="h6">
-                    No expense records
+                    {t('incomeExpense.noExpenseRecords')}
                   </Typography>
                   <Typography color="text.disabled" variant="body2">
-                    Add your first expense transaction
+                    {t('incomeExpense.addFirstExpenseTransaction')}
                   </Typography>
                 </Box>
               )}
@@ -1635,7 +1647,9 @@ function IncomeExpense() {
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog}>
         <DialogTitle>
-          {editData ? 'Edit' : 'Add New'} {dialogType === 'income' ? 'Income' : 'Expense'}
+          {dialogType === 'income' 
+            ? t('incomeExpense.dialog.add.income')
+            : t('incomeExpense.dialog.add.expense')}
         </DialogTitle>
         <DialogContent>
           {error && (
@@ -1648,7 +1662,7 @@ function IncomeExpense() {
               <>
                 <TextField
                   fullWidth
-                  label="Name"
+                  label={t('incomeExpense.dialog.fields.name')}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -1656,7 +1670,7 @@ function IncomeExpense() {
                 />
                 <TextField
                   fullWidth
-                  label="Iqama Number"
+                  label={t('incomeExpense.dialog.fields.iqamaNumber')}
                   value={formData.iqamaNumber}
                   onChange={(e) => setFormData({ ...formData, iqamaNumber: e.target.value })}
                   required
@@ -1664,7 +1678,7 @@ function IncomeExpense() {
                 />
                 <TextField
                   fullWidth
-                  label="Amount"
+                  label={t('incomeExpense.dialog.fields.amount')}
                   type="number"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -1675,25 +1689,25 @@ function IncomeExpense() {
             ) : (
               <>
                 <FormControl fullWidth margin="normal">
-                  <InputLabel>Paid For</InputLabel>
+                  <InputLabel>{t('incomeExpense.dialog.fields.paidFor')}</InputLabel>
                   <Select
                     value={formData.expenseType}
                     onChange={(e) => setFormData({ ...formData, expenseType: e.target.value })}
-                    label="Paid For"
+                    label={t('incomeExpense.dialog.fields.paidFor')}
                     required
                   >
-                    <MenuItem value="cr">CR Amount</MenuItem>
-                    <MenuItem value="qiwa">Qiwa Amount</MenuItem>
-                    <MenuItem value="muqeem">Muqeem Amount</MenuItem>
-                    <MenuItem value="saudi">Saudi Amount</MenuItem>
-                    <MenuItem value="efa">EFA Amount</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
+                    <MenuItem value="cr">{t('incomeExpense.expense.types.cr')}</MenuItem>
+                    <MenuItem value="qiwa">{t('incomeExpense.expense.types.qiwa')}</MenuItem>
+                    <MenuItem value="muqeem">{t('incomeExpense.expense.types.muqeem')}</MenuItem>
+                    <MenuItem value="saudi">{t('incomeExpense.expense.types.saudi')}</MenuItem>
+                    <MenuItem value="efa">{t('incomeExpense.expense.types.efa')}</MenuItem>
+                    <MenuItem value="other">{t('incomeExpense.expense.types.other')}</MenuItem>
                   </Select>
                 </FormControl>
                 {formData.expenseType === 'other' && (
                   <TextField
                     fullWidth
-                    label="Specify Other"
+                    label={t('incomeExpense.dialog.fields.specifyOther')}
                     value={formData.specification}
                     onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
                     required
@@ -1702,7 +1716,7 @@ function IncomeExpense() {
                 )}
                 <TextField
                   fullWidth
-                  label="Amount"
+                  label={t('incomeExpense.dialog.fields.amount')}
                   type="number"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -1714,9 +1728,9 @@ function IncomeExpense() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button onClick={handleSubmit} variant="contained" color="primary">
-            {editData ? 'Update' : 'Add'}
+            {t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1725,17 +1739,15 @@ function IncomeExpense() {
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
       >
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>{t('incomeExpense.dialog.delete.title')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this {itemToDelete?.type}?
+            {t('incomeExpense.dialog.delete.message', { type: itemToDelete?.type === 'income' ? t('incomeExpense.income.title') : t('incomeExpense.expense.title') })}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
-          </Button>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">{t('common.delete')}</Button>
         </DialogActions>
       </Dialog>
 

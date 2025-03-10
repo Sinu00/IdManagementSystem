@@ -50,6 +50,7 @@ import {
   ContentCopy as ContentCopyIcon,
   Error as ErrorIcon,
   Warning as WarningIcon,
+  FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import { individualApi, companyApi, incomeApi, notifyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -58,9 +59,11 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import IndividualDialog from '../components/dialogs/IndividualDialog';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import ProfileMenu from '../components/ProfileMenu';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { IndividualCardSkeletonList } from '../components/skeletons/IndividualCardSkeleton';
 import PaymentDialog from '../components/dialogs/PaymentDialog';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const calculateStatus = (expiryDate) => {
   const daysUntilExpiry = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -107,6 +110,7 @@ function IndividualList() {
     text: ''
   });
   const [referredByList, setReferredByList] = useState([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -214,7 +218,7 @@ function IndividualList() {
 
   const handleDelete = (individual) => {
     setIndividualToDelete(individual);
-    setConfirmMessage(`Are you sure you want to delete ${individual.name}?`);
+    setConfirmMessage(t('dialogs.confirm.deleteIndividual', { name: individual.name }));
     setConfirmAction(() => () => handleConfirmDelete(individual));
     setConfirmDialogOpen(true);
   };
@@ -225,9 +229,10 @@ function IndividualList() {
       const response = await individualApi.getByCompany(companyId);
       setAllIndividuals(response.data);
       setConfirmDialogOpen(false);
+      toast.success(t('toast.individualDeleted'));
     } catch (error) {
       console.error('Error deleting individual:', error);
-      setError('Failed to delete individual');
+      setError(t('toast.individualDeleteError'));
     }
   };
 
@@ -264,18 +269,18 @@ function IndividualList() {
         };
         
         await notifyAdminApi.create(notificationData);
-        toast.success(`${dialogMode === 'add' ? 'Addition' : 'Renewal'} request sent to admin for approval`);
+        toast.success(t('toast.individualRequestSent'));
         setDialogOpen(false);
         return;
       }
 
       // For admin users, process directly
       if (dialogMode === 'add') {
-        message = 'Are you sure you want to add this individual?';
+        message = t('dialogs.confirm.addIndividual');
       } else if (dialogMode === 'edit') {
-        message = `Are you sure you want to update ${selectedIndividual.name}'s information?`;
+        message = t('dialogs.confirm.editIndividual', { name: selectedIndividual.name });
       } else {
-        message = `Are you sure you want to renew ${selectedIndividual.name}'s ID?`;
+        message = t('dialogs.confirm.renewIndividual', { name: selectedIndividual.name });
       }
       
       setConfirmMessage(message);
@@ -303,16 +308,16 @@ function IndividualList() {
           setAllIndividuals(updatedList.data);
           setDialogOpen(false);
           setConfirmDialogOpen(false);
-          toast.success(`Individual ${dialogMode === 'add' ? 'added' : dialogMode === 'edit' ? 'updated' : 'renewed'} successfully`);
+          toast.success(t(`toast.individual${dialogMode === 'add' ? 'Added' : dialogMode === 'edit' ? 'Updated' : 'Renewed'}`));
         } catch (error) {
           console.error('Error:', error);
-          setDialogError(error.response?.data?.message || 'Operation failed');
+          setDialogError(error.response?.data?.message || t('toast.individualSaveError'));
         }
       });
       setConfirmDialogOpen(true);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      setDialogError(error.message || 'An error occurred');
+      setDialogError(error.message || t('toast.unexpectedError'));
     }
   };
 
@@ -384,7 +389,7 @@ function IndividualList() {
         };
         
         await notifyAdminApi.create(notificationData);
-        toast.success('Payment request sent to admin for approval');
+        toast.success(t('toast.paymentRequestSent'));
         setPaymentDialogOpen(false);
         return;
       }
@@ -399,9 +404,9 @@ function IndividualList() {
       setAllIndividuals(updatedList.data);
       
       setPaymentDialogOpen(false);
-      toast.success('Payment processed successfully');
+      toast.success(t('toast.paymentProcessed'));
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to process payment');
+      throw new Error(t('toast.paymentError'));
     }
   };
 
@@ -443,7 +448,7 @@ function IndividualList() {
             }}>
               <Box 
                 sx={{ 
-                  display: 'flex',
+                  display: 'flex', 
                   width: '100%',
                   justifyContent: 'space-between',
                   alignItems: 'center'
@@ -458,7 +463,7 @@ function IndividualList() {
                       {company?.name || <Skeleton width={200} />}
                     </Typography>
                     <Typography variant="body2">
-                      {loading ? <Skeleton width={150} /> : `Managing ${filteredData.length} Individuals`}
+                      {loading ? <Skeleton width={150} /> : `${t('common.managing')} ${filteredData.length} ${t('navigation.individuals')}`}
                     </Typography>
                   </Box>
                 </Box>
@@ -471,7 +476,7 @@ function IndividualList() {
                     display: { xs: 'flex', sm: 'none' }
                   }}
                 >
-                  <Tooltip title="Print PDF">
+                  <Tooltip title={t('common.print')}>
                     <IconButton
                       onClick={() => window.print()}
                       size="small"
@@ -495,6 +500,9 @@ function IndividualList() {
                       </Avatar>
                     </IconButton>
                   </Tooltip>
+
+                  <LanguageSwitcher />
+
                   <ProfileMenu 
                     username={user?.username} 
                     onLogout={handleLogout}
@@ -546,11 +554,11 @@ function IndividualList() {
                       }}
                     >
                       <BusinessIcon sx={{ fontSize: 16 }} />
-                      CR: {company?.crNumber || 'N/A'}
+                      {t('company.cr')}: {company?.crNumber || t('common.na')}
                       {company?.crNumber && (
                         <Tooltip 
                           open={copyFeedback.open && copyFeedback.text === 'CR Number copied!'}
-                          title="Copied!"
+                          title={t('common.copied')}
                           placement="top"
                         >
                           <IconButton
@@ -579,11 +587,11 @@ function IndividualList() {
                       }}
                     >
                       <BadgeIcon sx={{ fontSize: 16 }} />
-                      GOSI: {company?.gosiNumber || 'N/A'}
+                      {t('company.gosi')}: {company?.gosiNumber || t('common.na')}
                       {company?.gosiNumber && (
                         <Tooltip 
                           open={copyFeedback.open && copyFeedback.text === 'GOSI Number copied!'}
-                          title="Copied!"
+                          title={t('common.copied')}
                           placement="top"
                         >
                           <IconButton
@@ -621,11 +629,11 @@ function IndividualList() {
                       }}
                     >
                       <PersonIcon sx={{ fontSize: 16 }} />
-                      Sponsor: {company?.sponserId || 'N/A'}
+                      {t('company.sponsor')}: {company?.sponserId || t('common.na')}
                       {company?.sponserId && (
                         <Tooltip 
                           open={copyFeedback.open && copyFeedback.text === 'Sponsor copied!'}
-                          title="Copied!"
+                          title={t('common.copied')}
                           placement="top"
                         >
                           <IconButton
@@ -654,11 +662,11 @@ function IndividualList() {
                       }}
                     >
                       <LocationIcon sx={{ fontSize: 16 }} />
-                      MOL: {company?.makthabNumber || company?.molNumber || 'N/A'}
+                      {t('company.mol')}: {company?.makthabNumber || company?.molNumber || t('common.na')}
                       {(company?.makthabNumber || company?.molNumber) && (
                         <Tooltip 
                           open={copyFeedback.open && copyFeedback.text === 'MOL copied!'}
-                          title="Copied!"
+                          title={t('common.copied')}
                           placement="top"
                         >
                           <IconButton
@@ -685,7 +693,7 @@ function IndividualList() {
                     display: { xs: 'none', sm: 'flex' }
                   }}
                 >
-                  <Tooltip title="Print PDF">
+                  <Tooltip title={t('common.print')}>
                     <IconButton
                       onClick={() => window.print()}
                       size="small"
@@ -709,6 +717,9 @@ function IndividualList() {
                       </Avatar>
                     </IconButton>
                   </Tooltip>
+
+                  <LanguageSwitcher />
+
                   <ProfileMenu 
                     username={user?.username} 
                     onLogout={handleLogout}
@@ -736,7 +747,7 @@ function IndividualList() {
         >
           <TextField
             fullWidth
-            placeholder="Search individuals..."
+            placeholder={t('individual.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -754,30 +765,32 @@ function IndividualList() {
             }}
           />
           
-          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <InputLabel>Status</InputLabel>
+          <FormControl>
+            <InputLabel>{t('common.filter')}</InputLabel>
             <Select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              label="Status"
-              startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
+              label={t('common.filter')}
+              startAdornment={<FilterListIcon color="action" sx={{ mr: 1 }} />}
             >
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="expired">Expired</MenuItem>
+              <MenuItem value="all">{t('individual.filterAll')}</MenuItem>
+              <MenuItem value="expired">{t('individual.filterExpired')}</MenuItem>
+              <MenuItem value="warning">{t('individual.filterWarning')}</MenuItem>
+              <MenuItem value="active">{t('individual.filterActive')}</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <InputLabel>Sort By</InputLabel>
+          <FormControl>
+            <InputLabel>{t('common.sortBy')}</InputLabel>
             <Select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              label="Sort By"
+              label={t('common.sortBy')}
               startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
             >
-              <MenuItem value="name">Name</MenuItem>
-              <MenuItem value="expiryDate">Expiry Date</MenuItem>
+              <MenuItem value="name">{t('individual.sortName')}</MenuItem>
+              <MenuItem value="expiryDate">{t('individual.sortExpiry')}</MenuItem>
+              <MenuItem value="nationality">{t('individual.sortNationality')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -837,7 +850,7 @@ function IndividualList() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <BadgeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
-                                    Iqama: <span className="no-link">{individual.iqamaNumber}</span>
+                                    {t('individual.iqamaNumber')}: {individual.iqamaNumber || t('common.na')}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -846,9 +859,9 @@ function IndividualList() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <CalendarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
-                                    Expiry: {individual.expiryDate ? 
+                                    {t('individual.expiryDate')}: {individual.expiryDate ? 
                                       format(new Date(individual.expiryDate), 'dd MMM yyyy') : 
-                                      'Not set'}
+                                      t('common.na')}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -857,7 +870,7 @@ function IndividualList() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <PhoneIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
-                                    Phone: <span className={individual.phoneNumber ? '' : 'no-link'}>{individual.phoneNumber || 'N/A'}</span>
+                                    {t('individual.phoneNumber')}: <span className={individual.phoneNumber ? '' : 'no-link'}>{individual.phoneNumber || t('common.na')}</span>
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -866,7 +879,7 @@ function IndividualList() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <PersonIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                   <Typography variant="body2" color="text.secondary">
-                                    Referred by: {individual.referredBy || 'N/A'}
+                                    {t('individual.referredBy')}: {individual.referredBy || t('common.na')}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -876,9 +889,9 @@ function IndividualList() {
                                   <MonetizationIcon fontSize="small" color="action" />
                                   <Typography variant="body2" color="text.secondary">
                                     {individual.isFullyPaid ? (
-                                      'Fully Paid'
+                                      t('company.fullyPaid')
                                     ) : (
-                                      `Pending: SAR ${individual.pendingAmount}`
+                                      `${t('individual.pending')}: ${individual.pendingAmount} SAR`
                                     )}
                                   </Typography>
                                 </Box>
@@ -892,7 +905,11 @@ function IndividualList() {
                                   mt={0}
                                 >
                                   <Chip
-                                    label={`${Math.abs(getDaysUntilExpiry(individual.expiryDate))} days ${getDaysUntilExpiry(individual.expiryDate) < 0 ? 'overdue' : 'left'}`}
+                                    label={
+                                      getDaysUntilExpiry(individual.expiryDate) <= 0 
+                                        ? `${t('individual.expired')} ${Math.abs(getDaysUntilExpiry(individual.expiryDate))} ${t('individual.daysAgo')}`
+                                        : `${getDaysUntilExpiry(individual.expiryDate)} ${t('individual.daysUntilExpiry')}`
+                                    }
                                     size="small"
                                     sx={{
                                       '& .MuiChip-root': {
@@ -936,7 +953,7 @@ function IndividualList() {
                                   }}
                                 >
                                   {!individual.isFullyPaid && (
-                                    <Tooltip title="Pay Pending Amount">
+                                    <Tooltip title={t('common.process')}>
                                       <Button
                                         size="small"
                                         color="warning"
@@ -954,13 +971,13 @@ function IndividualList() {
                                           }
                                         }}
                                       >
-                                        Pay
+                                        {t('common.process')}
                                       </Button>
                                     </Tooltip>
                                   )}
 
                                   {individual.isFullyPaid && (
-                                    <Tooltip title="Renew Individual">
+                                    <Tooltip title={t('common.renew')}>
                                       <Button
                                         size="small"
                                         color="success"
@@ -978,14 +995,14 @@ function IndividualList() {
                                           }
                                         }}
                                       >
-                                        Renew
+                                        {t('common.renew')}
                                       </Button>
                                     </Tooltip>
                                   )}
 
                                   {user?.isAdmin && (
                                     <>
-                                      <Tooltip title="Edit Individual">
+                                      <Tooltip title={t('common.edit')}>
                                         <Button
                                           size="small"
                                           color="info"
@@ -1003,11 +1020,11 @@ function IndividualList() {
                                             }
                                           }}
                                         >
-                                          Edit
+                                          {t('common.edit')}
                                         </Button>
                                       </Tooltip>
 
-                                      <Tooltip title="Delete Individual">
+                                      <Tooltip title={t('common.delete')}>
                                         <Button
                                           size="small"
                                           color="error"
@@ -1025,24 +1042,12 @@ function IndividualList() {
                                             }
                                           }}
                                         >
-                                          Delete
+                                          {t('common.delete')}
                                         </Button>
                                       </Tooltip>
                                     </>
                                   )}
                                 </Box>
-                              </Grid>
-
-                              <Grid item xs={12}>
-                                {/* <Typography variant="caption" color="text.secondary">
-                                  Last updated by {individual.lastUpdatedBy}
-                                  {individual.lastUpdateDate && (
-                                    <>
-                                      {' '}on{' '}
-                                      {format(new Date(individual.lastUpdateDate), 'dd MMM yyyy')}
-                                    </>
-                                  )}
-                                </Typography> */}
                               </Grid>
                             </Grid>
                           </CardContent>
@@ -1110,7 +1115,7 @@ function IndividualList() {
         open={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
         onConfirm={confirmAction}
-        title="Confirm Action"
+        title={t('dialogs.confirm.title')}
         message={confirmMessage}
       />
 

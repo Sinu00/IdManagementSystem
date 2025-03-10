@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -11,8 +12,10 @@ import {
   Grid,
   InputAdornment
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: company?.name || '',
     crNumber: company?.crNumber || '',
@@ -98,7 +101,7 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
       disableRestoreFocus
     >
       <DialogTitle>
-        {mode === 'add' ? 'Add Company' : 'Edit Company'}
+        {mode === 'add' ? t('dialogs.titles.addCompany') : t('dialogs.titles.editCompany')}
       </DialogTitle>
       <DialogContent>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -112,36 +115,41 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Company Name"
+                label={t('company.name')}
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 required
                 autoFocus
+                inputProps={{
+                  dir: 'rtl'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="CR Number"
+                label={t('company.cr')}
                 name="crNumber"
                 value={formData.crNumber}
                 onChange={handleChange}
+                required
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Sponsor ID"
+                label={t('company.sponsor')}
                 name="sponserId"
                 value={formData.sponserId}
                 onChange={handleChange}
+                required
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="GOSI Number"
+                label={t('company.gosi')}
                 name="gosiNumber"
                 value={formData.gosiNumber}
                 onChange={handleChange}
@@ -150,7 +158,7 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="MOL Number"
+                label={t('company.mol')}
                 name="molNumber"
                 value={formData.molNumber}
                 onChange={handleChange}
@@ -159,7 +167,7 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="CR Amount"
+                label={t('dialogs.payment.crAmount')}
                 name="crAmount"
                 type="number"
                 value={formData.crAmount}
@@ -173,14 +181,16 @@ function CompanyDialog({ open, onClose, onSubmit, company, mode = 'add', error }
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} color="inherit">
+          {t('common.cancel')}
+        </Button>
         <Button 
           onClick={handleSubmit} 
           variant="contained" 
           color="primary"
           data-confirm-action="true"
         >
-          {mode === 'add' ? 'Add' : 'Save Changes'}
+          {t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>

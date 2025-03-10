@@ -18,8 +18,10 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 import { MonetizationOn as MonetizationIcon } from '@mui/icons-material';
 import { iqamaPriceApi, incomeApi } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', error, referredByOptions = [] }) {
+  const { t } = useTranslation();
   const initialFormData = {
     name: '',
     nationality: '',
@@ -42,10 +44,10 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   const validateIqamaNumber = (value) => {
     const numericValue = value.replace(/\D/g, '');
     if (numericValue.length !== 10) {
-      return 'Iqama number must be exactly 10 digits';
+      return t('individual.errors.iqamaLength');
     }
     if (!/^\d+$/.test(numericValue)) {
-      return 'Iqama number must contain only numbers';
+      return t('individual.errors.iqamaNumbers');
     }
     return '';
   };
@@ -53,16 +55,16 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   const validatePhoneNumber = (value) => {
     const numericValue = value.replace(/\D/g, '');
     if (numericValue.length !== 10) {
-      return 'Phone number must be exactly 10 digits';
+      return t('individual.errors.phoneLength');
     }
     if (!/^\d+$/.test(numericValue)) {
-      return 'Phone number must contain only numbers';
+      return t('individual.errors.phoneNumbers');
     }
     return '';
   };
 
   const validateName = (value) => {
-    if (!value) return 'Name is required';
+    if (!value) return t('individual.errors.nameRequired');
     return '';
   };
 
@@ -118,9 +120,9 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   const handlePaymentChange = (e) => {
     const value = parseFloat(e.target.value);
     if (value > currentIqamaPrice) {
-      setPaymentError(`Amount cannot exceed ${currentIqamaPrice} SAR`);
+      setPaymentError(t('individual.errors.amountExceeded', { amount: currentIqamaPrice }));
     } else if (value < 0) {
-      setPaymentError('Please enter a valid amount');
+      setPaymentError(t('individual.errors.validAmount'));
     } else {
       setPaymentError('');
     }
@@ -140,21 +142,21 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     
     if (isRenewMode) {
       if (!formData.expiryDate) {
-        errors.expiryDate = 'Expiry date is required';
+        errors.expiryDate = t('individual.errors.expiryRequired');
       }
       if (!formData.amount) {
-        errors.amount = 'Payment amount is required';
+        errors.amount = t('individual.errors.paymentRequired');
       }
     } else {
       // Validation for add/edit mode
       if (!formData.name) {
-        errors.name = 'Name is required';
+        errors.name = t('individual.errors.nameRequired');
       }
       if (!formData.nationality) {
-        errors.nationality = 'Nationality is required';
+        errors.nationality = t('individual.errors.nationalityRequired');
       }
       if (!formData.iqamaNumber) {
-        errors.iqamaNumber = 'Iqama number is required';
+        errors.iqamaNumber = t('individual.errors.iqamaRequired');
       } else {
         const iqamaError = validateIqamaNumber(formData.iqamaNumber);
         if (iqamaError) errors.iqamaNumber = iqamaError;
@@ -164,7 +166,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         if (phoneError) errors.phoneNumber = phoneError;
       }
       if (isAddMode && !formData.expiryDate) {
-        errors.expiryDate = 'Expiry date is required';
+        errors.expiryDate = t('individual.errors.expiryRequired');
       }
     }
 
@@ -262,17 +264,17 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Renewal Information for {individual?.name}
+            {t('individual.renewalInfo')} {individual?.name}
           </Typography>
         </Grid>
         <Grid item xs={12}>
           <Typography variant="body2" color="text.secondary">
-            Full IQAMA Amount: SAR {currentIqamaPrice}
+            {t('individual.fullIqamaAmount')}: {currentIqamaPrice} SAR
           </Typography>
           {individual?.lastUpdatedBy && (
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-              Last updated by {individual.lastUpdatedBy}
-              {individual.lastUpdateDate && ` on ${format(new Date(individual.lastUpdateDate), 'dd MMM yyyy')}`}
+              {t('individual.lastUpdatedBy')} {individual.lastUpdatedBy}
+              {individual.lastUpdateDate && ` ${t('individual.lastUpdateDate')} ${format(new Date(individual.lastUpdateDate), 'dd MMM yyyy')}`}
             </Typography>
           )}
         </Grid>
@@ -294,7 +296,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
       disableRestoreFocus
     >
       <DialogTitle>
-        {isAddMode ? 'Add Individual' : isRenewMode ? 'Renew ID' : 'Edit Individual'}
+        {t(`dialogs.titles.${mode === 'add' ? 'addIndividual' : mode === 'edit' ? 'editIndividual' : 'renewIndividual'}`)}
       </DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 2 }}>
@@ -308,13 +310,14 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                   <Grid item xs={12} sm={6} key={field}>
                     <TextField
                       fullWidth
-                      label={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                      label={t(`individual.${field}`)}
                       name={field}
                       value={formData[field]}
                       onChange={handleChange}
                       required={['name', 'nationality', 'iqamaNumber'].includes(field)}
                       error={!!validationErrors[field]}
                       helperText={validationErrors[field]}
+                      placeholder={t(`individual.placeholders.${field}`)}
                     />
                   </Grid>
                 ))}
@@ -323,10 +326,19 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     <Grid item xs={12} sm={6}>
                       <LocalizationProvider dateAdapter={AdapterDateFns}>
                         <DatePicker
-                          label="Expiry Date"
+                          label={t('individual.expiryDate')}
                           value={formData.expiryDate}
                           onChange={(newValue) => setFormData(prev => ({ ...prev, expiryDate: newValue }))}
-                          renderInput={(params) => <TextField {...params} fullWidth required error={!!dateError} helperText={dateError} />}
+                          renderInput={(params) => (
+                            <TextField 
+                              {...params} 
+                              fullWidth 
+                              required 
+                              error={!!dateError} 
+                              helperText={dateError}
+                              placeholder={t('individual.placeholders.expiryDate')}
+                            />
+                          )}
                           minDate={new Date()}
                           disablePast
                         />
@@ -335,19 +347,20 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Payment Amount (SAR)"
+                        label={t('common.paymentAmount')}
                         name="amount"
                         type="number"
                         value={formData.amount}
                         onChange={handlePaymentChange}
                         required
                         error={!!paymentError}
-                        helperText={paymentError || `Remaining amount will be ${currentIqamaPrice - (parseFloat(formData.amount) || 0)} SAR`}
+                        helperText={paymentError || t('individual.remainingAmount', { amount: currentIqamaPrice - (parseFloat(formData.amount) || 0) })}
                         inputProps={{
                           min: 0,
                           max: currentIqamaPrice,
                           step: "0.01"
                         }}
+                        placeholder={t('individual.placeholders.amount')}
                       />
                     </Grid>
                   </>
@@ -360,7 +373,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                 <Grid item xs={12} sm={6}>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker
-                      label="New Expiry Date"
+                      label={t('individual.newExpiryDate')}
                       value={formData.expiryDate}
                       onChange={(newValue) => {
                         setFormData(prev => ({ ...prev, expiryDate: newValue }));
@@ -372,7 +385,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                           required
                           name="expiryDate"
                           error={!!validationErrors.expiryDate}
-                          helperText={validationErrors.expiryDate || `Current expiry: ${format(new Date(individual?.expiryDate), 'dd MMM yyyy')}`}
+                          helperText={validationErrors.expiryDate || t('individual.currentExpiry', { date: format(new Date(individual?.expiryDate), 'dd MMM yyyy') })}
                         />
                       )}
                       minDate={new Date()}
@@ -383,14 +396,14 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Payment Amount (SAR)"
+                    label={t('common.paymentAmount')}
                     name="amount"
                     type="number"
                     value={formData.amount}
                     onChange={handlePaymentChange}
                     required
                     error={!!paymentError}
-                    helperText={paymentError || `Remaining amount will be ${currentIqamaPrice - (parseFloat(formData.amount) || 0)} SAR`}
+                    helperText={paymentError || t('individual.remainingAmount', { amount: currentIqamaPrice - (parseFloat(formData.amount) || 0) })}
                     inputProps={{
                       min: 0,
                       max: currentIqamaPrice,
@@ -404,7 +417,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 2, bgcolor: 'background.default' }}>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('common.cancel')}</Button>
         <Button 
           onClick={handleSubmit} 
           variant="contained" 
@@ -412,7 +425,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
           startIcon={isRenewMode ? <MonetizationIcon /> : undefined}
           disabled={!!paymentError}
         >
-          {isRenewMode ? 'Renew' : isAddMode ? 'Add' : 'Save Changes'}
+          {isRenewMode ? t('common.renew') : isAddMode ? t('common.submit') : t('common.edit')}
         </Button>
       </DialogActions>
     </Dialog>

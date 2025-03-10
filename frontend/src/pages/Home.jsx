@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Box,
@@ -40,11 +41,13 @@ import {
 import { mainPersonApi, notificationApi, companyApi, notifyAdminApi, notifyCompanyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ProfileMenu from '../components/ProfileMenu';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { StatCardSkeletonList } from '../components/skeletons/StatCardSkeleton';
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
 import axios from 'axios';
 
 function Home() {
+  const { t } = useTranslation();
   const [mainPersons, setMainPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -195,7 +198,7 @@ function Home() {
                           fontSize: { xs: '0.7rem', sm: '1rem' }
                         }}
                       >
-                        Sponsors
+                        {t('home.sponsors')}
                       </Typography>
                     </Box>
                   </Paper>
@@ -256,7 +259,7 @@ function Home() {
                           fontSize: { xs: '0.7rem', sm: '1rem' }
                         }}
                       >
-                        Total IDs
+                        {t('home.totalIds')}
                       </Typography>
                     </Box>
                   </Paper>
@@ -317,7 +320,7 @@ function Home() {
                           fontSize: { xs: '0.7rem', sm: '1rem' }
                         }}
                       >
-                        Expiring Soon
+                        {t('home.expiringSoon')}
                       </Typography>
                     </Box>
                   </Paper>
@@ -612,7 +615,7 @@ function Home() {
               username={user?.username} 
               onLogout={handleLogout}
             />
-            <Tooltip title="Print PDF">
+            <Tooltip title={t('home.printPdf')}>
               <IconButton
                 onClick={() => window.print()}
                 size="small"
@@ -637,8 +640,10 @@ function Home() {
               </IconButton>
             </Tooltip>
 
+            <LanguageSwitcher />
+
             {Boolean(user?.hasIncomeAccess) && (
-              <Tooltip title="Income & Expense">
+              <Tooltip title={t('home.incomeAndExpense')}>
                 <IconButton
                   onClick={() => navigate('/income-expense')}
                   size="small"
@@ -665,7 +670,7 @@ function Home() {
             )}
 
             {user?.isAdmin && (
-              <Tooltip title="Admin Notifications">
+              <Tooltip title={t('home.adminNotifications')}>
                 <IconButton
                   onClick={() => navigate('/admin-notifications')}
                   size="small"

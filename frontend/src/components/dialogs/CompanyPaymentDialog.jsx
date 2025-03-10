@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -21,8 +22,10 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import { expenseApi } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     paymentType: 'qiwa',
     amount: 0,
@@ -90,7 +93,7 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
       <DialogTitle>
         <Box display="flex" alignItems="center">
           <PaymentIcon sx={{ mr: 1 }} />
-          Company Payments
+          {t('dialogs.titles.processPayment')}
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -119,27 +122,27 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
                   }}
                 >
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Current Payment Status
+                    {t('common.currentStatus')}
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
                       <Typography variant="body2">
-                        CR Amount: <strong>{company.crAmount} SAR</strong>
+                        {t('dialogs.payment.crAmount')}: <strong>{company.crAmount} SAR</strong>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2">
-                        Qiwa Amount: <strong>{company.qiwaAmount} SAR</strong>
+                        {t('dialogs.payment.qiwaAmount')}: <strong>{company.qiwaAmount} SAR</strong>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2">
-                        Muqeem Amount: <strong>{company.muqeemAmount} SAR</strong>
+                        {t('dialogs.payment.muqeemAmount')}: <strong>{company.muqeemAmount} SAR</strong>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2">
-                        EFA Amount: <strong>{company.efaAmount} SAR</strong>
+                        {t('dialogs.payment.efaAmount')}: <strong>{company.efaAmount} SAR</strong>
                       </Typography>
                     </Grid>
                   </Grid>
@@ -148,22 +151,22 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
             </Grid>
             
             <FormControl fullWidth margin="normal">
-              <InputLabel>Payment Type</InputLabel>
+              <InputLabel>{t('dialogs.payment.paymentType')}</InputLabel>
               <Select
                 value={formData.paymentType}
                 onChange={(e) => setFormData({ ...formData, paymentType: e.target.value })}
-                label="Payment Type"
+                label={t('dialogs.payment.paymentType')}
                 required
               >
-                <MenuItem value="qiwa">Qiwa Amount</MenuItem>
-                <MenuItem value="muqeem">Muqeem Amount</MenuItem>
-                <MenuItem value="efa">EFA Amount</MenuItem>
+                <MenuItem value="qiwa">{t('dialogs.payment.qiwaAmount')}</MenuItem>
+                <MenuItem value="muqeem">{t('dialogs.payment.muqeemAmount')}</MenuItem>
+                <MenuItem value="efa">{t('dialogs.payment.efaAmount')}</MenuItem>
               </Select>
             </FormControl>
             
             <TextField
               fullWidth
-              label="Payment Amount"
+              label={t('common.paymentAmount')}
               type="number"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -176,14 +179,17 @@ function CompanyPaymentDialog({ open, onClose, onSubmit, company }) {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} color="inherit">
+          {t('common.cancel')}
+        </Button>
         <Button 
           onClick={handleFormSubmit} 
           variant="contained" 
           color="primary"
           startIcon={<PaymentIcon />}
+          disabled={!formData.amount}
         >
-          Process Payment
+          {t('common.submit')}
         </Button>
       </DialogActions>
     </Dialog>

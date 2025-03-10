@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -18,8 +19,10 @@ import {
 import PaymentIcon from '@mui/icons-material/Payment';
 import { Clear as ClearIcon } from '@mui/icons-material';
 import { expenseApi } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 function CompanySaudiPaymentDialog({ open, onClose, onSubmit, company }) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     amount: 0,
     paymentDate: new Date().toISOString().split('T')[0],
@@ -72,7 +75,7 @@ function CompanySaudiPaymentDialog({ open, onClose, onSubmit, company }) {
       <DialogTitle>
         <Box display="flex" alignItems="center">
           <PaymentIcon sx={{ mr: 1 }} />
-          Saudi Payment
+          {t('dialogs.titles.saudiPayment')}
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -91,13 +94,13 @@ function CompanySaudiPaymentDialog({ open, onClose, onSubmit, company }) {
             <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Current Saudi Payment Count: {company?.saudiCount || 0}
+                  {t('dialogs.payment.currentCount')}: {company?.saudiCount || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Total Saudi Amount Paid: {company?.saudiAmount || 0} SAR
+                  {t('common.totalAmount')}: {company?.saudiAmount || 0} SAR
                 </Typography>
               </Box>
-              <Tooltip title="Clear Saudi Payment Records">
+              <Tooltip title={t('dialogs.payment.clearRecords')}>
                 <IconButton 
                   onClick={handleClear}
                   color="error"
@@ -116,7 +119,7 @@ function CompanySaudiPaymentDialog({ open, onClose, onSubmit, company }) {
             
             <TextField
               fullWidth
-              label="Payment Amount"
+              label={t('common.paymentAmount')}
               type="number"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -129,14 +132,17 @@ function CompanySaudiPaymentDialog({ open, onClose, onSubmit, company }) {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} color="inherit">
+          {t('common.cancel')}
+        </Button>
         <Button 
           onClick={handleFormSubmit} 
           variant="contained" 
           color="primary"
           startIcon={<PaymentIcon />}
+          disabled={!formData.amount}
         >
-          Process Saudi Payment
+          {t('common.submit')}
         </Button>
       </DialogActions>
     </Dialog>

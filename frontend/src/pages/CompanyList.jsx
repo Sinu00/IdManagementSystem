@@ -60,6 +60,8 @@ import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkel
 import LoadingScreen from '../components/common/LoadingScreen';
 import { expenseApi } from '../services/api';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 function calculateTotalCounts(companies) {
   return companies.reduce((totals, company) => {
@@ -73,6 +75,7 @@ function calculateTotalCounts(companies) {
 }
 
 function CompanyList() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [companies, setCompanies] = useState([]);
   const [search, setSearch] = useState('');
@@ -200,7 +203,7 @@ function CompanyList() {
 
   const handleDelete = (company) => {
     setSelectedCompany(company);
-    setConfirmMessage(`Are you sure you want to delete ${company.name}?`);
+    setConfirmMessage(t('dialogs.confirm.deleteCompany', { name: company.name }));
     setConfirmAction(() => () => handleConfirmDelete(company));
     setConfirmDialogOpen(true);
   };
@@ -211,10 +214,10 @@ function CompanyList() {
       const response = await companyApi.getByMainPerson(mainPersonId);
       setCompanies(response.data);
       setConfirmDialogOpen(false);
-      toast.success('Company deleted successfully');
+      toast.success(t('toast.companyDeleted'));
     } catch (error) {
       console.error('Error deleting company:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete company');
+      toast.error(t('toast.companyDeleteError'));
     }
   };
 
@@ -222,8 +225,8 @@ function CompanyList() {
     try {
       setDialogError('');
       const message = dialogMode === 'add' 
-        ? 'Are you sure you want to add this company?' 
-        : `Are you sure you want to update ${selectedCompany.name}'s information?`;
+        ? t('dialogs.confirm.addCompany')
+        : t('dialogs.confirm.editCompany', { name: selectedCompany.name });
       
       setConfirmMessage(message);
       setConfirmAction(() => async () => {
@@ -238,14 +241,14 @@ function CompanyList() {
                 amount: formData.crAmount || 0,
                 paymentType: 'cr'
               });
-              toast.success('Company request sent to admin for approval');
+              toast.success(t('toast.companyRequestSent'));
             } else {
               await companyApi.create({ ...formData, mainPerson: mainPersonId });
-              toast.success('Company added successfully');
+              toast.success(t('toast.companySaved'));
             }
           } else {
             await companyApi.update(selectedCompany._id, formData);
-            toast.success('Company updated successfully');
+            toast.success(t('toast.companySaved'));
           }
           
           const response = await companyApi.getByMainPerson(mainPersonId);
@@ -255,28 +258,28 @@ function CompanyList() {
           setDialogError('');
         } catch (error) {
           console.error('Error saving company:', error);
-          setDialogError(error.response?.data?.message || 'Failed to save company');
-          toast.error(error.response?.data?.message || 'Failed to save company');
+          setDialogError(error.response?.data?.message || t('toast.companySaveError'));
+          toast.error(error.response?.data?.message || t('toast.companySaveError'));
           setConfirmDialogOpen(false);
         }
       });
       setConfirmDialogOpen(true);
     } catch (error) {
       console.error('Error:', error);
-      toast.error('An unexpected error occurred');
+      toast.error(t('toast.unexpectedError'));
     }
   };
 
   const handlePaymentSubmit = async (paymentData) => {
     try {
-      const response = await companyApi.processPayment(selectedCompany._id, paymentData);
+      await companyApi.processPayment(selectedCompany._id, paymentData);
       const updatedCompanies = await companyApi.getByMainPerson(mainPersonId);
       setCompanies(updatedCompanies.data);
       setPaymentDialogOpen(false);
-      toast.success('Payment processed successfully');
+      toast.success(t('toast.paymentProcessed'));
     } catch (error) {
       console.error('Error processing payment:', error);
-      toast.error(error.response?.data?.message || 'Failed to process payment');
+      toast.error(error.response?.data?.message || t('toast.paymentError'));
     }
   };
 
@@ -298,13 +301,13 @@ function CompanyList() {
         };
         
         await notifyCompanyAdminApi.create(notificationData);
-        toast.success('Renewal request sent to admin for approval');
+        toast.success(t('toast.renewalRequestSent'));
         setRenewDialogOpen(false);
         return;
       }
 
       // For admin users, process directly
-      const response = await companyApi.processPayment(selectedCompany._id, {
+      await companyApi.processPayment(selectedCompany._id, {
         paymentType: 'cr',
         paymentAmount: renewData.amount,
         isRenewal: true,
@@ -314,23 +317,23 @@ function CompanyList() {
       const updatedCompanies = await companyApi.getByMainPerson(mainPersonId);
       setCompanies(updatedCompanies.data);
       setRenewDialogOpen(false);
-      toast.success('Company renewed successfully');
+      toast.success(t('toast.companyRenewed'));
     } catch (error) {
       console.error('Error renewing company:', error);
-      toast.error(error.response?.data?.message || 'Failed to renew company');
+      toast.error(error.response?.data?.message || t('toast.renewalError'));
     }
   };
 
   const handleSaudiPaymentSubmit = async (paymentData) => {
     try {
-      const response = await companyApi.processSaudiPayment(selectedCompany._id, paymentData);
+      await companyApi.processSaudiPayment(selectedCompany._id, paymentData);
       const updatedCompanies = await companyApi.getByMainPerson(mainPersonId);
       setCompanies(updatedCompanies.data);
       setSaudiPaymentDialogOpen(false);
-      toast.success('Saudi payment processed successfully');
+      toast.success(t('toast.saudiPaymentProcessed'));
     } catch (error) {
       console.error('Error processing Saudi payment:', error);
-      toast.error(error.response?.data?.message || 'Failed to process Saudi payment');
+      toast.error(error.response?.data?.message || t('toast.saudiPaymentError'));
     }
   };
 
@@ -399,13 +402,13 @@ function CompanyList() {
                     {mainPerson?.name || <Skeleton width={200} />}
                   </Typography>
                   <Typography variant="body2">
-                    {loading ? <Skeleton width={150} /> : `Managing ${companies.length} Companies`}
+                    {loading ? <Skeleton width={150} /> : `${t('common.managing')} ${companies.length} ${t('navigation.companies')}`}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {loading ? (
                       <Skeleton width={180} />
                     ) : (
-                      `Total Individuals: ${calculateTotalCounts(companies).total}`
+                      `${t('company.totalIndividuals')}: ${calculateTotalCounts(companies).total}`
                     )}
                   </Typography>
                 </Box>
@@ -423,7 +426,7 @@ function CompanyList() {
               >
                 {/* Left side buttons wrapper */}
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Tooltip title="View Expired IDs">
+                  <Tooltip title={t('company.viewExpired')}>
                     <Box sx={{ position: 'relative' }}>
                       <IconButton
                         size="small"
@@ -476,7 +479,7 @@ function CompanyList() {
                     </Box>
                   </Tooltip>
 
-                  <Tooltip title="View Expiring Soon IDs">
+                  <Tooltip title={t('company.viewExpiring')}>
                     <Box sx={{ position: 'relative' }}>
                       <IconButton
                         size="small"
@@ -536,7 +539,7 @@ function CompanyList() {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <Tooltip title="Print PDF">
+                  <Tooltip title={t('common.print')}>
                     <IconButton
                       onClick={() => window.print()}
                       size="small"
@@ -561,6 +564,9 @@ function CompanyList() {
                       </Avatar>
                     </IconButton>
                   </Tooltip>
+
+                  <LanguageSwitcher />
+
                   <ProfileMenu 
                     username={user?.username} 
                     onLogout={handleLogout}
@@ -588,7 +594,7 @@ function CompanyList() {
         >
           <TextField
             fullWidth
-            placeholder="البحث عن الشركات..."
+            placeholder={t('company.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -610,32 +616,32 @@ function CompanyList() {
             }}
           />
           
-          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <InputLabel>Filter Status</InputLabel>
+          <FormControl>
+            <InputLabel>{t('common.filter')}</InputLabel>
             <Select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              label="Filter Status"
+              label={t('common.filter')}
               startAdornment={<FilterListIcon color="action" sx={{ mr: 1 }} />}
             >
-              <MenuItem value="all">All Companies</MenuItem>
-              <MenuItem value="withExpiring">Has Expiring IDs</MenuItem>
-              <MenuItem value="withExpired">Has Expired IDs</MenuItem>
+              <MenuItem value="all">{t('company.filterAll')}</MenuItem>
+              <MenuItem value="withExpiring">{t('company.filterExpiring')}</MenuItem>
+              <MenuItem value="withExpired">{t('company.filterExpired')}</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <InputLabel>Sort By</InputLabel>
+          <FormControl>
+            <InputLabel>{t('common.sortBy')}</InputLabel>
             <Select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              label="Sort By"
+              label={t('common.sortBy')}
               startAdornment={<SortIcon color="action" sx={{ mr: 1 }} />}
             >
-              <MenuItem value="name">Company Name</MenuItem>
-              <MenuItem value="expiringCount">Expiring IDs</MenuItem>
-              <MenuItem value="expiredCount">Expired IDs</MenuItem>
-              <MenuItem value="totalCount">Total IDs</MenuItem>
+              <MenuItem value="name">{t('company.sortName')}</MenuItem>
+              <MenuItem value="expiringCount">{t('company.sortExpiring')}</MenuItem>
+              <MenuItem value="expiredCount">{t('company.sortExpired')}</MenuItem>
+              <MenuItem value="totalCount">{t('company.sortTotal')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -670,9 +676,9 @@ function CompanyList() {
                           {/* Payment Status Indicator */}
                           <Tooltip 
                             title={
-                              company.paymentStatus === 'fully_paid' ? 'Fully Paid' :
-                              company.paymentStatus === 'partially_paid' ? 'Partially Paid' :
-                              company.paymentStatus === 'renewed' ? 'Renewed' : 'None Paid'
+                              company.paymentStatus === 'fully_paid' ? t('company.fullyPaid') :
+                              company.paymentStatus === 'partially_paid' ? t('company.partiallyPaid') :
+                              company.paymentStatus === 'renewed' ? t('company.renewed') : t('company.nonePaid')
                             }
                           >
                             <Box
@@ -696,40 +702,48 @@ function CompanyList() {
                           </Tooltip>
 
                           {/* Header Section */}
-                          <Box display="flex" alignItems="center" gap={1} mb={2}>
-                            <Box flex={1}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                <Typography 
-                                  variant="h5" 
-                                  fontWeight="bold"
-                                  sx={{ 
-                                    direction: 'rtl',
-                                    textAlign: 'right',
-                                    fontFamily: 'var(--font-family-arabic)',
-                                    fontSize: { xs: '1.5rem', sm: '1.5rem' },
-                                    lineHeight: 1.4,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    flex: 1
-                                  }}
-                                >
-                                  {company.name}
-                                </Typography>
-                              </Box>
-                            </Box>
+                          <Box 
+                            display="flex" 
+                            alignItems="center" 
+                            gap={1} 
+                            mb={2} 
+                            sx={{ 
+                              flexDirection: 'row-reverse',
+                              width: '100%',
+                              justifyContent: 'flex-start'
+                            }}
+                          >
                             <Avatar 
                               sx={{ 
                                 bgcolor: 'primary.light',
                                 color: 'primary.main',
                                 width: 56,
-                                height: 56
+                                height: 56,
+                                flexShrink: 0
                               }}
                             >
                               <BusinessIcon fontSize="large" />
                             </Avatar>
+                            <Box flex={1}>
+                              <Typography 
+                                variant="h5" 
+                                fontWeight="bold"
+                                sx={{ 
+                                  fontFamily: 'var(--font-family-arabic)',
+                                  fontSize: { xs: '1.5rem', sm: '1.5rem' },
+                                  lineHeight: 1.4,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  textAlign: 'right',
+                                  width: '100%'
+                                }}
+                              >
+                                {company.name}
+                              </Typography>
+                            </Box>
                           </Box>
 
                           <Divider sx={{ my: 2 }} />
@@ -737,24 +751,40 @@ function CompanyList() {
                           {/* Company Details Grid */}
                           <Grid container spacing={2}>
                             <Grid item xs={6}>
-                              <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <BusinessIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                                CR: <span className="no-link">{company.crNumber || 'N/A'}</span>
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <PersonIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                                Sponsor: {company.sponserId || 'N/A'}
-                              </Typography>
+                              <Box>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('company.cr')}
+                                </Typography>
+                                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                  <span className="no-link">{company.crNumber || t('common.na')}</span>
+                                </Typography>
+                              </Box>
+                              <Box sx={{ mt: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('company.sponsor')}
+                                </Typography>
+                                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                  {company.sponserId || t('common.na')}
+                                </Typography>
+                              </Box>
                             </Grid>
                             <Grid item xs={6}>
-                              <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <ErrorIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                                GOSI: <span className="no-link">{company.gosiNumber || 'N/A'}</span>
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary" gutterBottom>
-                                <LocationIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'text-bottom' }} />
-                                MOL: {company.molNumber || 'N/A'}
-                              </Typography>
+                              <Box>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('company.gosi')}
+                                </Typography>
+                                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                  <span className="no-link">{company.gosiNumber || t('common.na')}</span>
+                                </Typography>
+                              </Box>
+                              <Box sx={{ mt: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('company.mol')}
+                                </Typography>
+                                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                  {company.molNumber || t('common.na')}
+                                </Typography>
+                              </Box>
                             </Grid>
                           </Grid>
 
@@ -804,7 +834,7 @@ function CompanyList() {
                                       fontSize: '0.7rem'
                                     }}
                                   >
-                                    Expired
+                                    {t('company.expired')}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -852,7 +882,7 @@ function CompanyList() {
                                       fontSize: '0.7rem'
                                     }}
                                   >
-                                    Warning
+                                    {t('company.warning')}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -900,7 +930,7 @@ function CompanyList() {
                                       fontSize: '0.7rem'
                                     }}
                                   >
-                                    Total IDs
+                                    {t('company.active')}
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -931,7 +961,7 @@ function CompanyList() {
                           >
                             {user?.isAdmin && (
                               <>
-                                <Tooltip title="Delete Company">
+                                <Tooltip title={t('common.delete')}>
                                   <Button
                                     size="small"
                                     color="error"
@@ -949,11 +979,11 @@ function CompanyList() {
                                       }
                                     }}
                                   >
-                                    Delete
+                                    {t('common.delete')}
                                   </Button>
                                 </Tooltip>
 
-                                <Tooltip title="Edit Company">
+                                <Tooltip title={t('common.edit')}>
                                   <Button
                                     size="small"
                                     color="primary"
@@ -971,13 +1001,13 @@ function CompanyList() {
                                       }
                                     }}
                                   >
-                                    Edit
+                                    {t('common.edit')}
                                   </Button>
                                 </Tooltip>
                               </>
                             )}
 
-                            <Tooltip title={company.paymentStatus === 'fully_paid' ? "Renew Company" : "Process Payment"}>
+                            <Tooltip title={company.paymentStatus === 'fully_paid' ? t('common.renew') : t('common.process')}>
                               <Button
                                 size="small"
                                 color={company.paymentStatus === 'fully_paid' ? "success" : "info"}
@@ -999,11 +1029,11 @@ function CompanyList() {
                                   }
                                 }}
                               >
-                                {company.paymentStatus === 'fully_paid' ? 'Renew' : 'Pay'}
+                                {company.paymentStatus === 'fully_paid' ? t('common.renew') : t('common.process')}
                               </Button>
                             </Tooltip>
 
-                            <Tooltip title="Saudi Payment">
+                            <Tooltip title={t('company.saudiPayment')}>
                               <Button
                                 size="small"
                                 color="secondary"
@@ -1021,7 +1051,7 @@ function CompanyList() {
                                   }
                                 }}
                               >
-                                Saudi
+                                {t('company.saudiPayment')}
                               </Button>
                             </Tooltip>
                           </Box>

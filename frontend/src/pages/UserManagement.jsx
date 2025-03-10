@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Typography,
@@ -47,6 +48,7 @@ import { useAuth } from '../context/AuthContext';
 import { alpha } from '@mui/material/styles';
 
 const UserTableSkeleton = () => {
+  const { t } = useTranslation();
   return (
     <TableContainer 
       component={Paper} 
@@ -59,11 +61,11 @@ const UserTableSkeleton = () => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell width="30%">Username</TableCell>
-            <TableCell width="15%">Role</TableCell>
-            <TableCell width="15%">Income Access</TableCell>
-            <TableCell width="30%">Allowed Main Persons</TableCell>
-            <TableCell width="10%" align="right">Actions</TableCell>
+            <TableCell width="30%">{t('userManagement.table.username')}</TableCell>
+            <TableCell width="15%">{t('userManagement.table.role')}</TableCell>
+            <TableCell width="15%">{t('userManagement.table.incomeAccess')}</TableCell>
+            <TableCell width="30%">{t('userManagement.table.allowedMainPersons')}</TableCell>
+            <TableCell width="10%" align="right">{t('userManagement.table.actions')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -102,6 +104,7 @@ const UserTableSkeleton = () => {
 };
 
 const UserManagement = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -207,7 +210,7 @@ const UserManagement = () => {
   if (!user?.isAdmin) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Alert severity="error">You don't have permission to access this page.</Alert>
+        <Alert severity="error">{t('userManagement.noPermission')}</Alert>
       </Container>
     );
   }
@@ -272,7 +275,7 @@ const UserManagement = () => {
                   color: 'transparent'
                 }}
               >
-                User Management
+                {t('userManagement.title')}
               </Typography>
               <Typography 
                 variant="subtitle1" 
@@ -281,7 +284,7 @@ const UserManagement = () => {
                   fontSize: { xs: '0.875rem', sm: '1rem' }
                 }}
               >
-                Manage system users and their permissions
+                {t('userManagement.subtitle')}
               </Typography>
             </Box>
 
@@ -300,7 +303,7 @@ const UserManagement = () => {
                 }
               }}
             >
-              Add User
+              {t('userManagement.buttons.addUser')}
             </Button>
           </Box>
         </Box>
@@ -326,7 +329,7 @@ const UserManagement = () => {
           }}
           action={
             <Button color="inherit" size="small" onClick={fetchUsers}>
-              Retry
+              {t('userManagement.buttons.retry')}
             </Button>
           }
         >
@@ -348,11 +351,11 @@ const UserManagement = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell width="30%">Username</TableCell>
-                    <TableCell width="15%">Role</TableCell>
-                    <TableCell width="15%">Income Access</TableCell>
-                    <TableCell width="30%">Allowed Main Persons</TableCell>
-                    <TableCell width="10%" align="right">Actions</TableCell>
+                    <TableCell width="30%">{t('userManagement.table.username')}</TableCell>
+                    <TableCell width="15%">{t('userManagement.table.role')}</TableCell>
+                    <TableCell width="15%">{t('userManagement.table.incomeAccess')}</TableCell>
+                    <TableCell width="30%">{t('userManagement.table.allowedMainPersons')}</TableCell>
+                    <TableCell width="10%" align="right">{t('userManagement.table.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -391,7 +394,7 @@ const UserManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Chip 
-                          label={user.isAdmin ? 'Admin' : 'User'}
+                          label={user.isAdmin ? t('userManagement.roles.admin') : t('userManagement.roles.user')}
                           color={user.isAdmin ? 'primary' : 'default'}
                           size="small"
                           sx={{ 
@@ -410,7 +413,7 @@ const UserManagement = () => {
                       </TableCell>
                       <TableCell>
                         <Chip 
-                          label={user.hasIncomeAccess ? 'Yes' : 'No'}
+                          label={user.hasIncomeAccess ? t('userManagement.access.yes') : t('userManagement.access.no')}
                           color={user.hasIncomeAccess ? 'success' : 'error'}
                           size="small"
                           sx={{ 
@@ -433,7 +436,7 @@ const UserManagement = () => {
                             user.allowedMainPersons.map((person, index) => (
                               <Chip
                                 key={person._id || index}
-                                label={person.name || 'Unknown'}
+                                label={person.name || t('common.na')}
                                 size="small"
                                 sx={{ 
                                   borderRadius: '6px',
@@ -455,14 +458,14 @@ const UserManagement = () => {
                                 fontStyle: 'italic'
                               }}
                             >
-                              No access
+                              {t('userManagement.table.noAccess')}
                             </Typography>
                           )}
                         </Box>
                       </TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                          <Tooltip title="Edit User" arrow>
+                          <Tooltip title={t('userManagement.tooltips.edit')} arrow>
                             <IconButton 
                               onClick={() => handleEdit(user)}
                               sx={{ 
@@ -475,7 +478,7 @@ const UserManagement = () => {
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete User" arrow>
+                          <Tooltip title={t('userManagement.tooltips.delete')} arrow>
                             <IconButton 
                               onClick={() => {
                                 setUserToDelete(user);
@@ -571,7 +574,7 @@ const UserManagement = () => {
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Role</Typography>
                       <Chip 
-                        label={user.isAdmin ? 'Admin' : 'User'}
+                        label={user.isAdmin ? t('userManagement.roles.admin') : t('userManagement.roles.user')}
                         color={user.isAdmin ? 'primary' : 'default'}
                         size="small"
                         sx={{ 
@@ -592,7 +595,7 @@ const UserManagement = () => {
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Income Access</Typography>
                       <Chip 
-                        label={user.hasIncomeAccess ? 'Yes' : 'No'}
+                        label={user.hasIncomeAccess ? t('userManagement.access.yes') : t('userManagement.access.no')}
                         color={user.hasIncomeAccess ? 'success' : 'default'}
                         size="small"
                         sx={{ 
@@ -614,7 +617,7 @@ const UserManagement = () => {
                         user.allowedMainPersons.map((person, index) => (
                           <Chip
                             key={person._id || index}
-                            label={person.name || 'Unknown'}
+                            label={person.name || t('common.na')}
                             size="small"
                             sx={{ 
                               borderRadius: '6px',
@@ -632,7 +635,7 @@ const UserManagement = () => {
                             fontStyle: 'italic'
                           }}
                         >
-                          No access
+                          {t('userManagement.table.noAccess')}
                         </Typography>
                       )}
                     </Box>
@@ -676,59 +679,61 @@ const UserManagement = () => {
             py: 2
           }}>
             <Typography variant="h5" fontWeight={600}>
-              {dialogMode === 'add' ? 'Add New User' : 'Edit User'}
+              {dialogMode === 'add' 
+                ? t('userManagement.dialog.add.title')
+                : t('userManagement.dialog.edit.title')}
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ p: 3 , mt: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label="Username"
+                  label={t('userManagement.dialog.fields.username')}
                   fullWidth
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
                 />
                 <TextField
-                  label="Password"
+                  label={t('userManagement.dialog.fields.password')}
                   type="password"
                   fullWidth
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required={dialogMode === 'add'}
-                  helperText={dialogMode === 'edit' ? "Leave blank to keep current password" : ""}
+                  helperText={dialogMode === 'edit' ? t('userManagement.dialog.edit.passwordHelp') : ""}
                 />
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormControl fullWidth>
-                  <InputLabel>Role</InputLabel>
+                  <InputLabel>{t('userManagement.dialog.fields.role')}</InputLabel>
                   <Select
                     value={formData.isAdmin}
-                    label="Role"
+                    label={t('userManagement.dialog.fields.role')}
                     onChange={(e) => setFormData({ ...formData, isAdmin: e.target.value })}
                   >
-                    <MenuItem value={false}>User</MenuItem>
-                    <MenuItem value={true}>Admin</MenuItem>
+                    <MenuItem value={false}>{t('userManagement.roles.user')}</MenuItem>
+                    <MenuItem value={true}>{t('userManagement.roles.admin')}</MenuItem>
                   </Select>
                 </FormControl>
                 <FormControl fullWidth>
-                  <InputLabel>Income Access</InputLabel>
+                  <InputLabel>{t('userManagement.dialog.fields.incomeAccess')}</InputLabel>
                   <Select
                     value={formData.hasIncomeAccess}
-                    label="Income Access"
+                    label={t('userManagement.dialog.fields.incomeAccess')}
                     onChange={(e) => setFormData({ ...formData, hasIncomeAccess: e.target.value })}
                   >
-                    <MenuItem value={false}>No</MenuItem>
-                    <MenuItem value={true}>Yes</MenuItem>
+                    <MenuItem value={false}>{t('userManagement.access.no')}</MenuItem>
+                    <MenuItem value={true}>{t('userManagement.access.yes')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
               <FormControl fullWidth>
-                <InputLabel>Allowed Main Persons</InputLabel>
+                <InputLabel>{t('userManagement.dialog.fields.allowedMainPersons')}</InputLabel>
                 <Select
                   multiple
                   value={formData.allowedMainPersons}
-                  label="Allowed Main Persons"
+                  label={t('userManagement.dialog.fields.allowedMainPersons')}
                   onChange={(e) => setFormData({ ...formData, allowedMainPersons: e.target.value })}
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -777,7 +782,7 @@ const UserManagement = () => {
                 color: theme.palette.text.secondary
               }}
             >
-              Cancel
+              {t('userManagement.buttons.cancel')}
             </Button>
             <Button 
               type="submit" 
@@ -789,7 +794,9 @@ const UserManagement = () => {
                 boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
               }}
             >
-              {dialogMode === 'add' ? 'Add User' : 'Save Changes'}
+              {dialogMode === 'add' 
+                ? t('userManagement.dialog.add.button')
+                : t('userManagement.dialog.edit.button')}
             </Button>
           </DialogActions>
         </form>
@@ -818,14 +825,13 @@ const UserManagement = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <DeleteIcon color="error" />
             <Typography variant="h5" fontWeight={600}>
-              Confirm Delete
+              {t('userManagement.dialog.delete.title')}
             </Typography>
           </Box>
         </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
           <Typography>
-            Are you sure you want to delete user <strong>"{userToDelete?.username}"</strong>? 
-            This action cannot be undone.
+            {t('userManagement.dialog.delete.message', { username: userToDelete?.username })}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ 
@@ -841,7 +847,7 @@ const UserManagement = () => {
               color: theme.palette.text.secondary
             }}
           >
-            Cancel
+            {t('userManagement.buttons.cancel')}
           </Button>
           <Button 
             onClick={() => handleDelete(userToDelete?._id)}
@@ -853,7 +859,7 @@ const UserManagement = () => {
               boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.3)}`,
             }}
           >
-            Delete
+            {t('userManagement.dialog.delete.button')}
           </Button>
         </DialogActions>
       </Dialog>

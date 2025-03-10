@@ -1,86 +1,62 @@
-import { useState } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   TextField,
-  Typography,
-  Stack,
-  CircularProgress
+  Button,
+  Box
 } from '@mui/material';
-import { MonetizationOn as MonetizationIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
-function IqamaPriceDialog({ open, onClose, currentPrice, onSubmit }) {
-  const [price, setPrice] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+function IqamaPriceDialog({ open, onClose, onSubmit, currentPrice }) {
+  const { t } = useTranslation();
+  const [price, setPrice] = React.useState(currentPrice || '');
 
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
-      await onSubmit(parseFloat(price));
-      handleClose();
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsSubmitting(false);
+  React.useEffect(() => {
+    if (open) {
+      setPrice(currentPrice || '');
     }
-  };
+  }, [open, currentPrice]);
 
-  const handleClose = () => {
-    setPrice('');
-    setError('');
-    onClose();
+  const handleSubmit = () => {
+    onSubmit(Number(price));
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
       <DialogTitle>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <MonetizationIcon color="primary" />
-          <Typography variant="h6">Update IQAMA Price</Typography>
-        </Stack>
+        {t('dialogs.iqamaPrice.title')}
       </DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Current IQAMA Price: SAR {currentPrice}
-          </Typography>
+        <Box sx={{ mt: 2 }}>
           <TextField
             fullWidth
-            label="New IQAMA Price (SAR)"
+            label={t('dialogs.iqamaPrice.price')}
             type="number"
             value={price}
-            onChange={(e) => {
-              const value = parseFloat(e.target.value);
-              if (value <= 0) {
-                setError('Please enter a valid amount');
-              } else {
-                setError('');
-              }
-              setPrice(e.target.value);
-            }}
-            error={!!error}
-            helperText={error}
-            inputProps={{ min: 0, step: "0.01" }}
-            disabled={isSubmitting}
+            onChange={(e) => setPrice(e.target.value)}
+            required
           />
-        </Stack>
+        </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={handleClose} disabled={isSubmitting}>
-          Cancel
+      <DialogActions>
+        <Button onClick={onClose} color="inherit">
+          {t('dialogs.iqamaPrice.cancel')}
         </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
           color="primary"
-          disabled={!price || !!error || isSubmitting}
-          startIcon={isSubmitting ? <CircularProgress size={20} /> : <MonetizationIcon />}
+          disabled={!price}
         >
-          {isSubmitting ? 'Updating...' : 'Update Price'}
+          {t('dialogs.iqamaPrice.submit')}
         </Button>
       </DialogActions>
     </Dialog>
