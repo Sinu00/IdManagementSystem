@@ -643,8 +643,6 @@ function Home() {
               </IconButton>
             </Tooltip>
 
-            <LanguageSwitcher />
-
             {user?.hasIncomeAccess?.includes('company') && (
               <Tooltip title={t('home.incomeAndExpense')}>
                 <IconButton
@@ -698,6 +696,35 @@ function Home() {
                 </IconButton>
               </Tooltip>
             )}
+
+            {user?.isAdmin && (
+              <Tooltip title="Bulk Data Migration">
+                <IconButton
+                  onClick={() => navigate('/bulk-migration')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: 'success.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'success.dark',
+                    }
+                  }}
+                >
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32,
+                      bgcolor: 'inherit',
+                      color: 'inherit'
+                    }}
+                  >
+                    <BusinessIcon />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <LanguageSwitcher />
 
             {user?.isAdmin && (
               <Tooltip title={t('home.adminNotifications')}>

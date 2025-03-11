@@ -72,6 +72,7 @@ export const companyApi = {
   getStats: () => api.get('/api/companies/stats'),
   processPayment: (id, data) => api.post(`/api/companies/${id}/payment`, data),
   processSaudiPayment: (id, data) => api.post(`/api/companies/${id}/saudi-payment`, data),
+  bulkMigrate: (data) => api.post('/api/companies/bulk-migrate', data),
 };
 
 export const individualApi = {

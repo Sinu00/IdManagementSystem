@@ -25,6 +25,7 @@ const ExpiringSoonIds = lazy(() => import('./pages/ExpiringSoonIds'));
 const IncomeExpense = lazy(() => import('./pages/IncomeExpense'));
 const AdminNotifications = lazy(() => import('./pages/AdminNotifications'));
 const NasserIncomeExpense = lazy(() => import('./pages/NasserIncomeExpense'));
+const BulkMigration = lazy(() => import('./pages/BulkMigration'));
 
 function App() {
   const { i18n } = useTranslation();
@@ -138,6 +139,14 @@ function App() {
                   <ProtectedRoute adminOnly={true}>
                     <AppLayout>
                       <NasserIncomeExpense />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/bulk-migration" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AppLayout>
+                      <BulkMigration />
                     </AppLayout>
                   </ProtectedRoute>
                 } />

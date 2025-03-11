@@ -437,4 +437,96 @@ router.get('/main-person/:mainPersonId', protect, async (req, res) => {
   }
 });
 
+// Bulk migration route for companies and individuals
+router.post('/bulk-migrate', protect, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { mainPersonId, companies } = req.body;
+
+    if (!mainPersonId || !companies || !Array.isArray(companies)) {
+      return res.status(400).json({ message: 'Invalid request format' });
+    }
+
+    const results = {
+      companies: [],
+      individuals: []
+    };
+
+    // Process each company
+    for (const companyData of companies) {
+      const { 
+        name, 
+        crNumber, 
+        sponserId, 
+        gosiNumber, 
+        molNumber, 
+        crAmount,
+        qiwaAmount,
+        muqeemAmount,
+        efaAmount,
+        saudiAmount,
+        individuals 
+      } = companyData;
+
+      // Create company with all amount fields
+      const company = new Company({
+        name,
+        crNumber,
+        sponserId,
+        gosiNumber,
+        molNumber,
+        crAmount: crAmount || 0,
+        qiwaAmount: qiwaAmount || 0,
+        muqeemAmount: muqeemAmount || 0,
+        efaAmount: efaAmount || 0,
+        saudiAmount: saudiAmount || 0,
+        mainPerson: mainPersonId,
+        paymentStatus: 'none_paid'
+      });
+
+      await company.save({ session });
+      results.companies.push(company);
+
+      // Process individuals if provided
+      if (individuals && Array.isArray(individuals)) {
+        for (const individualData of individuals) {
+          const { amount = 0, iqamaPrice = 5000 } = individualData;
+          
+          // Create individual with payment information
+          const individual = new Individual({
+            ...individualData,
+            company: company._id,
+            mainPerson: mainPersonId,
+            totalPaidAmount: amount || 0,
+            iqamaPrice: iqamaPrice,
+            pendingAmount: iqamaPrice - (amount || 0),
+            isFullyPaid: (amount || 0) >= iqamaPrice,
+            paymentHistory: amount > 0 ? [{
+              amount: amount,
+              paidBy: req.user.username,
+              paidAt: new Date()
+            }] : []
+          });
+
+          await individual.save({ session });
+          results.individuals.push(individual);
+        }
+      }
+    }
+
+    await session.commitTransaction();
+    res.status(201).json(results);
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Bulk migration error:', error);
+    res.status(400).json({ 
+      message: error.message || 'Failed to process bulk migration'
+    });
+  } finally {
+    session.endSession();
+  }
+});
+
 export default router; 
