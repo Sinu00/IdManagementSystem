@@ -7,7 +7,7 @@ import User from '../models/user.model.js';
 const router = express.Router();
 
 // Define the Nasser mainPerson ID as a constant
-const NASSER_MAIN_PERSON_ID = "67b22c3748dc9b1348b1d636";
+const NASSER_MAIN_PERSON_ID = "67d09798726e5a47c4caf071";
 
 // Get Nasser's incomes
 router.get('/income', protect, async (req, res) => {

@@ -25,7 +25,7 @@ const createAdmin = async () => {
         isAdmin: true,
         allowedMainPersons: [
           "67b22c3748dc9b1348b1d635", // Mosa
-          "67b22c3748dc9b1348b1d636", // Nasar
+          "67d09798726e5a47c4caf071", // Nasar
           "67b22c3748dc9b1348b1d637"  // Munif
         ]
       });
@@ -41,7 +41,7 @@ const createAdmin = async () => {
         password: hashedPassword,
         isAdmin: true,
         allowedMainPersons: [
-          "67b22c3748dc9b1348b1d636" // Only Nasar
+          "67d09798726e5a47c4caf071" // Only Nasar
         ]
       });
       console.log("Arif admin created with restricted access");

@@ -8,7 +8,7 @@ dotenv.config();
 
 const MAIN_PERSON_IDS = [
   "67b22c3748dc9b1348b1d635", // Mosa
-  "67b22c3748dc9b1348b1d636", // Nasar
+  "67d09798726e5a47c4caf071", // Nasar
   "67b22c3748dc9b1348b1d637"  // Munif
 ];
 

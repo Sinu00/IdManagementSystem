@@ -293,7 +293,7 @@ function NasserIncomeExpense() {
         await nasserApi.create({
           ...formData,
           name: 'General Purpose',
-          mainPerson: '67b22c3748dc9b1348b1d636', // Nasser's mainPerson ID
+          mainPerson: '67d09798726e5a47c4caf071', // Nasser's mainPerson ID
           expenseType: formData.expenseType,
           specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType
         });
