@@ -514,19 +514,27 @@ function IncomeExpense() {
           <IconButton onClick={() => navigate(-1)} size="small">
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" component="h1">
-            {t('incomeExpense.title')}
-          </Typography>
+          <Typography 
+            variant="h5" 
+            component="h1"
+          sx={{ 
+              fontWeight: 700,
+              fontSize: '1.7rem',
+              letterSpacing: '0.5px'
+            }}
+          >
+                {t('incomeExpense.title')}
+              </Typography>
           <Box sx={{ flexGrow: 1 }} />
-          <Button
+              <Button
             startIcon={<WalletIcon />}
-            onClick={() => setIsIqamaPriceDialogOpen(true)}
-            variant="outlined"
-            size="small"
+                onClick={() => setIsIqamaPriceDialogOpen(true)}
+              variant="outlined"
+                    size="small"
           >
             {t('incomeExpense.buttons.setIqamaPrice')}
-          </Button>
-        </Stack>
+                  </Button>
+                </Stack>
 
         {/* Stats Cards */}
         <StatsCards
@@ -544,18 +552,18 @@ function IncomeExpense() {
               loading={loading}
               incomes={sortedIncomes}
               showFilters={showIncomeFilters}
-              filters={incomeFilters}
-              onFilterChange={handleFilterChange}
-              referredByList={referredByList}
+                    filters={incomeFilters}
+                    onFilterChange={handleFilterChange}
+                    referredByList={referredByList}
               onToggleFilters={() => setShowIncomeFilters(!showIncomeFilters)}
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('income')}
               onExport={() => handleExportClick('income')}
               onEdit={(item) => handleEdit(item, 'income')}
               onDelete={(item) => handleDeleteClick({ ...item, type: 'income' })}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
               sortField={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
@@ -570,17 +578,17 @@ function IncomeExpense() {
               loading={loading}
               expenses={sortedExpenses}
               showFilters={showExpenseFilters}
-              filters={expenseFilters}
-              onFilterChange={handleFilterChange}
+                    filters={expenseFilters}
+                    onFilterChange={handleFilterChange}
               onToggleFilters={() => setShowExpenseFilters(!showExpenseFilters)}
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('expense')}
               onExport={() => handleExportClick('expense')}
               onEdit={(item) => handleEdit(item, 'expense')}
               onDelete={(item) => handleDeleteClick({ ...item, type: 'expense' })}
-              page={expensePage}
+                    page={expensePage}
               onPageChange={handleExpensePageChange}
-              rowsPerPage={expenseRowsPerPage}
+                    rowsPerPage={expenseRowsPerPage}
               sortField={expenseSortField}
               sortOrder={expenseSortOrder}
               onSort={handleExpenseSort}
@@ -607,7 +615,7 @@ function IncomeExpense() {
         />
 
         <DeleteConfirmDialog
-          open={deleteConfirmOpen}
+        open={deleteConfirmOpen}
           type={itemToDelete?.type}
           onClose={() => {
             setDeleteConfirmOpen(false);
@@ -634,13 +642,13 @@ function IncomeExpense() {
           onExport={generatePDF}
         />
 
-        <IqamaPriceDialog
-          open={isIqamaPriceDialogOpen}
-          currentPrice={iqamaPrice}
+      <IqamaPriceDialog
+        open={isIqamaPriceDialogOpen}
+        currentPrice={iqamaPrice}
           onClose={() => setIsIqamaPriceDialogOpen(false)}
           onSave={handleIqamaPriceChange}
-        />
-      </Box>
+      />
+    </Box>
     </Container>
   );
 }

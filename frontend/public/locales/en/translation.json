@@ -477,6 +477,9 @@
       "user": "User"
     },
     "access": {
+      "none": "No Access",
+      "nasser": "Nasser Access",
+      "company": "Company Access",
       "yes": "Yes",
       "no": "No"
     },

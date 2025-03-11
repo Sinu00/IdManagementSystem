@@ -16,7 +16,8 @@ import {
   Grid,
   Card,
   CardContent,
-  Avatar
+  Avatar,
+  Divider
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, TrendingDown as ExpenseIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -76,8 +77,6 @@ const ExpenseSection = ({
         height: '100%'
       }}
     >
-
-
       <TableHeader
         type="expense"
         showFilters={showFilters}
@@ -102,25 +101,24 @@ const ExpenseSection = ({
             filters={filters}
             onFilterChange={onFilterChange}
           />
-                {/* Stats Section */}
-      <Grid container spacing={4} sx={{ mb: 3 }}>
-        <Grid item xs={6}>
-          <Typography variant="subtitle2" color="error.main" gutterBottom>
-            {t('incomeExpense.stats.thisMonth')}
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
-            SAR {(totalExpense || 0).toFixed(2)}
-          </Typography>
-        </Grid>
-        <Grid item xs={6}>
-          <Typography variant="subtitle2" color="error.main" gutterBottom>
-            {t('incomeExpense.stats.lastMonth')}
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
-            SAR {(lastMonthExpense || 0).toFixed(2)}
-          </Typography>
-        </Grid>
-      </Grid>
+                        <Divider sx={{ mb: 3 }} />
+          {/* Stats Section */}
+          <Grid container spacing={4} sx={{ mb: 3 }}>
+            <Grid item xs={6}>
+              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
+                <Typography variant="h6" fontWeight="bold">SAR {(totalExpense || 0).toFixed(2)}</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={6}>
+              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
+                <Typography variant="h6" fontWeight="bold">SAR {(lastMonthExpense || 0).toFixed(2)}</Typography>
+              </Box>
+            </Grid>
+          </Grid>
+          <Divider sx={{ mb: 3 }} />
+
           <TableContainer>
             <Table size="small" aria-label="expense table">
               <TableHead>
@@ -268,4 +266,4 @@ const ExpenseSection = ({
   );
 };
 
-export default ExpenseSection; 
+export default ExpenseSection;

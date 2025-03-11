@@ -12,7 +12,8 @@ import {
   TablePagination,
   Skeleton,
   Box,
-  Grid
+  Grid,
+  Divider
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
@@ -99,25 +100,24 @@ const IncomeSection = ({
             onFilterChange={onFilterChange}
             referredByList={referredByList}
           />
-                {/* Stats Section */}
-      <Grid container spacing={4} sx={{ mb: 3 }}>
-        <Grid item xs={6}>
-          <Typography variant="subtitle2" color="success.main" gutterBottom>
-            {t('incomeExpense.stats.thisMonth')}
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
-            SAR {(totalIncome || 0).toFixed(2)}
-          </Typography>
-        </Grid>
-        <Grid item xs={6}>
-          <Typography variant="subtitle2" color="success.main" gutterBottom>
-            {t('incomeExpense.stats.lastMonth')}
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
-            SAR {(lastMonthIncome || 0).toFixed(2)}
-          </Typography>
-        </Grid>
-      </Grid>
+                        <Divider sx={{ mb: 3 }} />
+          {/* Stats Section */}
+          <Grid container spacing={4} sx={{ mb: 3 }}>
+            <Grid item xs={6}>
+              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
+                <Typography variant="h6" fontWeight="bold">SAR {(totalIncome || 0).toFixed(2)}</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={6}>
+              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
+                <Typography variant="h6" fontWeight="bold">SAR {(lastMonthIncome || 0).toFixed(2)}</Typography>
+              </Box>
+            </Grid>
+          </Grid>
+          <Divider sx={{ mb: 3 }} />
+
           <TableContainer>
             <Table size="small" aria-label="income table">
               <TableHead>
@@ -248,4 +248,4 @@ const IncomeSection = ({
   );
 };
 
-export default IncomeSection; 
+export default IncomeSection;

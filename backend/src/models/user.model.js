@@ -21,8 +21,14 @@ const userSchema = new mongoose.Schema(
       ref: "MainPerson"
     }],
     hasIncomeAccess: {
-      type: Boolean,
-      default: false
+      type: [String],
+      validate: {
+        validator: function(v) {
+          return v.every(item => ['none', 'nasser', 'company'].includes(item));
+        },
+        message: props => `${props.value} contains invalid access types!`
+      },
+      default: ['none']
     }
   },
   { timestamps: true }
@@ -35,4 +41,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 const User = mongoose.model("User", userSchema);
 
-export default User; 
+export default User;

@@ -645,7 +645,7 @@ function Home() {
 
             <LanguageSwitcher />
 
-            {Boolean(user?.hasIncomeAccess) && (
+            {user?.hasIncomeAccess?.includes('company') && (
               <Tooltip title={t('home.incomeAndExpense')}>
                 <IconButton
                   onClick={() => navigate('/income-expense')}
@@ -667,6 +667,33 @@ function Home() {
                     }}
                   >
                     <WalletIcon />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {user?.hasIncomeAccess?.includes('nasser') && (
+              <Tooltip title="Nasser Income & Expense">
+                <IconButton
+                  onClick={() => navigate('/nasser-income-expense')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: 'info.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'info.dark',
+                    }
+                  }}
+                >
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32,
+                      bgcolor: 'inherit',
+                      color: 'inherit'
+                    }}
+                  >
+                    <MoneyIcon />
                   </Avatar>
                 </IconButton>
               </Tooltip>
@@ -708,33 +735,6 @@ function Home() {
                       <NotificationsIcon />
                     </Avatar>
                   </Badge>
-                </IconButton>
-              </Tooltip>
-            )}
-
-            {user?.isAdmin && (
-              <Tooltip title="Nasser Income & Expense">
-                <IconButton
-                  onClick={() => navigate('/nasser-income-expense')}
-                  size="small"
-                  sx={{ 
-                    bgcolor: 'info.main',
-                    color: 'white',
-                    '&:hover': {
-                      bgcolor: 'info.dark',
-                    }
-                  }}
-                >
-                  <Avatar 
-                    sx={{ 
-                      width: 32, 
-                      height: 32,
-                      bgcolor: 'inherit',
-                      color: 'inherit'
-                    }}
-                  >
-                    <MoneyIcon />
-                  </Avatar>
                 </IconButton>
               </Tooltip>
             )}

@@ -118,7 +118,7 @@ const UserManagement = () => {
     username: '',
     password: '',
     isAdmin: false,
-    hasIncomeAccess: false,
+    hasIncomeAccess: [],
     allowedMainPersons: []
   });
   const [mainPersons, setMainPersons] = useState([]);
@@ -160,8 +160,10 @@ const UserManagement = () => {
       username: userToEdit.username,
       password: '', // Clear password for security
       isAdmin: userToEdit.isAdmin,
-      hasIncomeAccess: userToEdit.hasIncomeAccess,
-      allowedMainPersons: userToEdit.allowedMainPersons.map(person => person._id) // Extract IDs
+      hasIncomeAccess: Array.isArray(userToEdit.hasIncomeAccess) 
+        ? userToEdit.hasIncomeAccess 
+        : [userToEdit.hasIncomeAccess], // Convert to array if it's not already
+      allowedMainPersons: userToEdit.allowedMainPersons.map(person => person._id)
     });
     setDialogMode('edit');
     setDialogOpen(true);
@@ -171,20 +173,26 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       setError(null);
+      const dataToSend = {
+        ...formData,
+        hasIncomeAccess: Array.isArray(formData.hasIncomeAccess) 
+          ? formData.hasIncomeAccess 
+          : [formData.hasIncomeAccess]
+      };
+
       if (dialogMode === 'add') {
-        await userApi.create(formData);
+        await userApi.create(dataToSend);
       } else {
         // Don't send password if it's empty during edit
-        const updateData = { ...formData };
-        if (!updateData.password) delete updateData.password;
-        await userApi.update(formData._id, updateData);
+        if (!dataToSend.password) delete dataToSend.password;
+        await userApi.update(formData._id, dataToSend);
       }
       setDialogOpen(false);
       setFormData({ 
         username: '', 
         password: '', 
         isAdmin: false, 
-        hasIncomeAccess: false, 
+        hasIncomeAccess: [], 
         allowedMainPersons: [] 
       });
       setDialogMode('add');
@@ -412,26 +420,52 @@ const UserManagement = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Chip 
-                          label={user.hasIncomeAccess ? t('userManagement.access.yes') : t('userManagement.access.no')}
-                          color={user.hasIncomeAccess ? 'success' : 'error'}
-                          size="small"
-                          sx={{ 
-                            fontWeight: 600,
-                            px: 1,
-                            borderRadius: '6px',
-                            background: user.hasIncomeAccess
-                              ? alpha(theme.palette.success.main, 0.1)
-                              : alpha(theme.palette.error.main, 0.1),
-                            border: '2px solid',
-                            borderColor: user.hasIncomeAccess
-                              ? alpha(theme.palette.success.main, 0.3)
-                              : alpha(theme.palette.error.main, 0.3)
-                          }}
-                        />
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          {Array.isArray(user.hasIncomeAccess) && user.hasIncomeAccess.length > 0 ? (
+                            user.hasIncomeAccess.map((access) => (
+                              <Chip 
+                                key={access}
+                                label={t(`userManagement.access.${access}`)}
+                                color={access === 'none' ? 'default' : 
+                                       access === 'nasser' ? 'primary' : 'success'}
+                                size="small"
+                                sx={{ 
+                                  fontWeight: 600,
+                                  px: 1,
+                                  borderRadius: '6px',
+                                  background: access === 'none'
+                                    ? alpha(theme.palette.grey[500], 0.1)
+                                    : access === 'nasser'
+                                    ? alpha(theme.palette.primary.main, 0.1)
+                                    : alpha(theme.palette.success.main, 0.1),
+                                  border: '2px solid',
+                                  borderColor: access === 'none'
+                                    ? alpha(theme.palette.grey[500], 0.2)
+                                    : access === 'nasser'
+                                    ? alpha(theme.palette.primary.main, 0.3)
+                                    : alpha(theme.palette.success.main, 0.3)
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <Chip 
+                              label={t('userManagement.access.none')}
+                              color="default"
+                              size="small"
+                              sx={{ 
+                                fontWeight: 600,
+                                px: 1,
+                                borderRadius: '6px',
+                                background: alpha(theme.palette.grey[500], 0.1),
+                                border: '2px solid',
+                                borderColor: alpha(theme.palette.grey[500], 0.2)
+                              }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                           {user.allowedMainPersons.length > 0 ? (
                             user.allowedMainPersons.map((person, index) => (
                               <Chip
@@ -594,17 +628,49 @@ const UserManagement = () => {
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Income Access</Typography>
-                      <Chip 
-                        label={user.hasIncomeAccess ? t('userManagement.access.yes') : t('userManagement.access.no')}
-                        color={user.hasIncomeAccess ? 'success' : 'default'}
-                        size="small"
-                        sx={{ 
-                          mt: 0.5,
-                          fontWeight: 600,
-                          width: '100%',
-                          borderRadius: '6px'
-                        }}
-                      />
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        {Array.isArray(user.hasIncomeAccess) && user.hasIncomeAccess.length > 0 ? (
+                          user.hasIncomeAccess.map((access) => (
+                            <Chip 
+                              key={access}
+                              label={t(`userManagement.access.${access}`)}
+                              color={access === 'none' ? 'default' : 
+                                     access === 'nasser' ? 'primary' : 'success'}
+                              size="small"
+                              sx={{ 
+                                fontWeight: 600,
+                                px: 1,
+                                borderRadius: '6px',
+                                background: access === 'none'
+                                  ? alpha(theme.palette.grey[500], 0.1)
+                                  : access === 'nasser'
+                                  ? alpha(theme.palette.primary.main, 0.1)
+                                  : alpha(theme.palette.success.main, 0.1),
+                                border: '2px solid',
+                                borderColor: access === 'none'
+                                  ? alpha(theme.palette.grey[500], 0.2)
+                                  : access === 'nasser'
+                                  ? alpha(theme.palette.primary.main, 0.3)
+                                  : alpha(theme.palette.success.main, 0.3)
+                              }}
+                            />
+                          ))
+                        ) : (
+                          <Chip 
+                            label={t('userManagement.access.none')}
+                            color="default"
+                            size="small"
+                            sx={{ 
+                              fontWeight: 600,
+                              px: 1,
+                              borderRadius: '6px',
+                              background: alpha(theme.palette.grey[500], 0.1),
+                              border: '2px solid',
+                              borderColor: alpha(theme.palette.grey[500], 0.2)
+                            }}
+                          />
+                        )}
+                      </Box>
                     </Grid>
                   </Grid>
 
@@ -657,7 +723,7 @@ const UserManagement = () => {
             username: '', 
             password: '', 
             isAdmin: false, 
-            hasIncomeAccess: false, 
+            hasIncomeAccess: [], 
             allowedMainPersons: [] 
           });
         }}
@@ -719,12 +785,25 @@ const UserManagement = () => {
                 <FormControl fullWidth>
                   <InputLabel>{t('userManagement.dialog.fields.incomeAccess')}</InputLabel>
                   <Select
-                    value={formData.hasIncomeAccess}
+                    multiple
+                    value={Array.isArray(formData.hasIncomeAccess) ? formData.hasIncomeAccess : [formData.hasIncomeAccess]}
                     label={t('userManagement.dialog.fields.incomeAccess')}
                     onChange={(e) => setFormData({ ...formData, hasIncomeAccess: e.target.value })}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip 
+                            key={value} 
+                            label={t(`userManagement.access.${value}`)}
+                            size="small"
+                          />
+                        ))}
+                      </Box>
+                    )}
                   >
-                    <MenuItem value={false}>{t('userManagement.access.no')}</MenuItem>
-                    <MenuItem value={true}>{t('userManagement.access.yes')}</MenuItem>
+                    <MenuItem value="none">{t('userManagement.access.none')}</MenuItem>
+                    <MenuItem value="nasser">{t('userManagement.access.nasser')}</MenuItem>
+                    <MenuItem value="company">{t('userManagement.access.company')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -772,7 +851,7 @@ const UserManagement = () => {
                   username: '', 
                   password: '', 
                   isAdmin: false, 
-                  hasIncomeAccess: false, 
+                  hasIncomeAccess: [], 
                   allowedMainPersons: [] 
                 });
               }}
@@ -867,4 +946,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement; 
+export default UserManagement;
