@@ -23,7 +23,7 @@
     "paymentAmount": "مبلغ الدفع (ريال)",
     "currentStatus": "الحالة الحالية",
     "totalAmount": "المبلغ الإجمالي",
-    "namora": "نمرة للمقاولات"
+    "namora": "نمورة للمقاولات"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -200,14 +200,17 @@
     "saudiPaymentProcessed": "تمت معالجة الدفع السعودي بنجاح",
     "saudiPaymentError": "فشل في معالجة الدفع السعودي",
     "unexpectedError": "حدث خطأ غير متوقع",
-    "individualAdded": "تم إضافة الفرد بنجاح",
-    "individualUpdated": "تم تحديث بيانات الفرد بنجاح",
-    "individualRenewed": "تم تجديد الفرد بنجاح",
     "individualDeleted": "تم حذف الفرد بنجاح",
     "individualDeleteError": "فشل في حذف الفرد",
+    "individualSaved": "تم حفظ بيانات الفرد بنجاح",
     "individualSaveError": "فشل في حفظ بيانات الفرد",
     "individualRequestSent": "تم إرسال طلب الفرد إلى المسؤول للموافقة",
-    "paymentRequestSent": "تم إرسال طلب الدفع إلى المسؤول للموافقة"
+    "individualRenewed": "تم تجديد الفرد بنجاح",
+    "individualRenewalError": "فشل في تجديد الفرد",
+    "paymentRequestSent": "تم إرسال طلب الدفع إلى المسؤول للموافقة",
+    "individualUpdated": "تم تحديث بيانات الفرد بنجاح",
+    "individualUpdateError": "فشل في تحديث بيانات الفرد",
+    "individualAdded": "تم إضافة الفرد بنجاح"
   },
   "expiredIds": {
     "title": "مركز تنبيه انتهاء الهوية",
@@ -393,7 +396,8 @@
       "iqamaPrice": "سعر الإقامة: {{price}} ريال",
       "add": "إضافة",
       "export": "تصدير",
-      "refresh": "تحديث"
+      "refresh": "تحديث",
+      "setIqamaPrice": "تعيين سعر الإقامة"
     },
     "filters": {
       "searchName": "البحث بالاسم",
@@ -438,6 +442,13 @@
       "refresh": "تحديث",
       "companyDetails": "تفاصيل الشركة",
       "filter": "إظهار الفلاتر"
+    },
+    "noIncomeRecords": "لا توجد سجلات إيرادات",
+    "addFirstIncomeTransaction": "انقر على زر الإضافة لتسجيل أول معاملة إيرادات",
+    "noExpenseRecords": "لا توجد سجلات مصروفات",
+    "addFirstExpenseTransaction": "انقر على زر الإضافة لتسجيل أول معاملة مصروفات",
+    "table": {
+      "other": "أخرى"
     }
   },
   "userManagement": {
@@ -492,5 +503,9 @@
       "edit": "تعديل المستخدم",
       "delete": "حذف المستخدم"
     }
+  },
+  "nasserIncomeExpense": {
+    "title": "إيرادات ومصروفات ناصر",
+    "subtitle": "إدارة معاملات الإيرادات والمصروفات الخاصة بناصر"
   }
 } 

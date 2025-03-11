@@ -22,7 +22,8 @@
     "amount": "Amount",
     "paymentAmount": "Payment Amount (SAR)",
     "currentStatus": "Current Status",
-    "totalAmount": "Total Amount"
+    "totalAmount": "Total Amount",
+    "namora": "Namora Contracting"
   },
   "auth": {
     "login": "Login",
@@ -208,7 +209,8 @@
     "individualRenewalError": "Failed to renew individual",
     "paymentRequestSent": "Payment request sent successfully",
     "individualUpdated": "Individual updated successfully",
-    "individualUpdateError": "Failed to update individual"
+    "individualUpdateError": "Failed to update individual",
+    "individualAdded": "Individual added successfully"
   },
   "expiredIds": {
     "title": "ID Expiry Alert Center",
@@ -393,7 +395,8 @@
       "iqamaPrice": "IQAMA Price: SAR {{price}}",
       "add": "Add",
       "export": "Export",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "setIqamaPrice": "Set Iqama Price"
     },
     "filters": {
       "searchName": "Search by name",
@@ -446,7 +449,11 @@
       "enterPrice": "Enter new IQAMA price",
       "updateSuccess": "IQAMA price updated successfully",
       "updateError": "Failed to update IQAMA price"
-    }
+    },
+    "noIncomeRecords": "No Income Records Found",
+    "addFirstIncomeTransaction": "Click the Add button to record your first income transaction",
+    "noExpenseRecords": "No Expense Records Found",
+    "addFirstExpenseTransaction": "Click the Add button to record your first expense transaction"
   },
   "userManagement": {
     "title": "User Management",
@@ -500,5 +507,9 @@
       "edit": "Edit User",
       "delete": "Delete User"
     }
+  },
+  "nasserIncomeExpense": {
+    "title": "Nasser's Income & Expense",
+    "subtitle": "Manage Nasser's income and expense transactions"
   }
 } 

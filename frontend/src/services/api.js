@@ -147,4 +147,22 @@ export const userApi = {
   delete: (id) => api.delete(`/api/users/${id}`)
 };
 
+export const nasserApi = {
+  getIncome: () => api.get('/api/nasser/income'),
+  getExpense: () => api.get('/api/nasser/expense'),
+  getIncomeByDateRange: (startDate, endDate) => 
+    api.get(`/api/nasser/income/filter/date?startDate=${startDate}&endDate=${endDate}`),
+  getExpenseByDateRange: (startDate, endDate) => 
+    api.get(`/api/nasser/expense/filter/date?startDate=${startDate}&endDate=${endDate}`),
+  getFilteredIncome: (filters) => 
+    api.post('/api/nasser/income/filter', filters),
+  getFilteredExpense: (filters) =>
+    api.post('/api/nasser/expense/filter', filters),
+  getReferredByList: () => api.get('/api/nasser/income/referred-by'),
+  create: (data) => api.post('/api/nasser/record', { ...data, type: data.iqamaNumber ? 'income' : 'expense' }),
+  update: (id, data) => api.put(`/api/nasser/record/${id}`, { ...data, type: data.iqamaNumber ? 'income' : 'expense' }),
+  delete: (id, type) => api.delete(`/api/nasser/record/${id}?type=${type}`),
+  getById: (id, type) => api.get(`/api/nasser/record/${id}?type=${type}`)
+};
+
 export default api; 

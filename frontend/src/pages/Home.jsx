@@ -36,7 +36,8 @@ import {
   Lock as LockIcon,
   AccountBalanceWallet as WalletIcon,
   MonetizationOn as MonetizationIcon,
-  NotificationsActive as NotificationsIcon
+  NotificationsActive as NotificationsIcon,
+  AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
 import { mainPersonApi, notificationApi, companyApi, notifyAdminApi, notifyCompanyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -45,6 +46,8 @@ import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { StatCardSkeletonList } from '../components/skeletons/StatCardSkeleton';
 import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkeleton';
 import axios from 'axios';
+import { startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { nasserApi } from '../services/api';
 
 function Home() {
   const { t } = useTranslation();
@@ -705,6 +708,33 @@ function Home() {
                       <NotificationsIcon />
                     </Avatar>
                   </Badge>
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {user?.isAdmin && (
+              <Tooltip title="Nasser Income & Expense">
+                <IconButton
+                  onClick={() => navigate('/nasser-income-expense')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: 'info.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'info.dark',
+                    }
+                  }}
+                >
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32,
+                      bgcolor: 'inherit',
+                      color: 'inherit'
+                    }}
+                  >
+                    <MoneyIcon />
+                  </Avatar>
                 </IconButton>
               </Tooltip>
             )}

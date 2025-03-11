@@ -11,6 +11,7 @@ import iqamaPriceRoutes from './routes/iqamaPrice.routes.js';
 import userRoutes from './routes/user.routes.js';
 import notifyAdminRoutes from './routes/notifyAdmin.routes.js';
 import notifyCompanyAdminRoutes from './routes/notifyCompanyAdmin.routes.js';
+import nasserRoutes from './routes/nasser.routes.js';
 
 const app = express();
 
@@ -54,5 +55,6 @@ app.use('/api/iqama-price', iqamaPriceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notify-admin', notifyAdminRoutes);
 app.use('/api/notify-company-admin', notifyCompanyAdminRoutes);
+app.use('/api/nasser', nasserRoutes);
 
 export default app; 

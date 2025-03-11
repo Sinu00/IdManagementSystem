@@ -56,7 +56,12 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { incomeApi, expenseApi, iqamaPriceApi, individualApi, companyApi } from '../services/api';
+import { 
+  nasserApi, 
+  userApi, 
+  companyApi, 
+  iqamaPriceApi 
+} from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -64,7 +69,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { saveAs } from 'file-saver';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
-import { generateReport } from '../components/income-expense/pdfgeneration/generateReport';
+import IqamaPriceDialog from '../components/dialogs/IqamaPriceDialog';
 
 // Import our new components
 import StatsCards from '../components/income-expense/sections/StatsCards';
@@ -74,9 +79,8 @@ import ExpenseSection from '../components/income-expense/sections/ExpenseSection
 import AddEditDialog from '../components/income-expense/dialogs/AddEditDialog';
 import DeleteConfirmDialog from '../components/income-expense/dialogs/DeleteConfirmDialog';
 import ExportDialog from '../components/income-expense/dialogs/ExportDialog';
-import IqamaPriceDialog from '../components/dialogs/IqamaPriceDialog';
 
-function IncomeExpense() {
+function NasserIncomeExpense() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -156,44 +160,54 @@ function IncomeExpense() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const currentDate = new Date();
-      const startDate = startOfMonth(currentDate);
-      const endDate = endOfMonth(currentDate);
-      const lastMonthStart = startOfMonth(subMonths(currentDate, 1));
-      const lastMonthEnd = endOfMonth(subMonths(currentDate, 1));
+      const dateFilter = {
+        startDate: incomeFilters.dateRange.start.toISOString(),
+        endDate: incomeFilters.dateRange.end.toISOString()
+      };
 
-      // Current month data
-      const [incomeRes, expenseRes] = await Promise.all([
-        incomeApi.getByDateRange(startDate.toISOString(), endDate.toISOString()),
-        expenseApi.getByDateRange(startDate.toISOString(), endDate.toISOString())
-      ]);
+      // Get income data
+      const incomeResponse = incomeFilters.referredBy !== 'all'
+        ? await nasserApi.getFilteredIncome({
+            ...dateFilter,
+            referredBy: incomeFilters.referredBy
+          })
+        : await nasserApi.getIncomeByDateRange(dateFilter.startDate, dateFilter.endDate);
 
-      // Last month data
-      const [lastMonthIncomeRes, lastMonthExpenseRes] = await Promise.all([
-        incomeApi.getByDateRange(lastMonthStart.toISOString(), lastMonthEnd.toISOString()),
-        expenseApi.getByDateRange(lastMonthStart.toISOString(), lastMonthEnd.toISOString())
-      ]);
+      // Get expense data
+      const expenseResponse = await nasserApi.getFilteredExpense({
+        ...dateFilter,
+        expenseType: expenseFilters.expenseType !== 'all' ? expenseFilters.expenseType : undefined
+      });
 
-      setIncomes(incomeRes.data || []);
-      setExpenses(expenseRes.data || []);
+      // Update state with response data
+      setIncomes(incomeResponse.data || []);
+      setExpenses(expenseResponse.data || []);
+
+      // Calculate totals
+      const totalInc = (incomeResponse.data || []).reduce((sum, item) => sum + item.amount, 0);
+      const totalExp = (expenseResponse.data || []).reduce((sum, item) => sum + item.amount, 0);
+      setTotalIncome(totalInc);
+      setTotalExpense(totalExp);
+
+      // Calculate last month's data
+      const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
+      const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
       
-      const currentMonthIncomeTotal = (incomeRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-      const currentMonthExpenseTotal = (expenseRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-      const lastMonthIncomeTotal = (lastMonthIncomeRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-      const lastMonthExpenseTotal = (lastMonthExpenseRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      const lastMonthIncomeResponse = await nasserApi.getIncomeByDateRange(
+        lastMonthStart.toISOString(),
+        lastMonthEnd.toISOString()
+      );
+      const lastMonthExpenseResponse = await nasserApi.getExpenseByDateRange(
+        lastMonthStart.toISOString(),
+        lastMonthEnd.toISOString()
+      );
 
-      setTotalIncome(currentMonthIncomeTotal);
-      setTotalExpense(currentMonthExpenseTotal);
-      setLastMonthIncome(lastMonthIncomeTotal);
-      setLastMonthExpense(lastMonthExpenseTotal);
+      setLastMonthIncome((lastMonthIncomeResponse.data || []).reduce((sum, item) => sum + item.amount, 0));
+      setLastMonthExpense((lastMonthExpenseResponse.data || []).reduce((sum, item) => sum + item.amount, 0));
+
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to load data. Please try again later.');
-      // Set default values in case of error
-      setTotalIncome(0);
-      setTotalExpense(0);
-      setLastMonthIncome(0);
-      setLastMonthExpense(0);
     } finally {
       setLoading(false);
     }
@@ -234,52 +248,23 @@ function IncomeExpense() {
     setDialogOpen(true);
   };
 
-  const handleDeleteClick = (item) => {
-    setItemToDelete(item);
+  const handleDeleteClick = (item, type) => {
+    setItemToDelete({ ...item, type });
     setDeleteConfirmOpen(true);
   };
 
-  const handleExpensePageChange = (event, newPage) => {
-    setExpensePage(newPage);
-  };
-
-  const handleExpenseSort = (field) => {
-    if (field === expenseSortField) {
-      setExpenseSortOrder(expenseSortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setExpenseSortField(field);
-      setExpenseSortOrder('asc');
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
-
+  const handleDelete = async () => {
     try {
-      setLoading(true);
       if (itemToDelete.type === 'income') {
-        await incomeApi.deleteIncome(itemToDelete._id);
+        await nasserApi.delete(itemToDelete._id, 'income');
       } else {
-        await expenseApi.deleteExpense(itemToDelete._id);
+        await nasserApi.delete(itemToDelete._id, 'expense');
       }
       setDeleteConfirmOpen(false);
-      setItemToDelete(null);
       fetchData();
     } catch (error) {
-      console.error('Error deleting item:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleIqamaPriceChange = async (newPrice) => {
-    try {
-      await iqamaPriceApi.updateIqamaPrice(newPrice);
-      setIqamaPrice(newPrice);
-      setIsIqamaPriceDialogOpen(false);
-    } catch (error) {
-      console.error('Error updating iqama price:', error);
+      console.error('Error deleting record:', error);
+      setError(error.response?.data?.message || 'Failed to delete record');
     }
   };
 
@@ -290,7 +275,7 @@ function IncomeExpense() {
       // If it's an income entry, we need to get the mainPerson
       if (dialogType === 'income') {
         // First find the individual by iqamaNumber to get their company and mainPerson
-        const individualsResponse = await individualApi.getByIqamaNumber(formData.iqamaNumber);
+        const individualsResponse = await userApi.getByIqamaNumber(formData.iqamaNumber);
         const individual = individualsResponse.data;
         
         if (!individual) {
@@ -298,17 +283,17 @@ function IncomeExpense() {
           return;
         }
 
-        await incomeApi.create({
+        await nasserApi.create({
           ...formData,
           referredBy: user.username,
           mainPerson: individual.company.mainPerson
         });
       } else {
-        // For expenses, we'll create with the other mainPerson ID
-        await expenseApi.create({
+        // For expenses, we'll create with Nasser's mainPerson ID
+        await nasserApi.create({
           ...formData,
           name: 'General Purpose',
-          mainPerson: '67b22c3748dc9b1348b1d635', // Other mainPerson ID
+          mainPerson: '67b22c3748dc9b1348b1d636', // Nasser's mainPerson ID
           expenseType: formData.expenseType,
           specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType
         });
@@ -363,6 +348,11 @@ function IncomeExpense() {
     });
   }, [incomes, sortField, sortOrder, incomeFilters]);
 
+  const handleExpenseSort = (field) => {
+    setExpenseSortField(field);
+    setExpenseSortOrder(currentOrder => currentOrder === 'asc' ? 'desc' : 'asc');
+  };
+
   const sortedExpenses = useMemo(() => {
     const filtered = applyFilters(expenses, 'expense');
     return [...filtered].sort((a, b) => {
@@ -401,7 +391,7 @@ function IncomeExpense() {
   const fetchReferredByList = async () => {
     try {
       console.log('Fetching referred by list...');
-      const response = await incomeApi.getReferredByList();
+      const response = await nasserApi.getReferredByList();
       console.log('Referred by list:', response.data);
       setReferredByList(response.data);
     } catch (error) {
@@ -426,23 +416,185 @@ function IncomeExpense() {
           };
 
       if (exportType === 'income') {
-        const response = await incomeApi.getFilteredIncome({
+        const response = await nasserApi.getFilteredIncome({
           ...dateFilter,
           referredBy: selectedReferredBy === 'all' ? null : selectedReferredBy
         });
         data = response.data;
       } else {
-        const response = await expenseApi.getFilteredExpense(dateFilter);
+        const response = await nasserApi.getFilteredExpense(dateFilter);
         data = response.data;
       }
 
-      const doc = await generateReport(exportType, data, {
-        dateFilterType,
-        startDate: exportStartDate,
-        endDate: exportEndDate,
-        specificDate: exportSpecificDate,
-        selectedReferredBy
+      // Create PDF document with slightly larger margins
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        margins: { top: 20, right: 20, bottom: 20, left: 20 }
       });
+      
+      // Add decorative header bar
+      doc.setFillColor(0, 102, 204);
+      doc.rect(0, 0, doc.internal.pageSize.width, 15, 'F');
+      
+      // Add company logo or name at the top with better spacing
+      doc.setFontSize(28);
+      doc.setTextColor(0, 102, 204);
+      doc.text("NASSER CONTRACTING", doc.internal.pageSize.width/2, 30, { align: 'center' });
+      
+      // Add subtle divider
+      doc.setDrawColor(0, 102, 204);
+      doc.setLineWidth(0.5);
+      doc.line(20, 35, doc.internal.pageSize.width - 20, 35);
+      
+      // Add report title with better styling
+      doc.setFontSize(22);
+      doc.setTextColor(51, 51, 51);
+      doc.text(
+        `${exportType.charAt(0).toUpperCase() + exportType.slice(1)} Report`,
+        doc.internal.pageSize.width/2,
+        45,
+        { align: 'center' }
+      );
+
+      // Add report metadata with improved layout
+      doc.setFontSize(11);
+      doc.setTextColor(102, 102, 102);
+      const reportMetadata = [
+        `Period: ${dateFilterType === 'range' 
+          ? `${format(exportStartDate, 'dd MMMM yyyy')} - ${format(exportEndDate, 'dd MMMM yyyy')}`
+          : format(exportSpecificDate, 'dd MMMM yyyy')}`,
+        exportType === 'income' && selectedReferredBy !== 'all' ? `Referred By: ${selectedReferredBy}` : null
+      ].filter(Boolean);
+
+      reportMetadata.forEach((text, index) => {
+        doc.text(text, doc.internal.pageSize.width/2, 55 + (index * 6), { align: 'center' });
+      });
+
+      if (!data || data.length === 0) {
+        // Styled "No Data Available" message
+        doc.setFillColor(245, 245, 245);
+        doc.roundedRect(20, 70, doc.internal.pageSize.width - 40, 30, 3, 3, 'F');
+        doc.setFontSize(16);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+          "No data available for the selected period",
+          doc.internal.pageSize.width/2,
+          88,
+          { align: 'center' }
+        );
+      } else {
+        // Add summary section with improved styling
+        const total = data.reduce((sum, item) => sum + item.amount, 0);
+        doc.setFillColor(240, 245, 255); // Light blue background
+        doc.roundedRect(20, 70, doc.internal.pageSize.width - 40, 25, 3, 3, 'F');
+        doc.setTextColor(0, 102, 204);
+        doc.setFontSize(12);
+        doc.text(`Total ${exportType}: `, 30, 85);
+        doc.setFontSize(14);
+        doc.text(`SAR ${total.toFixed(2)}`, 65, 85);
+        doc.setFontSize(12);
+        doc.text(`Number of Entries: ${data.length}`, doc.internal.pageSize.width - 30, 85, { align: 'right' });
+
+        // Configure and add table with improved styling
+        const tableColumns = exportType === 'income' 
+          ? [
+              { header: 'Date', dataKey: 'date' },
+              { header: 'Name', dataKey: 'name' },
+              { header: 'Iqama Number', dataKey: 'iqama' },
+              { header: 'Referred By', dataKey: 'referredBy' },
+              { header: 'Amount (SR)', dataKey: 'amount' }
+            ]
+          : [
+              { header: 'Date', dataKey: 'date' },
+              { header: 'Name', dataKey: 'name' },
+              { header: 'Amount (SR)', dataKey: 'amount' }
+            ];
+
+        const tableRows = data.map(item => ({
+          date: format(new Date(item.createdAt), 'dd MMMM yyyy'),
+          name: item.name,
+          iqama: item.iqamaNumber || '-',
+          referredBy: item.referredBy || '-',
+          amount: item.amount.toFixed(2)
+        }));
+
+        doc.autoTable({
+          columns: tableColumns,
+          body: tableRows,
+          startY: 100,
+          styles: {
+            fontSize: 10,
+            cellPadding: 4,
+            lineColor: [240, 240, 240],
+            lineWidth: 0.1,
+          },
+          headStyles: {
+            fillColor: [0, 102, 204],
+            textColor: 255,
+            fontSize: 11,
+            fontStyle: 'bold',
+            halign: 'center',
+            cellPadding: 5
+          },
+          columnStyles: {
+            date: { halign: 'center' },
+            amount: { halign: 'right', fontStyle: 'bold' },
+            iqama: { halign: 'center' }
+          },
+          alternateRowStyles: {
+            fillColor: [249, 250, 251]
+          },
+          showHead: 'everyPage',
+          didDrawPage: function(data) {
+            // Header on every page
+            doc.setFillColor(0, 102, 204);
+            doc.rect(0, 0, doc.internal.pageSize.width, 15, 'F');
+            
+            // Company name in header
+            doc.setFontSize(10);
+            doc.setTextColor(255, 255, 255);
+            doc.text(
+              'NASSER CONTRACTING',
+              doc.internal.pageSize.width - 20,
+              10,
+              { align: 'right' }
+            );
+            
+            // Generation date in header
+            doc.text(
+              `Generated: ${format(new Date(), 'dd MMMM yyyy hh:mm a')}`,
+              20,
+              10
+            );
+            
+            // Footer with page numbers
+            doc.setFontSize(9);
+            doc.setTextColor(128, 128, 128);
+            doc.text(
+              `Page ${doc.internal.getCurrentPageInfo().pageNumber} of ${doc.internal.getNumberOfPages()}`,
+              doc.internal.pageSize.width/2,
+              doc.internal.pageSize.height - 10,
+              { align: 'center' }
+            );
+          },
+          margin: { top: 30, bottom: 30, left: 20, right: 20 }
+        });
+
+        // Add footer with total
+        const finalY = doc.autoTable.previous.finalY;
+        doc.setFillColor(0, 102, 204);
+        doc.roundedRect(20, finalY + 5, doc.internal.pageSize.width - 40, 20, 2, 2, 'F');
+        doc.setFontSize(12);
+        doc.setTextColor(255, 255, 255);
+        doc.text(
+          `Total Amount: SAR ${total.toFixed(2)}`,
+          doc.internal.pageSize.width - 30,
+          finalY + 17,
+          { align: 'right' }
+        );
+      }
 
       // Save the PDF
       doc.save(`${exportType}_report_${format(new Date(), 'dd_MM_yyyy')}.pdf`);
@@ -463,11 +615,24 @@ function IncomeExpense() {
 
   const handleExportClick = (type) => {
     setExportType(type);
+    setDateFilterType('range');
+    setExportStartDate(startOfMonth(new Date()));
+    setExportEndDate(endOfMonth(new Date()));
+    setExportSpecificDate(new Date());
+    setSelectedReferredBy('all');
     setExportDialogOpen(true);
+  };
+
+  const handleExport = () => {
+    generatePDF();
   };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
+  };
+
+  const handleExpensePageChange = (event, newPage) => {
+    setExpensePage(newPage);
   };
 
   const handleFilterChange = (type, field, value) => {
@@ -496,6 +661,16 @@ function IncomeExpense() {
     }
   };
 
+  const handleUpdatePrice = async (newPrice) => {
+    try {
+      await iqamaPriceApi.update(newPrice);
+      await loadIqamaPrice();
+    } catch (error) {
+      console.error('Error updating IQAMA price:', error);
+      throw new Error('Failed to update IQAMA price. Please try again.');
+    }
+  };
+
   const fetchCompanies = async () => {
     try {
       const response = await companyApi.getAll();
@@ -518,13 +693,24 @@ function IncomeExpense() {
             {t('incomeExpense.title')}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+          {user?.isAdmin && (
+            <Button
+              startIcon={<PeopleIcon />}
+              onClick={() => navigate('/users')}
+              variant="outlined"
+              size="small"
+              sx={{ mr: 1 }}
+            >
+              {t('incomeExpense.buttons.manageUsers')}
+            </Button>
+          )}
           <Button
             startIcon={<WalletIcon />}
             onClick={() => setIsIqamaPriceDialogOpen(true)}
             variant="outlined"
             size="small"
           >
-            {t('incomeExpense.buttons.setIqamaPrice')}
+            {t('incomeExpense.buttons.setIqamaPrice', { price: iqamaPrice })}
           </Button>
         </Stack>
 
@@ -551,8 +737,8 @@ function IncomeExpense() {
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('income')}
               onExport={() => handleExportClick('income')}
-              onEdit={(item) => handleEdit(item, 'income')}
-              onDelete={(item) => handleDeleteClick({ ...item, type: 'income' })}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
               page={page}
               onPageChange={handleChangePage}
               rowsPerPage={rowsPerPage}
@@ -576,8 +762,8 @@ function IncomeExpense() {
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('expense')}
               onExport={() => handleExportClick('expense')}
-              onEdit={(item) => handleEdit(item, 'expense')}
-              onDelete={(item) => handleDeleteClick({ ...item, type: 'expense' })}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
               page={expensePage}
               onPageChange={handleExpensePageChange}
               rowsPerPage={expenseRowsPerPage}
@@ -613,7 +799,7 @@ function IncomeExpense() {
             setDeleteConfirmOpen(false);
             setItemToDelete(null);
           }}
-          onConfirm={handleConfirmDelete}
+          onConfirm={handleDelete}
         />
 
         <ExportDialog
@@ -631,18 +817,18 @@ function IncomeExpense() {
           onEndDateChange={setExportEndDate}
           onSpecificDateChange={setExportSpecificDate}
           onReferredByChange={(value) => setSelectedReferredBy(value)}
-          onExport={generatePDF}
+          onExport={handleExport}
         />
 
         <IqamaPriceDialog
           open={isIqamaPriceDialogOpen}
           currentPrice={iqamaPrice}
           onClose={() => setIsIqamaPriceDialogOpen(false)}
-          onSave={handleIqamaPriceChange}
+          onSave={handleUpdatePrice}
         />
       </Box>
     </Container>
   );
 }
 
-export default IncomeExpense;
+export default NasserIncomeExpense;
