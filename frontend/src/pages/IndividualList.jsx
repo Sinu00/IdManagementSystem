@@ -81,6 +81,11 @@ const getDaysUntilExpiry = (expiryDate) => {
   return Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
 };
 
+const formatText = (text) => {
+  if (!text) return '';
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};
+
 function IndividualList() {
   const { id: companyId } = useParams();
   const [allIndividuals, setAllIndividuals] = useState([]);
@@ -834,11 +839,11 @@ function IndividualList() {
                                 {individual.name?.charAt(0)}
                               </Avatar>
                               <Box flex={1}>
-                                <Typography variant="h6" fontWeight="bold">
-                                  {individual.name}
+                                <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1rem' }}>
+                                  {formatText(individual.name)}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                  {individual.nationality}
+                                  {formatText(individual.nationality)}
                                 </Typography>
                               </Box>
                             </Box>
@@ -1148,4 +1153,4 @@ function IndividualList() {
   );
 }
 
-export default IndividualList; 
+export default IndividualList;

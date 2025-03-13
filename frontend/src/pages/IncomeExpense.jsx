@@ -525,15 +525,26 @@ function IncomeExpense() {
           >
                 {t('incomeExpense.title')}
               </Typography>
-          <Box sx={{ flexGrow: 1 }} />
-              <Button
-            startIcon={<WalletIcon />}
-                onClick={() => setIsIqamaPriceDialogOpen(true)}
+              <Box sx={{ flexGrow: 1 }} />
+          {user?.username == "Suhail" && (
+            <Button
+              startIcon={<PeopleIcon />}
+              onClick={() => navigate('/users')}
               variant="outlined"
-                    size="small"
+              size="small"
+              sx={{ mr: 1 }}
+            >
+              {t('incomeExpense.buttons.manageUsers')}
+            </Button>
+          )}
+          <Button
+            startIcon={<WalletIcon />}
+            onClick={() => setIsIqamaPriceDialogOpen(true)}
+            variant="outlined"
+            size="small"
           >
-            {t('incomeExpense.buttons.setIqamaPrice')}
-                  </Button>
+            {t('incomeExpense.buttons.setIqamaPrice', { price: iqamaPrice })}
+          </Button>
                 </Stack>
 
         {/* Stats Cards */}

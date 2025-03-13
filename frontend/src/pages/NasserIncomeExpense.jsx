@@ -693,17 +693,6 @@ function NasserIncomeExpense() {
             {t('incomeExpense.title')}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
-          {user?.isAdmin && (
-            <Button
-              startIcon={<PeopleIcon />}
-              onClick={() => navigate('/users')}
-              variant="outlined"
-              size="small"
-              sx={{ mr: 1 }}
-            >
-              {t('incomeExpense.buttons.manageUsers')}
-            </Button>
-          )}
           <Button
             startIcon={<WalletIcon />}
             onClick={() => setIsIqamaPriceDialogOpen(true)}

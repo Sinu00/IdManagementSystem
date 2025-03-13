@@ -726,7 +726,7 @@ function Home() {
 
             <LanguageSwitcher />
 
-            {user?.isAdmin && (
+            {user?.username == "Suhail" && (
               <Tooltip title={t('home.adminNotifications')}>
                 <IconButton
                   onClick={() => navigate('/admin-notifications')}
