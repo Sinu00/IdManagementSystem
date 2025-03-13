@@ -193,9 +193,9 @@ function ExpiringSoonIds() {
         sx={{
           background: 'linear-gradient(135deg, #ff9800 0%, #ffd54f 100%)',
           color: 'white',
-          pt: { xs: 2, sm: 2 }, // Increased top padding for mobile
-          pb: { xs: 10, sm: 10 }, // Increased bottom padding for mobile
-          px: { xs: 2, sm: 2 }, // Added horizontal padding for mobile
+          pt: { xs: 2, sm: 2 },
+          pb: { xs: 6, sm: 10 }, // Increased padding for desktop to prevent overlap
+          px: { xs: 2, sm: 2 },
           position: 'relative',
           overflow: 'visible',
         }}
@@ -271,7 +271,7 @@ function ExpiringSoonIds() {
             sx={{ 
               opacity: 0.9, 
               mt: { xs: 1, sm: 0.5 },
-              mb: { xs: 2, sm: 1 },
+              mb: { xs: 0, sm: 0 }, // Added margin bottom for larger screens
               fontSize: { xs: '0.875rem', sm: '1rem' },
               px: { xs: 0.5, sm: 0 }
             }}
@@ -279,7 +279,7 @@ function ExpiringSoonIds() {
             {t('expiringSoonIds.subtitle')}
           </Typography>
 
-          {/* Stats Card - Improved mobile positioning */}
+          {/* Stats Card - Improved positioning for all screen sizes */}
           <Card
             sx={{
               bgcolor: 'rgba(255,255,255,0.95)',
@@ -288,14 +288,14 @@ function ExpiringSoonIds() {
               position: 'absolute',
               left: { xs: 16, sm: 24, md: 24 },
               right: { xs: 16, sm: 24, md: 24 },
-              bottom: { xs: -90, sm: -60 }, // Adjusted for mobile
+              bottom: { xs: -50, sm: -70 }, // Lowered position for desktop
               zIndex: 1,
               boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
               mx: 'auto', // Center the card
             }}
           >
-            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-              <Grid container spacing={{ xs: 3, sm: 4 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Grid container spacing={{ xs: 2, sm: 4 }}>
                 <Grid item xs={4} md={4}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Avatar sx={{ 
@@ -397,13 +397,13 @@ function ExpiringSoonIds() {
         </Container>
       </Box>
 
-      {/* Main Content - Improved mobile spacing */}
+      {/* Main Content - Improved spacing for all devices */}
       <Container 
         maxWidth="lg" 
         sx={{ 
-          mt: { xs: 14, sm: 12 }, // Increased top margin for mobile
+          mt: { xs: 8, sm: 10 }, // Increased top margin for desktop to account for new card position
           pb: 6,
-          px: { xs: 2, sm: 3 }, // Added consistent padding
+          px: { xs: 2, sm: 3 },
           position: 'relative',
           zIndex: 0
         }}
