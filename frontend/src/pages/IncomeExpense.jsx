@@ -258,9 +258,9 @@ function IncomeExpense() {
     try {
       setLoading(true);
       if (itemToDelete.type === 'income') {
-        await incomeApi.deleteIncome(itemToDelete._id);
+        await incomeApi.delete(itemToDelete._id);
       } else {
-        await expenseApi.deleteExpense(itemToDelete._id);
+        await expenseApi.delete(itemToDelete._id);
       }
       setDeleteConfirmOpen(false);
       setItemToDelete(null);

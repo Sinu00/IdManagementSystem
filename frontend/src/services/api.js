@@ -128,7 +128,7 @@ export const expenseApi = {
   getById: (id) => api.get(`/api/expense/${id}`),
   create: (data) => api.post('/api/expense', data),
   update: (id, data) => api.put(`/api/expense/${id}`, data),
-  delete: (id) => api.delete(`/api/expense/${id}`),
+  delete: (id) => api.delete(`/api/expense/${id}`),  // This line was missing
   getByDateRange: (startDate, endDate) => 
     api.get(`/api/expense/filter/date?startDate=${startDate}&endDate=${endDate}`),
   getFilteredExpense: (filters) =>
@@ -166,4 +166,4 @@ export const nasserApi = {
   getById: (id, type) => api.get(`/api/nasser/record/${id}?type=${type}`)
 };
 
-export default api; 
+export default api;
