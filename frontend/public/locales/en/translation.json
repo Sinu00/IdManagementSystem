@@ -5,6 +5,8 @@
     "arabic": "Arabic",
     "search": "Search",
     "filter": "Filter Status",
+    "showAll": "Show All",
+    "clearFilter": "Clear Filter",
     "sortBy": "Sort By",
     "actions": "Actions",
     "copy": "Copy",
@@ -30,7 +32,8 @@
     "paymentAmount": "Payment Amount (SAR)",
     "currentStatus": "Current Status",
     "totalAmount": "Total Amount",
-    "namora": "Namora Contracting"
+    "namora": "Namora Contracting",
+    "tryAgain": "Try Again"
   },
   "auth": {
     "login": "Login",
@@ -233,7 +236,9 @@
     },
     "noResults": {
       "title": "No IDs Found",
-      "subtitle": "Try adjusting your search or filter"
+      "subtitle": "Try adjusting your search or filter",
+      "withFilter": "No IDs found with referral by {{filter}}",
+      "tryOtherFilter": "Try clearing the filter or select a different referrer"
     },
     "modifyExpiry": {
       "title": "Modify Expiry Date",
@@ -258,7 +263,9 @@
     },
     "noResults": {
       "title": "No IDs Found",
-      "subtitle": "No IDs are expiring soon"
+      "subtitle": "No IDs are expiring soon",
+      "withFilter": "No IDs found with referral by {{filter}}",
+      "tryOtherFilter": "Try clearing the filter or select a different referrer"
     },
     "modifyExpiry": {
       "title": "Modify Expiry Date",
