@@ -14,11 +14,22 @@ import {
   TextField,
   Typography,
   Alert,
+  Autocomplete,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { companyApi, mainPersonApi, userApi } from '../services/api';
 import { toast } from 'react-hot-toast';
+
+const NATIONALITIES = [
+  'Indian',
+  'Pakistan',
+  'Bangladesh',
+  'Sudan',
+  'Bengal',
+  'Nepal',
+  'Philippines'
+];
 
 const emptyCompany = {
   name: '',
@@ -271,8 +282,19 @@ const BulkMigration = () => {
     }
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !loading) {
+      handleSubmit();
+    }
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container 
+      maxWidth="lg" 
+      sx={{ mt: 4, mb: 4 }}
+      onKeyDown={handleKeyDown}
+      tabIndex={0} // Makes the container focusable
+    >
       <Typography variant="h4" gutterBottom>
         Bulk Data Migration
       </Typography>
@@ -469,11 +491,18 @@ const BulkMigration = () => {
                           />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                          <TextField
+                          <Autocomplete
                             fullWidth
-                            label="Nationality"
+                            freeSolo
+                            options={NATIONALITIES}
                             value={individual.nationality}
-                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'nationality', e.target.value)}
+                            onChange={(_, newValue) => handleIndividualChange(companyIndex, individualIndex, 'nationality', newValue)}
+                            renderInput={(params) => (
+                              <TextField 
+                                {...params} 
+                                label="Nationality"
+                              />
+                            )}
                           />
                         </Grid>
                         <Grid item xs={12} sm={6}>
