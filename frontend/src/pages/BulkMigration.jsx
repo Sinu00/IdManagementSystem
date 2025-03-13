@@ -19,9 +19,6 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { companyApi, mainPersonApi, userApi } from '../services/api';
 import { toast } from 'react-hot-toast';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 const emptyCompany = {
   name: '',
@@ -46,6 +43,54 @@ const emptyIndividual = {
   referredBy: '',
   amount: '',
   iqamaPrice: 5000
+};
+
+const formatDate = (input) => {
+  if (!input) return { display: '', backend: null, isValid: true };
+  
+  const inputStr = String(input);
+  
+  // If the input already contains separators
+  if (inputStr.includes('-') || inputStr.includes('/')) {
+    // Handle pasted dates (either DD-MM-YYYY or YYYY-MM-DD)
+    const datePattern = /^(\d{2})[-/](\d{2})[-/](\d{4})$|^(\d{4})[-/](\d{2})[-/](\d{2})$/;
+    const match = inputStr.match(datePattern);
+    // ...rest of the existing pasted date handling...
+  }
+
+  // Handle direct typing (numbers only)
+  const digits = inputStr.replace(/\D/g, '');
+  let display = digits;
+
+  // Format with hyphens while typing
+  if (digits.length > 4) {
+    // Format: DD-MM-YYYY
+    display = `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`;
+  } else if (digits.length > 2) {
+    // Format: DD-MM
+    display = `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  } else {
+    // Just the day part
+    display = digits;
+  }
+
+  // Only validate if we have a complete date
+  if (digits.length === 8) {
+    const day = parseInt(digits.slice(0, 2), 10);
+    const month = parseInt(digits.slice(2, 4), 10);
+    const year = parseInt(digits.slice(4, 8), 10);
+
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 2000 && year <= 2100) {
+      return {
+        display: `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`,
+        backend: `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`,
+        isValid: true
+      };
+    }
+    return { display, backend: null, isValid: false };
+  }
+
+  return { display, backend: null, isValid: digits.length < 8 };
 };
 
 const BulkMigration = () => {
@@ -161,8 +206,8 @@ const BulkMigration = () => {
           if (!individual.iqamaNumber?.trim()) {
             throw new Error(`Company ${companyIndex + 1}, Individual ${individualIndex + 1}: Iqama number is required`);
           }
-          if (!individual.expiryDate) {
-            throw new Error(`Company ${companyIndex + 1}, Individual ${individualIndex + 1}: Expiry date is required`);
+          if (!individual.expiryDate?.value && !formatDate(individual.expiryDate)?.backend) {
+            throw new Error(`Company ${companyIndex + 1}, Individual ${individualIndex + 1}: Valid expiry date is required`);
           }
 
           // Check for duplicate iqama numbers
@@ -203,6 +248,7 @@ const BulkMigration = () => {
         saudiAmount: company.saudiAmount === '' ? 0 : Number(company.saudiAmount),
         individuals: company.individuals?.map(individual => ({
           ...individual,
+          expiryDate: individual.expiryDate?.value || formatDate(individual.expiryDate)?.backend || null,
           amount: individual.amount === '' ? 0 : Number(individual.amount),
           iqamaPrice: Number(individual.iqamaPrice) || 5000
         }))
@@ -226,298 +272,308 @@ const BulkMigration = () => {
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Bulk Data Migration
-        </Typography>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Bulk Data Migration
+      </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-        <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Select Main Person</InputLabel>
-                <Select
-                  value={selectedMainPerson}
-                  onChange={handleMainPersonChange}
-                  label="Select Main Person"
-                >
-                  {mainPersons.map((person) => (
-                    <MenuItem key={person._id} value={person._id}>
-                      {person.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3, border: '1px solid', borderColor: 'divider' }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel>Select Main Person</InputLabel>
+              <Select
+                value={selectedMainPerson}
+                onChange={handleMainPersonChange}
+                label="Select Main Person"
+              >
+                {mainPersons.map((person) => (
+                  <MenuItem key={person._id} value={person._id}>
+                    {person.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
 
-            {companies.map((company, companyIndex) => (
-              <Grid item xs={12} key={companyIndex}>
-                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="h6">Company {companyIndex + 1}</Typography>
-                    {companies.length > 1 && (
-                      <IconButton
-                        onClick={() => handleRemoveCompany(companyIndex)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </Box>
+          {companies.map((company, companyIndex) => (
+            <Grid item xs={12} key={companyIndex}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="h6">Company {companyIndex + 1}</Typography>
+                  {companies.length > 1 && (
+                    <IconButton
+                      onClick={() => handleRemoveCompany(companyIndex)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                </Box>
 
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Company Name"
-                        value={company.name}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'name', e.target.value)}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="CR Number"
-                        value={company.crNumber}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'crNumber', e.target.value)}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        label="Sponsor ID"
-                        value={company.sponserId}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'sponserId', e.target.value)}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        label="GOSI Number"
-                        value={company.gosiNumber}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'gosiNumber', e.target.value)}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        label="MOL Number"
-                        value={company.molNumber}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'molNumber', e.target.value)}
-                      />
-                    </Grid>
-
-                    {/* Amount Fields */}
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" sx={{ mb: 2, mt: 1 }}>Company Amounts</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="CR Amount"
-                        value={company.crAmount}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'crAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="Qiwa Amount"
-                        value={company.qiwaAmount}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'qiwaAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="Muqeem Amount"
-                        value={company.muqeemAmount}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'muqeemAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="EFA Amount"
-                        value={company.efaAmount}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'efaAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="Saudi Amount"
-                        value={company.saudiAmount}
-                        onChange={(e) => handleCompanyChange(companyIndex, 'saudiAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                      />
-                    </Grid>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Company Name"
+                      value={company.name}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'name', e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="CR Number"
+                      value={company.crNumber}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'crNumber', e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      label="Sponsor ID"
+                      value={company.sponserId}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'sponserId', e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      label="GOSI Number"
+                      value={company.gosiNumber}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'gosiNumber', e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      label="MOL Number"
+                      value={company.molNumber}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'molNumber', e.target.value)}
+                    />
                   </Grid>
 
-                  <Box sx={{ mt: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="subtitle1">Individuals (Optional)</Typography>
-                      <Button
-                        startIcon={<AddIcon />}
-                        onClick={() => handleAddIndividual(companyIndex)}
-                        size="small"
-                      >
-                        Add Individual
-                      </Button>
-                    </Box>
-                    
-                    {(!company.individuals || company.individuals.length === 0) && (
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ 
-                          fontStyle: 'italic',
-                          mb: 2,
-                          textAlign: 'center',
-                          p: 2,
-                          bgcolor: 'action.hover',
-                          borderRadius: 1
-                        }}
-                      >
-                        No individuals added yet. You can add individuals or leave it empty.
-                      </Typography>
-                    )}
+                  {/* Amount Fields */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ mb: 2, mt: 1 }}>Company Amounts</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="CR Amount"
+                      value={company.crAmount}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'crAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Qiwa Amount"
+                      value={company.qiwaAmount}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'qiwaAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Muqeem Amount"
+                      value={company.muqeemAmount}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'muqeemAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="EFA Amount"
+                      value={company.efaAmount}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'efaAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="Saudi Amount"
+                      value={company.saudiAmount}
+                      onChange={(e) => handleCompanyChange(companyIndex, 'saudiAmount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    />
+                  </Grid>
+                </Grid>
 
-                    {company.individuals?.map((individual, individualIndex) => (
-                      <Box 
-                        key={individualIndex} 
-                        sx={{ 
-                          mt: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          p: 3
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <IconButton
-                            onClick={() => handleRemoveIndividual(companyIndex, individualIndex)}
-                            color="error"
-                            size="small"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              fullWidth
-                              label="Name"
-                              value={individual.name}
-                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'name', e.target.value)}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              fullWidth
-                              label="Nationality"
-                              value={individual.nationality}
-                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'nationality', e.target.value)}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              fullWidth
-                              label="Phone Number"
-                              value={individual.phoneNumber}
-                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'phoneNumber', e.target.value)}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              fullWidth
-                              label="Iqama Number"
-                              value={individual.iqamaNumber}
-                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'iqamaNumber', e.target.value)}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <DatePicker
-                              label="Expiry Date"
-                              value={individual.expiryDate}
-                              onChange={(date) => handleIndividualChange(companyIndex, individualIndex, 'expiryDate', date)}
-                              renderInput={(params) => <TextField {...params} fullWidth />}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth>
-                              <InputLabel>Referred By</InputLabel>
-                              <Select
-                                value={individual.referredBy}
-                                onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'referredBy', e.target.value)}
-                                label="Referred By"
-                              >
-                                {users.map((user) => (
-                                  <MenuItem key={user._id} value={user.username}>
-                                    {user.username}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              fullWidth
-                              type="number"
-                              label="Amount"
-                              value={individual.amount}
-                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              fullWidth
-                              type="number"
-                              label="Iqama Price"
-                              value={individual.iqamaPrice}
-                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'iqamaPrice', parseFloat(e.target.value))}
-                            />
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    ))}
+                <Box sx={{ mt: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="subtitle1">Individuals (Optional)</Typography>
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddIndividual(companyIndex)}
+                      size="small"
+                    >
+                      Add Individual
+                    </Button>
                   </Box>
-                </Box>
-              </Grid>
-            ))}
+                  
+                  {(!company.individuals || company.individuals.length === 0) && (
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ 
+                        fontStyle: 'italic',
+                        mb: 2,
+                        textAlign: 'center',
+                        p: 2,
+                        bgcolor: 'action.hover',
+                        borderRadius: 1
+                      }}
+                    >
+                      No individuals added yet. You can add individuals or leave it empty.
+                    </Typography>
+                  )}
 
-            <Grid item xs={12}>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={handleAddCompany}
-                sx={{ mr: 2 }}
-              >
-                Add Company
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                Submit Migration
-              </Button>
+                  {company.individuals?.map((individual, individualIndex) => (
+                    <Box 
+                      key={individualIndex} 
+                      sx={{ 
+                        mt: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        p: 3
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton
+                          onClick={() => handleRemoveIndividual(companyIndex, individualIndex)}
+                          color="error"
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Name"
+                            value={individual.name}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'name', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Nationality"
+                            value={individual.nationality}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'nationality', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Phone Number"
+                            value={individual.phoneNumber}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'phoneNumber', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Iqama Number"
+                            value={individual.iqamaNumber}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'iqamaNumber', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Expiry Date"
+                            value={individual.expiryDate?.display || individual.expiryDate || ''}
+                            onChange={(e) => {
+                              const result = formatDate(e.target.value);
+                              handleIndividualChange(companyIndex, individualIndex, 'expiryDate', 
+                                result.backend ? { display: result.display, value: result.backend } : result.display
+                              );
+                            }}
+                            error={individual.expiryDate && !formatDate(individual.expiryDate)?.isValid}
+                            helperText={
+                              individual.expiryDate && !formatDate(individual.expiryDate)?.isValid
+                                ? "Invalid date. Use DD-MM-YYYY format"
+                                : "Format: DD-MM-YYYY"
+                            }
+                            placeholder="DD-MM-YYYY"
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <FormControl fullWidth>
+                            <InputLabel>Referred By</InputLabel>
+                            <Select
+                              value={individual.referredBy}
+                              onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'referredBy', e.target.value)}
+                              label="Referred By"
+                            >
+                              {users.map((user) => (
+                                <MenuItem key={user._id} value={user.username}>
+                                  {user.username}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="Amount"
+                            value={individual.amount}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'amount', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="Iqama Price"
+                            value={individual.iqamaPrice}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'iqamaPrice', parseFloat(e.target.value))}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             </Grid>
+          ))}
+
+          <Grid item xs={12}>
+            <Button
+              startIcon={<AddIcon />}
+              onClick={handleAddCompany}
+              sx={{ mr: 2 }}
+            >
+              Add Company
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              Submit Migration
+            </Button>
           </Grid>
-        </Box>
-      </Container>
-    </LocalizationProvider>
+        </Grid>
+      </Box>
+    </Container>
   );
 };
 
-export default BulkMigration; 
+export default BulkMigration;
