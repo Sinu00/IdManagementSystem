@@ -953,7 +953,7 @@ function IndividualList() {
                                   }}
                                 >
                                   {!individual.isFullyPaid && (
-                                    <Tooltip title={t('common.process')}>
+                                    <Tooltip title={t('common.paypendingamount')}>
                                       <Button
                                         size="small"
                                         color="warning"
@@ -971,13 +971,13 @@ function IndividualList() {
                                           }
                                         }}
                                       >
-                                        {t('common.process')}
+                                        {t('common.pay')}
                                       </Button>
                                     </Tooltip>
                                   )}
 
                                   {individual.isFullyPaid && (
-                                    <Tooltip title={t('common.renew')}>
+                                    <Tooltip title={t('common.renewiqamatooltip')}>
                                       <Button
                                         size="small"
                                         color="success"
@@ -1002,7 +1002,7 @@ function IndividualList() {
 
                                   {user?.isAdmin && (
                                     <>
-                                      <Tooltip title={t('common.edit')}>
+                                      <Tooltip title={t('common.editiqamatooltip')}>
                                         <Button
                                           size="small"
                                           color="info"
@@ -1024,7 +1024,7 @@ function IndividualList() {
                                         </Button>
                                       </Tooltip>
 
-                                      <Tooltip title={t('common.delete')}>
+                                      <Tooltip title={t('common.deleteiqamatootip')}>
                                         <Button
                                           size="small"
                                           color="error"

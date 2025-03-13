@@ -961,7 +961,7 @@ function CompanyList() {
                           >
                             {user?.isAdmin && (
                               <>
-                                <Tooltip title={t('common.delete')}>
+                                <Tooltip title={t('common.deletetooltip')}>
                                   <Button
                                     size="small"
                                     color="error"
@@ -983,7 +983,7 @@ function CompanyList() {
                                   </Button>
                                 </Tooltip>
 
-                                <Tooltip title={t('common.edit')}>
+                                <Tooltip title={t('common.edittooltip')}>
                                   <Button
                                     size="small"
                                     color="primary"
@@ -1007,7 +1007,7 @@ function CompanyList() {
                               </>
                             )}
 
-                            <Tooltip title={company.paymentStatus === 'fully_paid' ? t('common.renew') : t('common.process')}>
+                            <Tooltip title={company.paymentStatus === 'fully_paid' ? t('common.renew') : t('common.paypendingamount')}>
                               <Button
                                 size="small"
                                 color={company.paymentStatus === 'fully_paid' ? "success" : "info"}
@@ -1029,11 +1029,11 @@ function CompanyList() {
                                   }
                                 }}
                               >
-                                {company.paymentStatus === 'fully_paid' ? t('common.renew') : t('common.process')}
+                                {company.paymentStatus === 'fully_paid' ? t('common.renew') : t('common.pay')}
                               </Button>
                             </Tooltip>
 
-                            <Tooltip title={t('company.saudiPayment')}>
+                            <Tooltip title={t('company.saudiPaymenttooltip')}>
                               <Button
                                 size="small"
                                 color="secondary"
