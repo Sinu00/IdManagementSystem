@@ -156,7 +156,7 @@ function ExpiringSoonIds() {
           overflow: 'visible',
         }}
       >
-        <Container maxWidth="lg">
+        <Container maxWidth="lg" disableGutters >
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
             <IconButton 
               onClick={() => navigate(-1)} 
