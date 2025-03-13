@@ -26,9 +26,9 @@ const NATIONALITIES = [
   'Pakistan',
   'Bangladesh',
   'Sudan',
-  'Bengal',
   'Nepal',
-  'Philippines'
+  'Philippines',
+  '.'
 ];
 
 const emptyCompany = {
