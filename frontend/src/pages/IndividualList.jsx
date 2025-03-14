@@ -64,6 +64,7 @@ import { IndividualCardSkeletonList } from '../components/skeletons/IndividualCa
 import PaymentDialog from '../components/dialogs/PaymentDialog';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import printIdPdf from '../utils/pdf/PrintIdPdf';
 
 const calculateStatus = (expiryDate) => {
   const daysUntilExpiry = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -429,6 +430,30 @@ function IndividualList() {
     });
   };
 
+  // Handle print PDF functionality
+  const handlePrintPdf = () => {
+    try {
+      if (!company) {
+        toast.error(t('toast.noCompanyData'));
+        return;
+      }
+      
+      // Use our custom PDF generator instead of window.print()
+      const success = printIdPdf(company, sortedData, {
+        filename: `${company.name}-individuals-report.pdf`
+      });
+      
+      if (success) {
+        toast.success(t('toast.pdfGenerated'));
+      } else {
+        toast.error(t('toast.pdfGenerationFailed'));
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error(t('toast.pdfGenerationError'));
+    }
+  };
+
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
@@ -483,7 +508,7 @@ function IndividualList() {
                 >
                   <Tooltip title={t('common.print')}>
                     <IconButton
-                      onClick={() => window.print()}
+                      onClick={handlePrintPdf}
                       size="small"
                       sx={{ 
                         bgcolor: 'secondary.main',
@@ -700,7 +725,7 @@ function IndividualList() {
                 >
                   <Tooltip title={t('common.print')}>
                     <IconButton
-                      onClick={() => window.print()}
+                      onClick={handlePrintPdf}
                       size="small"
                       sx={{ 
                         bgcolor: 'secondary.main',

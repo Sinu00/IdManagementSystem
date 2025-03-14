@@ -209,7 +209,7 @@ router.post('/:id/payment', protect, async (req, res) => {
       return res.status(400).json({ message: 'Invalid company ID' });
     }
 
-    const { paymentType, paymentAmount, isRenewal, resetPayments } = req.body;
+    const { paymentType, paymentAmount, isRenewal, resetPayments, clear } = req.body;
     
     // Find the company
     const company = await Company.findById(req.params.id);
@@ -242,8 +242,13 @@ router.post('/:id/payment', protect, async (req, res) => {
             company.efaAmount = paymentAmount;
             break;
           case 'saudi':
-            company.saudiAmount = (company.saudiAmount || 0) + paymentAmount;
-            company.saudiCount = (company.saudiCount || 0) + 1;
+            if (clear) {
+              company.saudiAmount = 0;
+              company.saudiCount = 0;
+            } else {
+              company.saudiAmount = (company.saudiAmount || 0) + paymentAmount;
+              company.saudiCount = (company.saudiCount || 0) + 1;
+            }
             break;
           case 'cr':
             company.crAmount = paymentAmount;
@@ -268,18 +273,20 @@ router.post('/:id/payment', protect, async (req, res) => {
       
       await company.save();
 
-      // Create expense entry
-      const expense = new Expense({
-        name: isRenewal 
-          ? `CR Renewal Payment for ${company.name}`
-          : `${paymentType.toUpperCase()} Payment for ${company.name}`,
-        amount: paymentAmount,
-        company: company._id,
-        mainPerson: company.mainPerson,
-        expenseType: paymentType,
-        specification: isRenewal ? 'Renewal CR Payment' : `Regular ${paymentType.toUpperCase()} Payment`
-      });
-      await expense.save();
+      // Create expense entry only if not clearing Saudi payment
+      if (!(paymentType === 'saudi' && clear)) {
+        const expense = new Expense({
+          name: isRenewal 
+            ? `CR Renewal Payment for ${company.name}`
+            : `${paymentType.toUpperCase()} Payment for ${company.name}`,
+          amount: paymentAmount,
+          company: company._id,
+          mainPerson: company.mainPerson,
+          expenseType: paymentType,
+          specification: isRenewal ? 'Renewal CR Payment' : `Regular ${paymentType.toUpperCase()} Payment`
+        });
+        await expense.save();
+      }
       
       // Return the updated company
       const updatedCompany = await Company.findById(req.params.id)
@@ -314,56 +321,6 @@ router.post('/:id/payment', protect, async (req, res) => {
     res.status(400).json({ 
       message: error.message || 'Failed to process payment' 
     });
-  }
-});
-
-// Process Saudi payment
-router.post('/:id/saudi-payment', protect, async (req, res) => {
-  try {
-    const { amount, clear } = req.body;
-    const company = await Company.findById(req.params.id);
-    
-    if (!company) {
-      return res.status(404).json({ message: 'Company not found' });
-    }
-
-    // If user is admin, process payment directly
-    if (req.user.isAdmin) {
-      if (clear) {
-        company.saudiAmount = 0;
-        company.saudiCount = 0;
-      } else {
-        company.saudiAmount += amount;
-        company.saudiCount += 1;
-      }
-      
-      await company.save();
-      return res.json(company);
-    }
-
-    // For normal users, create a payment notification
-    const notification = new NotifyCompanyAdmin({
-      name: company.name,
-      mainPerson: company.mainPerson,
-      requestType: 'PAYMENT',
-      paymentType: 'saudi',
-      amount: amount,
-      addedBy: req.user._id,
-      originalCompany: company._id
-    });
-
-    await notification.save();
-    const populatedNotification = await NotifyCompanyAdmin.findById(notification._id)
-      .populate('mainPerson', 'name email contactNumber')
-      .populate('addedBy', 'username')
-      .populate('originalCompany', 'name');
-
-    res.json({
-      message: 'Saudi payment request sent for approval',
-      notification: populatedNotification
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
   }
 });
 

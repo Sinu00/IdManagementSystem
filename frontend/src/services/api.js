@@ -71,7 +71,11 @@ export const companyApi = {
   delete: (id) => api.delete(`/api/companies/${id}`),
   getStats: () => api.get('/api/companies/stats'),
   processPayment: (id, data) => api.post(`/api/companies/${id}/payment`, data),
-  processSaudiPayment: (id, data) => api.post(`/api/companies/${id}/saudi-payment`, data),
+  processSaudiPayment: (id, data) => api.post(`/api/companies/${id}/payment`, { 
+    paymentType: 'saudi',
+    paymentAmount: data.amount,
+    clear: data.clear
+  }),
   bulkMigrate: (data) => api.post('/api/companies/bulk-migrate', data),
 };
 
