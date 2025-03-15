@@ -307,6 +307,7 @@ router.post('/', protect, async (req, res) => {
       totalPaidAmount: initialPayment,
       pendingAmount,
       isFullyPaid,
+      referredBy: req.body.referredBy || req.user.username, 
       lastUpdatedBy: req.user.username,
       lastUpdateDate: new Date(),
       paymentHistory: initialPayment > 0 ? [{
@@ -323,10 +324,7 @@ router.post('/', protect, async (req, res) => {
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
         amount: initialPayment,
-        referredBy: req.user.username,
-        addedBy: req.user.username,
-        dateAndTime: new Date(),
-        notes: 'Initial payment for new individual',
+        referredBy: individual.referredBy, // Use the individual's referredBy
         mainPerson: company.mainPerson // Use company's mainPerson
       });
     }
@@ -433,10 +431,7 @@ router.put('/:id', protect, async (req, res) => {
           name: individual.name,
           iqamaNumber: individual.iqamaNumber,
           amount: renewalPayment,
-          referredBy: individual.referredBy || '',
-          addedBy: req.user.username,
-          dateAndTime: new Date(),
-          notes: 'Renewal payment',
+          referredBy: individual.referredBy, // Use the original referredBy
           mainPerson: company.mainPerson
         });
 
@@ -459,6 +454,11 @@ router.put('/:id', protect, async (req, res) => {
     // Remove isRenewal flag and ensure mainPerson is set
     delete req.body.isRenewal;
     req.body.mainPerson = company.mainPerson;
+
+    // Keep the original referredBy if not explicitly changed
+    if (!req.body.referredBy) {
+      delete req.body.referredBy;
+    }
 
     const updatedIndividual = await Individual.findByIdAndUpdate(
       req.params.id,

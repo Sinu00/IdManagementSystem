@@ -300,7 +300,7 @@
       "amount": "المبلغ",
       "date": "التاريخ",
       "actions": "الإجراءات",
-      "mainPerson": "الشخص الرئيسي",
+      "mainPerson": "الكفلاء",
       "referredBy": "تمت الإحالة بواسطة",
       "iqamaNumber": "رقم الإقامة",
       "paidAmount": "المبلغ المدفوع",
@@ -374,7 +374,7 @@
     },
     "filters": {
       "referredBy": "تمت الإحالة بواسطة",
-      "mainPerson": "الشخص الرئيسي",
+      "mainPerson": "الكفلاء",
       "company": "الشركة",
       "paymentStatus": "حالة الدفع",
       "all": "الكل",
@@ -498,7 +498,7 @@
       "username": "اسم المستخدم",
       "role": "الدور",
       "incomeAccess": "صلاحية الدخل",
-      "allowedMainPersons": "الأشخاص المسموح بهم",
+      "allowedMainPersons": "الرعاة المسموح بهم",
       "actions": "الإجراءات",
       "noAccess": "لا يوجد صلاحية"
     },
@@ -530,7 +530,7 @@
         "password": "كلمة المرور",
         "role": "الدور",
         "incomeAccess": "صلاحية الدخل",
-        "allowedMainPersons": "الأشخاص المسموح بهم"
+        "allowedMainPersons": "الرعاة المسموح بهم"
       }
     },
     "buttons": {

@@ -390,9 +390,7 @@ function NasserIncomeExpense() {
 
   const fetchReferredByList = async () => {
     try {
-      console.log('Fetching referred by list...');
       const response = await nasserApi.getReferredByList();
-      console.log('Referred by list:', response.data);
       setReferredByList(response.data);
     } catch (error) {
       console.error('Error fetching referred by list:', error);
@@ -402,7 +400,6 @@ function NasserIncomeExpense() {
 
   const generatePDF = async () => {
     try {
-      console.log('Starting PDF generation...');
       setError('');
       let data;
       const dateFilter = dateFilterType === 'range' 

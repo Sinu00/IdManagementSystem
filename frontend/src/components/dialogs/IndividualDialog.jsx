@@ -12,6 +12,10 @@ import {
   Grid,
   Paper,
   Autocomplete,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -30,6 +34,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     description: '',
     expiryDate: null,
     amount: '',
+    referredBy: '',
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -243,6 +248,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         description: individual.description || '',
         expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
         amount: individual.amount?.toString() || '',
+        referredBy: individual.referredBy || '',
       });
     } else {
       setFormData(initialFormData);
@@ -381,6 +387,24 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     </Grid>
                   </>
                 )}
+
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>{t('individual.referredBy')}</InputLabel>
+                    <Select
+                      value={formData.referredBy || ''}
+                      onChange={handleChange}
+                      name="referredBy"
+                      label={t('individual.referredBy')}
+                    >
+                      {referredByOptions.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
               </Grid>
             )}
 

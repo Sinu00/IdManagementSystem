@@ -299,6 +299,9 @@ const BulkMigration = () => {
       <Typography variant="h4" gutterBottom>
         Bulk Data Migration
       </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        (Data Added from here is not recoded as income or expense)
+      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>

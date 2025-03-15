@@ -134,7 +134,6 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const response = await userApi.getAll();
-      console.log('Fetched users:', response.data); // Log the fetched users
       setUsers(response.data);
       setLoading(false);
     } catch (error) {

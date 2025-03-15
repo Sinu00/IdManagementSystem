@@ -299,7 +299,7 @@
       "amount": "Amount",
       "date": "Date",
       "actions": "Actions",
-      "mainPerson": "Main Person",
+      "mainPerson": "Sponsor",
       "referredBy": "Referred By",
       "iqamaNumber": "Iqama Number",
       "paidAmount": "Paid Amount",
@@ -373,7 +373,7 @@
     },
     "filters": {
       "referredBy": "Referred By",
-      "mainPerson": "Main Person",
+      "mainPerson": "Sponsor",
       "company": "Company",
       "paymentStatus": "Payment Status",
       "all": "All",
@@ -507,7 +507,7 @@
       "username": "Username",
       "role": "Role",
       "incomeAccess": "Income Access",
-      "allowedMainPersons": "Allowed Main Persons",
+      "allowedMainPersons": "Allowed Sponsors",
       "actions": "Actions",
       "noAccess": "No access assigned"
     },
@@ -542,7 +542,7 @@
         "password": "Password",
         "role": "Role",
         "incomeAccess": "Income Access",
-        "allowedMainPersons": "Allowed Main Persons"
+        "allowedMainPersons": "Allowed Sponsors"
       }
     },
     "tooltips": {

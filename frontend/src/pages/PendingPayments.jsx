@@ -482,7 +482,7 @@ function PendingPayments() {
                               <IconButton
                                 size="small"
                                 color="primary"
-                                onClick={() => navigate(`/individuals/${individual._id}`)}
+                                onClick={() => navigate(`/company/${individual.company?._id}/individuals`)}
                                 sx={{ 
                                   bgcolor: '#e3f2fd',
                                   '&:hover': { bgcolor: '#bbdefb' }
