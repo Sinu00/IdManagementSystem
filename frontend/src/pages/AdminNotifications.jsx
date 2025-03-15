@@ -29,7 +29,11 @@ import {
   Tabs,
   Tab,
   Skeleton,
-  Badge
+  Badge,
+  TablePagination,
+  TextField,
+  InputAdornment,
+  MenuItem
 } from '@mui/material';
 import {
   Check as CheckIcon,
@@ -43,10 +47,12 @@ import {
   Autorenew as RenewIcon,
   MonetizationOn as PaymentIcon,
   Business as BusinessIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { notifyAdminApi, notifyCompanyAdminApi } from '../services/api';
+import { notifyAdminApi, notifyCompanyAdminApi, individualApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -142,13 +148,6 @@ function AdminNotifications() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if user is not admin
-  useEffect(() => {
-    if (!user?.isAdmin) {
-      navigate('/');
-    }
-  }, [user, navigate]);
-
   const fetchNotifications = async () => {
     try {
       setRefreshing(true);
@@ -164,29 +163,8 @@ function AdminNotifications() {
         notifyCompanyAdminApi.getAll()
       ]);
 
-      console.log('Raw company notifications:', companyRes.data);
-
-      // For company notifications, if it's a payment request, get the details from originalCompany
-      const processedCompanyNotifications = companyRes.data.map(notification => {
-        if (notification.requestType === 'PAYMENT') {
-          const originalCompany = notification.originalCompany;
-          console.log('Original company data:', originalCompany);
-          
-          return {
-            ...notification,
-            crNumber: originalCompany?.crNumber || '-',
-            sponserId: originalCompany?.sponserId || '-',
-            gosiNumber: originalCompany?.gosiNumber || '-',
-            molNumber: originalCompany?.molNumber || '-'
-          };
-        }
-        return notification;
-      });
-
-      console.log('Processed notifications:', processedCompanyNotifications);
-      
       setIndividualNotifications(Array.isArray(individualRes.data) ? individualRes.data : []);
-      setCompanyNotifications(Array.isArray(processedCompanyNotifications) ? processedCompanyNotifications : []);
+      setCompanyNotifications(Array.isArray(companyRes.data) ? companyRes.data : []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       setError('Failed to load notifications');
@@ -539,7 +517,9 @@ function AdminNotifications() {
                     {loading ? (
                       <Skeleton width={100} />
                     ) : (
-                      t('adminNotifications.pendingCount', { count: individualNotifications.length + companyNotifications.length })
+                      t('adminNotifications.pendingCount', { 
+                        count: individualNotifications.length + companyNotifications.length 
+                      })
                     )}
                   </Typography>
                 </Box>
@@ -564,10 +544,21 @@ function AdminNotifications() {
                       '&.Mui-selected': {
                         color: '#fff',
                         opacity: 1
+                      },
+                      '&:focus': {
+                        outline: 'none'
+                      },
+                      '&.Mui-focusVisible': {
+                        outline: 'none'
                       }
                     },
                     '& .MuiTabs-indicator': {
                       backgroundColor: '#fff'
+                    },
+                    '& .MuiButtonBase-root': {
+                      '&:focus': {
+                        outline: 'none'
+                      }
                     }
                   }}
                 >

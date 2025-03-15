@@ -139,7 +139,7 @@ function Home() {
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 3}}>
+    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: 'background.default', pt: 3 }}>
       <Container maxWidth="lg">
         {/* Stats Section - Show cards immediately with skeletons only for numbers */}
         <Box sx={{ mt: { xs: 0, sm: 3 } }}>
@@ -613,11 +613,11 @@ function Home() {
             alignItems="center"
             justifyContent="center"
           >
-
             <ProfileMenu 
               username={user?.username} 
               onLogout={handleLogout}
             />
+
             <Tooltip title={t('home.printPdf')}>
               <IconButton
                 onClick={() => window.print()}
@@ -725,45 +725,68 @@ function Home() {
             )}
 
             <LanguageSwitcher />
-
             {user?.username == "Suhail" && (
-              <Tooltip title={t('home.adminNotifications')}>
-                <IconButton
-                  onClick={() => navigate('/admin-notifications')}
-                  size="small"
-                  sx={{ 
-                    bgcolor: 'warning.main',
-                    color: 'white',
-                    '&:hover': {
-                      bgcolor: 'warning.dark',
-                    }
-                  }}
-                >
-                  <Badge 
-                    badgeContent={loading ? (
-                      <Skeleton 
-                        variant="circular" 
-                        width={16} 
-                        height={16} 
-                        sx={{ bgcolor: 'warning.main' }} 
-                      />
-                    ) : notificationCount}
-                    color="error"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        right: -3,
-                        top: 3,
-                        border: '2px solid #fff',
-                        padding: '0 4px',
+              <>
+                <Tooltip title={t('home.adminNotifications')}>
+                  <IconButton
+                    onClick={() => navigate('/admin-notifications')}
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'warning.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'warning.dark',
+                      }
+                    }}
+                  >
+                    <Badge 
+                      badgeContent={loading ? (
+                        <Skeleton 
+                          variant="circular" 
+                          width={16} 
+                          height={16} 
+                          sx={{ bgcolor: 'warning.main' }} 
+                        />
+                      ) : notificationCount}
+                      color="error"
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          right: -3,
+                          top: 3,
+                          border: '2px solid #fff',
+                          padding: '0 4px',
+                        }
+                      }}
+                    >
+                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
+                        <NotificationsIcon />
+                      </Avatar>
+                    </Badge>
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+            {user?.isAdmin && (
+              <>
+
+                <Tooltip title={t('home.pendingPayments')}>
+                  <IconButton
+                    onClick={() => navigate('/pending-payments')}
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'error.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'error.dark',
                       }
                     }}
                   >
                     <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
-                      <NotificationsIcon />
+                      <MonetizationIcon />
                     </Avatar>
-                  </Badge>
-                </IconButton>
-              </Tooltip>
+                  </IconButton>
+                </Tooltip>
+              </>
             )}
           </Stack>
         </Container>

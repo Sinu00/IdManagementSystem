@@ -33,7 +33,13 @@
     "currentStatus": "Current Status",
     "totalAmount": "Total Amount",
     "namora": "Namora Contracting",
-    "tryAgain": "Try Again"
+    "tryAgain": "Try Again",
+    "rowsPerPage": "Rows per page",
+    "paginationDisplay": "{{from}}-{{to}} of {{count}}",
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "displayedRows": "{{from}}-{{to}} of {{count}}"
+    }
   },
   "auth": {
     "login": "Login",
@@ -68,7 +74,8 @@
     "printPdf": "Print PDF",
     "accountSettings": "Account Settings",
     "incomeAndExpense": "Income & Expense",
-    "adminNotifications": "Admin Notifications"
+    "adminNotifications": "Admin Notifications",
+    "pendingPayments": "Pending Payments"
   },
   "company": {
     "search": "Search companies...",
@@ -112,6 +119,7 @@
     "name": "Name",
     "nationality": "Nationality",
     "profession": "Profession",
+    "description": "Description",
     "iqamaNumber": "Iqama Number",
     "passportNumber": "Passport Number",
     "phoneNumber": "Phone Number",
@@ -131,6 +139,7 @@
       "name": "Enter individual name",
       "nationality": "Enter nationality",
       "profession": "Enter profession",
+      "description": "Enter description",
       "iqamaNumber": "Enter iqama number",
       "passportNumber": "Enter passport number",
       "phoneNumber": "Enter phone number",
@@ -278,7 +287,8 @@
     "refresh": "Refresh",
     "tabs": {
       "individual": "Individuals ({{count}})",
-      "company": "Companies ({{count}})"
+      "company": "Companies ({{count}})",
+      "pendingPayments": "Pending Payments ({{count}})"
     },
     "table": {
       "type": "Type",
@@ -288,7 +298,12 @@
       "details": "Details",
       "amount": "Amount",
       "date": "Date",
-      "actions": "Actions"
+      "actions": "Actions",
+      "mainPerson": "Main Person",
+      "referredBy": "Referred By",
+      "iqamaNumber": "Iqama Number",
+      "paidAmount": "Paid Amount",
+      "pendingAmount": "Pending Amount"
     },
     "requestTypes": {
       "ADD": "Add",
@@ -316,17 +331,20 @@
     },
     "actions": {
       "approve": "Approve",
-      "reject": "Reject"
+      "reject": "Reject",
+      "view": "View Details"
     },
     "dialog": {
       "approve": {
         "individual": "Approve Individual Request",
         "company": "Approve Company Request",
+        "undefined": "Approve Request",
         "message": "Are you sure you want to approve this request? It will be added to the system."
       },
       "reject": {
         "individual": "Reject Individual Request",
         "company": "Reject Company Request",
+        "undefined": "Reject Request",
         "message": "Are you sure you want to reject this request? The notification will be removed."
       },
       "details": {
@@ -352,6 +370,17 @@
       "individualRequestRejected": "Individual request rejected successfully",
       "companyRequestRejected": "Company request rejected successfully",
       "processingError": "Error processing request. Please try again."
+    },
+    "filters": {
+      "referredBy": "Referred By",
+      "mainPerson": "Main Person",
+      "company": "Company",
+      "paymentStatus": "Payment Status",
+      "all": "All",
+      "noPaid": "No Payment",
+      "partiallyPaid": "Partially Paid",
+      "showing": "Showing {{count}} of {{total}} records",
+      "reset": "Reset Filters"
     }
   },
   "incomeExpense": {

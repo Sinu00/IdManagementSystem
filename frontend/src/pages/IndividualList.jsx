@@ -51,6 +51,7 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon,
   FilterList as FilterListIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
 import { individualApi, companyApi, incomeApi, notifyAdminApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -117,6 +118,19 @@ function IndividualList() {
   });
   const [referredByList, setReferredByList] = useState([]);
   const { t } = useTranslation();
+  const [formData, setFormData] = useState({
+    name: '',
+    nationality: '',
+    phoneNumber: '',
+    iqamaNumber: '',
+    description: '',
+    expiryDate: null,
+    company: '',
+    mainPerson: '',
+    referredBy: '',
+    amount: '',
+    iqamaPrice: 5000
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -913,6 +927,17 @@ function IndividualList() {
                                   </Typography>
                                 </Box>
                               </Grid>
+
+                              {individual.description && (
+                                <Grid item xs={12}>
+                                  <Box display="flex" alignItems="flex-start" gap={1} mt={1}>
+                                    <DescriptionIcon sx={{ fontSize: 16, color: 'primary.main', mt: 0.5 }} />
+                                    <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
+                                      {t('individual.description')}: {individual.description}
+                                    </Typography>
+                                  </Box>
+                                </Grid>
+                              )}
 
                               <Grid item xs={12}>
                                 <Box display="flex" alignItems="center" gap={1}>

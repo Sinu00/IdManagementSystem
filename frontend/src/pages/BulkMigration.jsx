@@ -50,6 +50,7 @@ const emptyIndividual = {
   nationality: '',
   phoneNumber: '',
   iqamaNumber: '',
+  description: '',
   expiryDate: null,
   referredBy: '',
   amount: '',
@@ -511,6 +512,16 @@ const BulkMigration = () => {
                             label="Phone Number"
                             value={individual.phoneNumber}
                             onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'phoneNumber', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            label="Description"
+                            value={individual.description}
+                            onChange={(e) => handleIndividualChange(companyIndex, individualIndex, 'description', e.target.value)}
+                            multiline
+                            rows={3}
                           />
                         </Grid>
                         <Grid item xs={12} sm={6}>

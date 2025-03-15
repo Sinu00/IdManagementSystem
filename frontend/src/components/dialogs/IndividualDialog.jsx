@@ -27,6 +27,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     nationality: '',
     phoneNumber: '',
     iqamaNumber: '',
+    description: '',
     expiryDate: null,
     amount: '',
   };
@@ -239,6 +240,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         nationality: individual.nationality || '',
         phoneNumber: individual.phoneNumber || '',
         iqamaNumber: individual.iqamaNumber || '',
+        description: individual.description || '',
         expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
         amount: individual.amount?.toString() || '',
       });
@@ -321,6 +323,20 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     />
                   </Grid>
                 ))}
+                
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label={t('individual.description')}
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    multiline
+                    rows={3}
+                    placeholder={t('individual.placeholders.description')}
+                  />
+                </Grid>
+
                 {isAddMode && (
                   <>
                     <Grid item xs={12} sm={6}>

@@ -16,6 +16,11 @@ const individualSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    description: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     iqamaNumber: {
       type: String,
       required: [true, 'Iqama number is required'],
@@ -56,12 +61,15 @@ const individualSchema = new mongoose.Schema(
     pendingAmount: {
       type: Number,
       default: function() {
-        return this.iqamaPrice - this.totalPaidAmount;
+        return this.iqamaPrice - (this.totalPaidAmount || 0);
       }
     },
     isFullyPaid: {
       type: Boolean,
-      default: false
+      default: function() {
+        const pending = this.iqamaPrice - (this.totalPaidAmount || 0);
+        return pending <= 0;
+      }
     },
     lastUpdatedBy: {
       type: String,

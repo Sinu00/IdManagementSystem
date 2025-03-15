@@ -38,10 +38,14 @@ api.interceptors.response.use(
       error: error.message
     });
     
+    // Only redirect to login if there's no token or if it's expired
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+      }
     }
+    
     // Add better error messages for CORS issues
     if (error.message === 'Network Error') {
       console.error('CORS or Network Error:', error);
@@ -80,6 +84,7 @@ export const companyApi = {
 };
 
 export const individualApi = {
+  getAll: () => api.get('/api/individuals/all'),
   getByCompany: (companyId) => api.get(`/api/individuals/company/${companyId}`),
   create: (data) => api.post('/api/individuals', data),
   update: (id, data) => api.put(`/api/individuals/${id}`, data),

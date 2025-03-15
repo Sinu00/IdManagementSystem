@@ -8,7 +8,226 @@ import IqamaPrice from '../models/iqamaPrice.model.js';
 
 const router = express.Router();
 
-// Get individuals by company (Public)
+// Get all individuals (Admin only) - Specifically for AdminNotifications page pending payments
+router.get('/all', adminProtect, async (req, res) => {
+  try {
+    // First get all companies to ensure we have access to all individuals
+    const companies = await Company.find();
+    const companyIds = companies.map(company => company._id);
+
+    // Get all individuals from all companies
+    const individuals = await Individual.find({
+      company: { $in: companyIds }
+    }).populate({
+      path: 'company',
+      select: 'name crNumber mainPerson',
+      populate: {
+        path: 'mainPerson',
+        select: 'name'
+      }
+    }).populate('mainPerson', 'name email contactNumber');
+
+    // Log the count of all individuals and those with pending payments
+    const pendingPayments = individuals.filter(ind => {
+      const totalPaid = ind.totalPaidAmount || 0;
+      const iqamaPrice = ind.iqamaPrice || 5000;
+      return totalPaid < iqamaPrice;
+    });
+
+    // Log payment-related fields for debugging
+    const paymentInfo = individuals.map(ind => ({
+      id: ind._id,
+      name: ind.name,
+      iqamaPrice: ind.iqamaPrice || 5000,
+      totalPaidAmount: ind.totalPaidAmount || 0,
+      pendingAmount: (ind.iqamaPrice || 5000) - (ind.totalPaidAmount || 0),
+      isFullyPaid: (ind.totalPaidAmount || 0) >= (ind.iqamaPrice || 5000)
+    }));
+
+
+    res.json(individuals);
+  } catch (error) {
+    console.error('Error fetching all individuals:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get expired individuals by main person
+router.get('/expired/:mainPersonId', protect, async (req, res) => {
+  try {
+    const { mainPersonId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
+      return res.status(400).json({ message: 'Invalid main person ID' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(mainPersonId)) {
+      return res.status(403).json({ message: 'Not authorized to access this data' });
+    }
+
+    // Get all companies belonging to the main person
+    const companies = await Company.find({ mainPerson: mainPersonId });
+    const companyIds = companies.map(company => company._id);
+
+    // Find all expired individuals from these companies
+    const today = new Date();
+    const expiredIndividuals = await Individual.find({
+      company: { $in: companyIds },
+      expiryDate: { $lt: today }
+    }).populate({
+      path: 'company',
+      select: 'name mainPerson',
+      populate: {
+        path: 'mainPerson',
+        select: 'name'
+      }
+    }).sort({ expiryDate: 1 });
+
+    res.json(expiredIndividuals);
+  } catch (error) {
+    console.error('Error fetching expired IDs:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get expiring soon individuals by main person
+router.get('/expiring-soon/:mainPersonId', protect, async (req, res) => {
+  try {
+    const { mainPersonId } = req.params;
+    const days = parseInt(req.query.days) || 30; // Default to 30 days if not specified
+    
+    if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
+      return res.status(400).json({ message: 'Invalid main person ID' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(mainPersonId)) {
+      return res.status(403).json({ message: 'Not authorized to access this data' });
+    }
+
+    // Get all companies belonging to the main person
+    const companies = await Company.find({ mainPerson: mainPersonId });
+    const companyIds = companies.map(company => company._id);
+
+    // Find all individuals expiring in the next X days
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + days);
+
+    const expiringIndividuals = await Individual.find({
+      company: { $in: companyIds },
+      expiryDate: { 
+        $gt: today,
+        $lte: futureDate
+      }
+    }).populate({
+      path: 'company',
+      select: 'name mainPerson',
+      populate: {
+        path: 'mainPerson',
+        select: 'name'
+      }
+    }).sort({ expiryDate: 1 });
+
+    // Calculate days until expiry for each individual
+    const individualsWithDays = expiringIndividuals.map(individual => {
+      const daysUntilExpiry = Math.ceil(
+        (new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
+      );
+      return {
+        ...individual.toObject(),
+        daysUntilExpiry
+      };
+    });
+
+    res.json(individualsWithDays);
+  } catch (error) {
+    console.error('Error fetching expiring IDs:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get individual by iqama number
+router.get('/by-iqama/:iqamaNumber', protect, async (req, res) => {
+  try {
+    const individual = await Individual.findOne({ 
+      iqamaNumber: req.params.iqamaNumber 
+    }).populate({
+      path: 'company',
+      select: 'mainPerson'
+    });
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    res.json(individual);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get individuals by company
+router.get('/company/:companyId', protect, async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const user = req.user;
+
+    // Get the company to check main person
+    const company = await Company.findById(companyId)
+      .populate('mainPerson');
+    
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Allow access if:
+    // 1. User is admin OR
+    // 2. User has access to this company's main person
+    if (!user.isAdmin && !user.allowedMainPersons.includes(company.mainPerson._id.toString())) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const individuals = await Individual.find({ company: companyId })
+      .populate({
+        path: 'company',
+        select: 'name address contactNumber mainPerson',
+        populate: {
+          path: 'mainPerson',
+          select: 'name email contactNumber _id'
+        }
+      });
+
+    res.json(individuals);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get individual by ID
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const individual = await Individual.findById(req.params.id)
+      .populate('company')
+      .populate('lastUpdatedBy', 'username');
+
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    // Add authorization check
+    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(individual.company.mainPerson.toString())) {
+      return res.status(403).json({ message: 'Not authorized to access this individual' });
+    }
+
+    res.json(individual);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+});
+
+// Get individuals by query parameters
 router.get('/', protect, async (req, res, next) => {
   try {
     const { companyId, search, sort, filter } = req.query;
@@ -58,46 +277,9 @@ router.get('/', protect, async (req, res, next) => {
         }
       });
 
-
     res.json(individuals);
   } catch (error) {
     next(error);
-  }
-});
-
-router.get('/company/:companyId', protect, async (req, res) => {
-  try {
-    const { companyId } = req.params;
-    const user = req.user;
-
-    // Get the company to check main person
-    const company = await Company.findById(companyId)
-      .populate('mainPerson');
-    
-    if (!company) {
-      return res.status(404).json({ message: 'Company not found' });
-    }
-
-    // Allow access if:
-    // 1. User is admin OR
-    // 2. User has access to this company's main person
-    if (!user.isAdmin && !user.allowedMainPersons.includes(company.mainPerson._id.toString())) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    const individuals = await Individual.find({ company: companyId })
-      .populate({
-        path: 'company',
-        select: 'name address contactNumber mainPerson',
-        populate: {
-          path: 'mainPerson',
-          select: 'name email contactNumber _id'
-        }
-      });
-
-    res.json(individuals);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -108,12 +290,19 @@ router.post('/', protect, async (req, res) => {
     const iqamaPrice = currentPrice?.price || 5000;
     const initialPayment = parseFloat(req.body.amount) || 0;
     
-    // Calculate payment status - isFullyPaid only when exact match
+    // Get company to set mainPerson
+    const company = await Company.findById(req.body.company);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    
+    // Calculate payment status
     const pendingAmount = iqamaPrice - initialPayment;
     const isFullyPaid = initialPayment === iqamaPrice;
     
     const individual = await Individual.create({
       ...req.body,
+      mainPerson: company.mainPerson, // Set mainPerson from company
       iqamaPrice,
       totalPaidAmount: initialPayment,
       pendingAmount,
@@ -130,8 +319,6 @@ router.post('/', protect, async (req, res) => {
 
     // Create income record if payment is made
     if (initialPayment > 0) {
-      const company = await Company.findById(req.body.company).populate('mainPerson');
-      
       await Income.create({
         name: individual.name,
         iqamaNumber: individual.iqamaNumber,
@@ -140,7 +327,7 @@ router.post('/', protect, async (req, res) => {
         addedBy: req.user.username,
         dateAndTime: new Date(),
         notes: 'Initial payment for new individual',
-        mainPerson: company.mainPerson._id
+        mainPerson: company.mainPerson // Use company's mainPerson
       });
     }
 
@@ -214,13 +401,24 @@ router.post('/:id/pay-pending', protect, async (req, res) => {
 // Update individual (including renewal)
 router.put('/:id', protect, async (req, res) => {
   try {
-    // Check if this is a renewal operation (has both expiryDate and isRenewal flag)
+    const individual = await Individual.findById(req.params.id);
+    if (!individual) {
+      return res.status(404).json({ message: 'Individual not found' });
+    }
+
+    // Get company to ensure mainPerson is set
+    const company = await Company.findById(req.body.company || individual.company);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Check if this is a renewal operation
     if (req.body.expiryDate && req.body.isRenewal) {
       const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
       const iqamaPrice = currentPrice?.price || 5000;
       const renewalPayment = parseFloat(req.body.totalPaidAmount) || 0;
       
-      // Calculate payment status for new period - isFullyPaid only when exact match
+      // Calculate payment status for new period
       const pendingAmount = iqamaPrice - renewalPayment;
       const isFullyPaid = renewalPayment === iqamaPrice;
       
@@ -230,16 +428,7 @@ router.put('/:id', protect, async (req, res) => {
       req.body.pendingAmount = pendingAmount;
       req.body.isFullyPaid = isFullyPaid;
 
-      // Add payment to history if there's a payment
       if (renewalPayment > 0) {
-        const individual = await Individual.findById(req.params.id);
-        const company = await Company.findById(req.body.company || individual.company).populate('mainPerson');
-        
-        if (!company || !company.mainPerson) {
-          throw new Error('Company or main person not found');
-        }
-
-        // Create income record for the renewal payment
         await Income.create({
           name: individual.name,
           iqamaNumber: individual.iqamaNumber,
@@ -248,7 +437,7 @@ router.put('/:id', protect, async (req, res) => {
           addedBy: req.user.username,
           dateAndTime: new Date(),
           notes: 'Renewal payment',
-          mainPerson: company.mainPerson._id
+          mainPerson: company.mainPerson
         });
 
         req.body.paymentHistory = [{
@@ -259,7 +448,7 @@ router.put('/:id', protect, async (req, res) => {
         }];
       }
     } else {
-      // For regular updates, remove any payment-related fields to prevent accidental updates
+      // For regular updates, remove payment-related fields
       delete req.body.iqamaPrice;
       delete req.body.totalPaidAmount;
       delete req.body.pendingAmount;
@@ -267,10 +456,11 @@ router.put('/:id', protect, async (req, res) => {
       delete req.body.paymentHistory;
     }
 
-    // Remove isRenewal from the update data as it's not part of the model
+    // Remove isRenewal flag and ensure mainPerson is set
     delete req.body.isRenewal;
+    req.body.mainPerson = company.mainPerson;
 
-    const individual = await Individual.findByIdAndUpdate(
+    const updatedIndividual = await Individual.findByIdAndUpdate(
       req.params.id,
       {
         ...req.body,
@@ -290,11 +480,7 @@ router.put('/:id', protect, async (req, res) => {
       }
     });
 
-    if (!individual) {
-      return res.status(404).json({ message: 'Individual not found' });
-    }
-
-    res.json(individual);
+    res.json(updatedIndividual);
   } catch (error) {
     console.error('Error updating individual:', error);
     res.status(400).json({ message: error.message });
@@ -318,144 +504,6 @@ router.delete('/:id', adminProtect, async (req, res) => {
     res.json({ message: 'Individual deleted successfully' });
   } catch (error) {
     console.error('Error deleting individual:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Add this new route to get expired IDs by main person
-router.get('/expired/:mainPersonId', protect, async (req, res) => {
-  try {
-    const { mainPersonId } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
-      return res.status(400).json({ message: 'Invalid main person ID' });
-    }
-
-    // Add authorization check
-    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(mainPersonId)) {
-      return res.status(403).json({ message: 'Not authorized to access this data' });
-    }
-
-    // Get all companies belonging to the main person
-    const companies = await Company.find({ mainPerson: mainPersonId });
-    const companyIds = companies.map(company => company._id);
-
-    // Find all expired individuals from these companies
-    const today = new Date();
-    const expiredIndividuals = await Individual.find({
-      company: { $in: companyIds },
-      expiryDate: { $lt: today }
-    }).populate({
-      path: 'company',
-      select: 'name mainPerson',
-      populate: {
-        path: 'mainPerson',
-        select: 'name'
-      }
-    }).sort({ expiryDate: 1 });
-
-    res.json(expiredIndividuals);
-  } catch (error) {
-    console.error('Error fetching expired IDs:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Add this new route to get expiring IDs by main person
-router.get('/expiring-soon/:mainPersonId', protect, async (req, res) => {
-  try {
-    const { mainPersonId } = req.params;
-    const days = parseInt(req.query.days) || 30; // Default to 30 days if not specified
-    
-    if (!mongoose.Types.ObjectId.isValid(mainPersonId)) {
-      return res.status(400).json({ message: 'Invalid main person ID' });
-    }
-
-    // Add authorization check
-    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(mainPersonId)) {
-      return res.status(403).json({ message: 'Not authorized to access this data' });
-    }
-
-    // Get all companies belonging to the main person
-    const companies = await Company.find({ mainPerson: mainPersonId });
-    const companyIds = companies.map(company => company._id);
-
-    // Find all individuals expiring in the next X days
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + days);
-
-    const expiringIndividuals = await Individual.find({
-      company: { $in: companyIds },
-      expiryDate: { 
-        $gt: today,
-        $lte: futureDate
-      }
-    }).populate({
-      path: 'company',
-      select: 'name mainPerson',
-      populate: {
-        path: 'mainPerson',
-        select: 'name'
-      }
-    }).sort({ expiryDate: 1 });
-
-    // Calculate days until expiry for each individual
-    const individualsWithDays = expiringIndividuals.map(individual => {
-      const daysUntilExpiry = Math.ceil(
-        (new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
-      );
-      return {
-        ...individual.toObject(),
-        daysUntilExpiry
-      };
-    });
-
-    res.json(individualsWithDays);
-  } catch (error) {
-    console.error('Error fetching expiring IDs:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Update the get routes to populate lastRenewedBy
-router.get('/:id', protect, async (req, res) => {
-  try {
-    const individual = await Individual.findById(req.params.id)
-      .populate('company')
-      .populate('lastUpdatedBy', 'username');
-
-    if (!individual) {
-      return res.status(404).json({ message: 'Individual not found' });
-    }
-
-    // Add authorization check
-    if (!req.user.isAdmin && !req.user.allowedMainPersons.includes(individual.company.mainPerson.toString())) {
-      return res.status(403).json({ message: 'Not authorized to access this individual' });
-    }
-
-    res.json(individual);
-  } catch (error) {
-    res.status(404).json({ message: error.message });
-  }
-});
-
-// Add this new route to get individual by iqama number
-router.get('/by-iqama/:iqamaNumber', protect, async (req, res) => {
-  try {
-    const individual = await Individual.findOne({ 
-      iqamaNumber: req.params.iqamaNumber 
-    }).populate({
-      path: 'company',
-      select: 'mainPerson'
-    });
-
-    if (!individual) {
-      return res.status(404).json({ message: 'Individual not found' });
-    }
-
-    res.json(individual);
-  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });

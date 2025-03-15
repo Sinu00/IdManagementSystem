@@ -33,7 +33,13 @@
     "currentStatus": "الحالة الحالية",
     "totalAmount": "المبلغ الإجمالي",
     "namora": "نمورة للمقاولات",
-    "tryAgain": "المحاولة مرة أخرى"
+    "tryAgain": "المحاولة مرة أخرى",
+    "rowsPerPage": "عدد الصفوف في الصفحة",
+    "paginationDisplay": "{{from}}-{{to}} من {{count}}",
+    "pagination": {
+      "rowsPerPage": "عدد الصفوف في الصفحة",
+      "displayedRows": "{{from}}-{{to}} من {{count}}"
+    }
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -68,7 +74,8 @@
     "printPdf": "طباعة PDF",
     "accountSettings": "إعدادات الحساب",
     "incomeAndExpense": "الدخل والمصروفات",
-    "adminNotifications": "إشعارات المسؤول"
+    "adminNotifications": "إشعارات المسؤول",
+    "pendingPayments": "المدفوعات المعلقة"
   },
   "company": {
     "search": "البحث عن الشركات...",
@@ -112,6 +119,7 @@
     "name": "الاسم",
     "nationality": "الجنسية",
     "profession": "المهنة",
+    "description": "ملاحظة",
     "iqamaNumber": "رقم الإقامة",
     "passportNumber": "رقم الجواز",
     "phoneNumber": "رقم الجوال",
@@ -131,6 +139,7 @@
       "name": "أدخل الاسم",
       "nationality": "أدخل الجنسية",
       "profession": "أدخل المهنة",
+      "description": "أدخل ملاحظة",
       "iqamaNumber": "أدخل رقم الإقامة",
       "passportNumber": "أدخل رقم الجواز",
       "phoneNumber": "أدخل رقم الجوال",
@@ -279,7 +288,8 @@
     "refresh": "تحديث",
     "tabs": {
       "individual": "الأفراد ({{count}})",
-      "company": "الشركات ({{count}})"
+      "company": "الشركات ({{count}})",
+      "pendingPayments": "المدفوعات المعلقة ({{count}})"
     },
     "table": {
       "type": "النوع",
@@ -289,7 +299,12 @@
       "details": "التفاصيل",
       "amount": "المبلغ",
       "date": "التاريخ",
-      "actions": "الإجراءات"
+      "actions": "الإجراءات",
+      "mainPerson": "الشخص الرئيسي",
+      "referredBy": "تمت الإحالة بواسطة",
+      "iqamaNumber": "رقم الإقامة",
+      "paidAmount": "المبلغ المدفوع",
+      "pendingAmount": "المبلغ المعلق"
     },
     "requestTypes": {
       "ADD": "إضافة",
@@ -317,17 +332,20 @@
     },
     "actions": {
       "approve": "موافقة",
-      "reject": "رفض"
+      "reject": "رفض",
+      "view": "عرض التفاصيل"
     },
     "dialog": {
       "approve": {
         "individual": "موافقة طلب الفرد",
         "company": "موافقة طلب الشركة",
+        "undefined": "موافقة الطلب",
         "message": "هل أنت متأكد من الموافقة على هذا الطلب؟ سيتم إضافته إلى النظام."
       },
       "reject": {
         "individual": "رفض طلب الفرد",
         "company": "رفض طلب الشركة",
+        "undefined": "رفض الطلب",
         "message": "هل أنت متأكد من رفض هذا الطلب؟ سيتم حذف الإشعار."
       },
       "details": {
@@ -353,6 +371,17 @@
       "individualRequestRejected": "تم رفض طلب الفرد بنجاح",
       "companyRequestRejected": "تم رفض طلب الشركة بنجاح",
       "processingError": "حدث خطأ أثناء معالجة الطلب. يرجى المحاولة مرة أخرى"
+    },
+    "filters": {
+      "referredBy": "تمت الإحالة بواسطة",
+      "mainPerson": "الشخص الرئيسي",
+      "company": "الشركة",
+      "paymentStatus": "حالة الدفع",
+      "all": "الكل",
+      "noPaid": "لم يتم الدفع",
+      "partiallyPaid": "مدفوع جزئياً",
+      "showing": "عرض {{count}} من {{total}} سجل",
+      "reset": "إعادة تعيين التصفية"
     }
   },
   "incomeExpense": {
