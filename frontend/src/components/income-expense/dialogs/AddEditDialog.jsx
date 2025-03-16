@@ -11,14 +11,18 @@ import {
   Select,
   MenuItem,
   Alert,
-  Box
+  Box,
+  InputAdornment
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 const defaultFormData = {
   name: '',
+  description: '',
   amount: '',
   iqamaNumber: '',
+  referredBy: '',
+  company: '',
   expenseType: 'other',
   specification: ''
 };
@@ -29,45 +33,62 @@ const AddEditDialog = ({
   type, 
   onSubmit, 
   error,
-  data = null
+  data = null,
+  companies,
+  iqamaPrice
 }) => {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState(data || defaultFormData);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    amount: '',
+    iqamaNumber: '',
+    referredBy: '',
+    company: '',
+    expenseType: 'other',
+    specification: ''
+  });
 
   useEffect(() => {
-    // Reset form data when dialog opens/closes or type changes
-    if (open) {
-      setFormData(data || {
-        ...defaultFormData,
-        name: type === 'expense' ? 'General Purpose' : '',
+    if (data) {
+      setFormData({
+        name: data.name || '',
+        description: data.description || '',
+        amount: data.amount?.toString() || '',
+        iqamaNumber: data.iqamaNumber || '',
+        referredBy: data.referredBy || '',
+        company: data.company || '',
+        expenseType: data.expenseType || 'other',
+        specification: data.specification || ''
+      });
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        amount: '',
+        iqamaNumber: '',
+        referredBy: '',
+        company: '',
+        expenseType: 'other',
+        specification: ''
       });
     }
-  }, [open, type, data]);
+  }, [data]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const submissionData = type === 'expense' 
-      ? {
-          ...formData,
-          expenseType: formData.expenseType || 'other',
-          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
-        }
-      : formData;
-
-    onSubmit(submissionData);
-  };
-
-  const handleClose = () => {
-    setFormData(defaultFormData);
-    onClose();
+    onSubmit(formData);
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {type === 'income'
-          ? t('incomeExpense.dialog.add.income')
-          : t('incomeExpense.dialog.add.expense')}
+        {t(data ? 'dialog.edit' : 'dialog.add')} {t(`dialog.${type}`)}
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -76,80 +97,90 @@ const AddEditDialog = ({
               {error}
             </Alert>
           )}
-          <Box sx={{ mt: 2 }}>
-            {type === 'income' ? (
-              <>
+          
+          {type === 'income' && (
+            <>
+              <TextField
+                fullWidth
+                label={t('form.incomeSource')}
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                margin="normal"
+                required
+                helperText={t('form.incomeSourceHelperText')}
+              />
+              <TextField
+                fullWidth
+                label={t('form.description')}
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                margin="normal"
+                multiline
+                rows={2}
+                helperText={t('form.descriptionHelperText')}
+              />
+              <TextField
+                fullWidth
+                label={t('form.amount')}
+                name="amount"
+                type="number"
+                value={formData.amount}
+                onChange={handleChange}
+                margin="normal"
+                required
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">SAR</InputAdornment>,
+                }}
+              />
+            </>
+          )}
+
+          {type === 'expense' && (
+            <>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>{t('incomeExpense.dialog.fields.paidFor')}</InputLabel>
+                <Select
+                  value={formData.expenseType || 'other'}
+                  onChange={(e) => setFormData({ ...formData, expenseType: e.target.value })}
+                  label={t('incomeExpense.dialog.fields.paidFor')}
+                  required
+                >
+                  <MenuItem value="cr">{t('incomeExpense.expense.types.cr')}</MenuItem>
+                  <MenuItem value="qiwa">{t('incomeExpense.expense.types.qiwa')}</MenuItem>
+                  <MenuItem value="muqeem">{t('incomeExpense.expense.types.muqeem')}</MenuItem>
+                  <MenuItem value="saudi">{t('incomeExpense.expense.types.saudi')}</MenuItem>
+                  <MenuItem value="efa">{t('incomeExpense.expense.types.efa')}</MenuItem>
+                  <MenuItem value="other">{t('incomeExpense.expense.types.other')}</MenuItem>
+                </Select>
+              </FormControl>
+              {formData.expenseType === 'other' && (
                 <TextField
                   fullWidth
-                  label={t('incomeExpense.dialog.fields.name')}
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  label={t('incomeExpense.dialog.fields.specifyOther')}
+                  value={formData.specification || ''}
+                  onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
                   required
                   margin="normal"
                 />
-                <TextField
-                  fullWidth
-                  label={t('incomeExpense.dialog.fields.iqamaNumber')}
-                  value={formData.iqamaNumber || ''}
-                  onChange={(e) => setFormData({ ...formData, iqamaNumber: e.target.value })}
-                  required
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label={t('incomeExpense.dialog.fields.amount')}
-                  type="number"
-                  value={formData.amount || ''}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  required
-                  margin="normal"
-                />
-              </>
-            ) : (
-              <>
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>{t('incomeExpense.dialog.fields.paidFor')}</InputLabel>
-                  <Select
-                    value={formData.expenseType || 'other'}
-                    onChange={(e) => setFormData({ ...formData, expenseType: e.target.value })}
-                    label={t('incomeExpense.dialog.fields.paidFor')}
-                    required
-                  >
-                    <MenuItem value="cr">{t('incomeExpense.expense.types.cr')}</MenuItem>
-                    <MenuItem value="qiwa">{t('incomeExpense.expense.types.qiwa')}</MenuItem>
-                    <MenuItem value="muqeem">{t('incomeExpense.expense.types.muqeem')}</MenuItem>
-                    <MenuItem value="saudi">{t('incomeExpense.expense.types.saudi')}</MenuItem>
-                    <MenuItem value="efa">{t('incomeExpense.expense.types.efa')}</MenuItem>
-                    <MenuItem value="other">{t('incomeExpense.expense.types.other')}</MenuItem>
-                  </Select>
-                </FormControl>
-                {formData.expenseType === 'other' && (
-                  <TextField
-                    fullWidth
-                    label={t('incomeExpense.dialog.fields.specifyOther')}
-                    value={formData.specification || ''}
-                    onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
-                    required
-                    margin="normal"
-                  />
-                )}
-                <TextField
-                  fullWidth
-                  label={t('incomeExpense.dialog.fields.amount')}
-                  type="number"
-                  value={formData.amount || ''}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  required
-                  margin="normal"
-                />
-              </>
-            )}
-          </Box>
+              )}
+              <TextField
+                fullWidth
+                label={t('incomeExpense.dialog.fields.amount')}
+                type="number"
+                value={formData.amount || ''}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                required
+                margin="normal"
+              />
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>{t('common.cancel')}</Button>
-          <Button type="submit" variant="contained" color="primary">
-            {t('common.save')}
+          <Button onClick={onClose}>{t('dialog.cancel')}</Button>
+          <Button type="submit" variant="contained">
+            {t(data ? 'dialog.save' : 'dialog.add')}
           </Button>
         </DialogActions>
       </form>

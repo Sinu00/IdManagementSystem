@@ -92,6 +92,7 @@ function IncomeExpense() {
   const [dialogType, setDialogType] = useState('income'); // 'income' or 'expense'
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     amount: '',
     iqamaNumber: '', // only for income
     referredBy: '',
@@ -203,6 +204,7 @@ function IncomeExpense() {
     setDialogType(type);
     setFormData({
       name: '',
+      description: '',
       amount: '',
       iqamaNumber: '',
       referredBy: '',
@@ -224,6 +226,7 @@ function IncomeExpense() {
     setEditData(item);
     setFormData({
       name: item.name,
+      description: item.description || '',
       amount: item.amount.toString(),
       iqamaNumber: item.iqamaNumber || '',
       referredBy: item.referredBy || '',
@@ -287,31 +290,34 @@ function IncomeExpense() {
     try {
       setError('');
       
-      // If it's an income entry, we need to get the mainPerson
+      // If it's an income entry
       if (dialogType === 'income') {
-        // First find the individual by iqamaNumber to get their company and mainPerson
-        const individualsResponse = await individualApi.getByIqamaNumber(formData.iqamaNumber);
-        const individual = individualsResponse.data;
-        
-        if (!individual) {
-          setError('No individual found with this iqama number');
-          return;
-        }
-
+        // Custom income
         await incomeApi.create({
-          ...formData,
-          referredBy: user.username,
-          mainPerson: individual.company.mainPerson
+          name: formData.name,
+          description: formData.description,
+          amount: formData.amount,
+          referredBy: formData.description, // Use description as referredBy for custom income
+          mainPerson: '67d09798726e5a47c4caf072', // Main company mainPerson ID
+          isCustomIncome: true,
+          iqamaNumber: 'N/A'
         });
       } else {
         // For expenses, we'll create with the other mainPerson ID
-        await expenseApi.create({
-          ...formData,
+        const expenseData = {
           name: 'General Purpose',
-          mainPerson: '67b22c3748dc9b1348b1d635', // Other mainPerson ID
+          amount: formData.amount,
           expenseType: formData.expenseType,
-          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType
-        });
+          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
+          mainPerson: '67b22c3748dc9b1348b1d635' // Other mainPerson ID
+        };
+        
+        // Only include company if it's not empty
+        if (formData.company) {
+          expenseData.company = formData.company;
+        }
+
+        await expenseApi.create(expenseData);
       }
 
       handleCloseDialog();

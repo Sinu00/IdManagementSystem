@@ -548,5 +548,22 @@
   "nasserIncomeExpense": {
     "title": "إيرادات ومصروفات ناصر",
     "subtitle": "إدارة معاملات الإيرادات والمصروفات الخاصة بناصر"
+  },
+  "form": {
+    "incomeSource": "مصدر الدخل",
+    "incomeSourceHelperText": "أدخل مصدر أو غرض هذا الدخل",
+    "description": "الوصف",
+    "descriptionHelperText": "أضف أي تفاصيل إضافية عن هذا الدخل",
+    "amount": "المبلغ",
+    "iqamaNumber": "رقم الإقامة",
+    "iqamaNumberHelperText": "أدخل رقم الإقامة (اختياري للدخل المخصص)"
+  },
+  "dialog": {
+    "add": "إضافة",
+    "edit": "تعديل",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "income": "دخل",
+    "expense": "مصروف"
   }
 } 

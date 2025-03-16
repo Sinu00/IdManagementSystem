@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 const router = express.Router();
 
 // Define the excluded mainPerson ID as a constant
-const EXCLUDED_MAIN_PERSON_ID = "67b22c3748dc9b1348b1d636";
+const EXCLUDED_MAIN_PERSON_ID = "67d09798726e5a47c4caf071";
 
 // Helper function to add mainPerson filter
 const addMainPersonFilter = (query) => {

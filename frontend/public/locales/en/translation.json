@@ -555,5 +555,22 @@
   "nasserIncomeExpense": {
     "title": "Nasser's Income & Expense",
     "subtitle": "Manage Nasser's income and expense transactions"
+  },
+  "form": {
+    "incomeSource": "Income Source",
+    "incomeSourceHelperText": "Enter the source or purpose of this income",
+    "description": "Description",
+    "descriptionHelperText": "Add any additional details about this income",
+    "amount": "Amount",
+    "iqamaNumber": "Iqama Number",
+    "iqamaNumberHelperText": "Enter iqama number (optional for custom income)"
+  },
+  "dialog": {
+    "add": "Add",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "income": "Income",
+    "expense": "Expense"
   }
 } 

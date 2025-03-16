@@ -204,7 +204,7 @@ router.post('/:id/approve', protect, adminProtect, async (req, res) => {
         mainPerson: company.mainPerson,
         expenseType: notification.paymentType,
         specification: notification.paymentType === 'cr' && company.paymentStatus === 'none_paid'
-          ? 'Renewal Payment'
+          ? 'Renewal CR Payment'
           : `Regular ${notification.paymentType.toUpperCase()} Payment`
       });
       await expense.save({ session });

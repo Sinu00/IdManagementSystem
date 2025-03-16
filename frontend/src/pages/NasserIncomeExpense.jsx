@@ -278,31 +278,34 @@ function NasserIncomeExpense() {
     try {
       setError('');
       
-      // If it's an income entry, we need to get the mainPerson
+      // If it's an income entry
       if (dialogType === 'income') {
-        // First find the individual by iqamaNumber to get their company and mainPerson
-        const individualsResponse = await userApi.getByIqamaNumber(formData.iqamaNumber);
-        const individual = individualsResponse.data;
-        
-        if (!individual) {
-          setError('No individual found with this iqama number');
-          return;
-        }
-
+        // Custom income
         await nasserApi.create({
-          ...formData,
-          referredBy: user.username,
-          mainPerson: individual.company.mainPerson
+          name: formData.name,
+          description: formData.description,
+          amount: formData.amount,
+          referredBy: formData.description, // Use description as referredBy for custom income
+          mainPerson: '67d09798726e5a47c4caf071', // Nasser's mainPerson ID
+          isCustomIncome: true,
+          iqamaNumber: 'N/A'
         });
       } else {
         // For expenses, we'll create with Nasser's mainPerson ID
-        await nasserApi.create({
-          ...formData,
+        const expenseData = {
           name: 'General Purpose',
-          mainPerson: '67b22c3748dc9b1348b1d636', // Nasser's mainPerson ID
+          amount: formData.amount,
           expenseType: formData.expenseType,
-          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType
-        });
+          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
+          mainPerson: '67b22c3748dc9b1348b1d636' // Nasser's mainPerson ID
+        };
+        
+        // Only include company if it's not empty
+        if (formData.company) {
+          expenseData.company = formData.company;
+        }
+
+        await nasserApi.create(expenseData);
       }
 
       handleCloseDialog();
