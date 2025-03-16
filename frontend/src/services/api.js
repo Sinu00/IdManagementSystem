@@ -101,6 +101,7 @@ export const notificationApi = {
 
 export const notifyAdminApi = {
   getAll: () => api.get('/api/notify-admin'),
+  getAllNasser: () => api.get('/api/notify-admin/nasser'),
   getById: (id) => api.get(`/api/notify-admin/${id}`),
   create: (data) => api.post('/api/notify-admin', data),
   update: (id, data) => api.put(`/api/notify-admin/${id}`, data),
@@ -111,6 +112,7 @@ export const notifyAdminApi = {
 
 export const notifyCompanyAdminApi = {
   getAll: () => api.get('/api/notify-company-admin'),
+  getAllNasser: () => api.get('/api/notify-company-admin/nasser'),
   getById: (id) => api.get(`/api/notify-company-admin/${id}`),
   create: (data) => api.post('/api/notify-company-admin', data),
   update: (id, data) => api.put(`/api/notify-company-admin/${id}`, data),

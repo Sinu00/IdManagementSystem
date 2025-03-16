@@ -298,6 +298,10 @@ router.post('/:id/payment', protect, async (req, res) => {
     // For normal users, create a payment notification
     const notification = new NotifyCompanyAdmin({
       name: company.name,
+      crNumber: company.crNumber,
+      sponserId: company.sponserId,
+      gosiNumber: company.gosiNumber,
+      molNumber: company.molNumber,
       mainPerson: company.mainPerson,
       requestType: 'PAYMENT',
       paymentType,

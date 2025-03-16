@@ -20,10 +20,12 @@ export const createNotification = async (req, res) => {
   }
 };
 
-// Get all notifications
+// Get all notifications (excluding Nasser's)
 export const getAllNotifications = async (req, res) => {
   try {
-    const notifications = await NotifyAdmin.find()
+    const notifications = await NotifyAdmin.find({
+      mainPerson: { $ne: "67d09798726e5a47c4caf071" }  // Exclude Nasser's notifications
+    })
       .populate('company')
       .populate('mainPerson')
       .populate('addedBy', 'username')
@@ -32,6 +34,26 @@ export const getAllNotifications = async (req, res) => {
     res.status(StatusCodes.OK).json(notifications);
   } catch (error) {
     console.error('Error fetching notifications:', error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+      message: error.message || 'Failed to fetch notifications'
+    });
+  }
+};
+
+// Get only Nasser's notifications
+export const getAllNasserNotifications = async (req, res) => {
+  try {
+    const notifications = await NotifyAdmin.find({
+      mainPerson: "67d09798726e5a47c4caf071"  // Only Nasser's notifications
+    })
+      .populate('company')
+      .populate('mainPerson')
+      .populate('addedBy', 'username')
+      .sort({ createdAt: -1 });
+    
+    res.status(StatusCodes.OK).json(notifications);
+  } catch (error) {
+    console.error('Error fetching Nasser notifications:', error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
       message: error.message || 'Failed to fetch notifications'
     });

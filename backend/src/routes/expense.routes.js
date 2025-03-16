@@ -13,7 +13,7 @@ router.get('/filter/date', protect, async (req, res) => {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       },
-      mainPerson: { $ne: '67d09798726e5a47c4caf071' }
+      mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     })
     .populate('company', 'name crNumber sponserId gosiNumber molNumber')
     .populate('mainPerson', 'name')
@@ -28,7 +28,7 @@ router.get('/filter/date', protect, async (req, res) => {
 router.get('/', protect, async (req, res) => {
   try {
     const expenses = await Expense.find({
-      mainPerson: { $ne: '67d09798726e5a47c4caf071' }
+      mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     })
       .populate('company', 'name crNumber sponserId gosiNumber molNumber')
       .populate('mainPerson', 'name')
@@ -44,7 +44,7 @@ router.get('/:id', protect, async (req, res) => {
   try {
     const expense = await Expense.findOne({
       _id: req.params.id,
-      mainPerson: { $ne: '67d09798726e5a47c4caf071' }
+      mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     })
       .populate('company', 'name crNumber sponserId gosiNumber molNumber')
       .populate('company', 'name')
@@ -78,7 +78,7 @@ router.put('/:id', protect, async (req, res) => {
     const expense = await Expense.findOneAndUpdate(
       {
         _id: req.params.id,
-        mainPerson: { $ne: '67d09798726e5a47c4caf071' }
+        mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
       },
       req.body,
       { new: true }
@@ -99,7 +99,7 @@ router.delete('/:id', protect, async (req, res) => {
   try {
     const expense = await Expense.findOneAndDelete({
       _id: req.params.id,
-      mainPerson: { $ne: '67d09798726e5a47c4caf071' }
+      mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     });
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
@@ -115,7 +115,7 @@ router.post('/filter', protect, async (req, res) => {
   try {
     const { startDate, endDate, company, expenseType } = req.body;
     const query = {
-      mainPerson: { $ne: '67d09798726e5a47c4caf071' }
+      mainPerson: { $ne: '67b22c3748dc9b1348b1d636' }
     };
 
     if (startDate && endDate) {

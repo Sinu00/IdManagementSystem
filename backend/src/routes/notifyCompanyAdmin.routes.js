@@ -7,21 +7,7 @@ import mongoose from 'mongoose';
 
 const router = express.Router();
 
-// Get all notifications
-router.get('/', protect, async (req, res) => {
-  try {
-    const notifications = await NotifyCompanyAdmin.find()
-      .populate('mainPerson', 'name email contactNumber')
-      .populate('addedBy', 'username')
-      .populate('originalCompany', 'name crNumber sponserId gosiNumber molNumber')
-      .sort({ createdAt: -1 });
-    res.json(notifications);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Create new notification
+// Routes that require authentication but not admin privileges
 router.post('/', protect, async (req, res) => {
   try {
     const notification = new NotifyCompanyAdmin({
@@ -41,8 +27,92 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// Get all notifications (excluding Nasser's)
+router.get('/', protect, adminProtect, async (req, res) => {
+  try {
+    const notifications = await NotifyCompanyAdmin.find({
+      mainPerson: { $ne: "67b22c3748dc9b1348b1d636" }  // Exclude Nasser's notifications
+    })
+      .populate('mainPerson', 'name email contactNumber')
+      .populate('addedBy', 'username')
+      .populate('originalCompany', 'name crNumber sponserId gosiNumber molNumber')
+      .sort({ createdAt: -1 });
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get Nasser's notifications
+router.get('/nasser', protect, adminProtect, async (req, res) => {
+  try {
+    const notifications = await NotifyCompanyAdmin.find({
+      mainPerson: "67b22c3748dc9b1348b1d636"  // Only Nasser's notifications
+    })
+      .populate('mainPerson', 'name email contactNumber')
+      .populate('addedBy', 'username')
+      .populate('originalCompany', 'name crNumber sponserId gosiNumber molNumber')
+      .sort({ createdAt: -1 });
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get notification by ID
+router.get('/:id', protect, adminProtect, async (req, res) => {
+  try {
+    const notification = await NotifyCompanyAdmin.findById(req.params.id)
+      .populate('mainPerson', 'name email contactNumber')
+      .populate('addedBy', 'username')
+      .populate('originalCompany', 'name crNumber sponserId gosiNumber molNumber');
+    
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    res.json(notification);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Update notification
+router.put('/:id', protect, adminProtect, async (req, res) => {
+  try {
+    const notification = await NotifyCompanyAdmin.findById(req.params.id);
+    
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    Object.assign(notification, req.body);
+    const updatedNotification = await notification.save();
+    
+    res.json(updatedNotification);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Delete notification
+router.delete('/:id', protect, adminProtect, async (req, res) => {
+  try {
+    const notification = await NotifyCompanyAdmin.findById(req.params.id);
+    
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    await NotifyCompanyAdmin.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 // Approve notification
-router.post('/:id/approve', adminProtect, async (req, res) => {
+router.post('/:id/approve', protect, adminProtect, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -154,7 +224,7 @@ router.post('/:id/approve', adminProtect, async (req, res) => {
 });
 
 // Reject notification
-router.post('/:id/reject', adminProtect, async (req, res) => {
+router.post('/:id/reject', protect, adminProtect, async (req, res) => {
   try {
     const notification = await NotifyCompanyAdmin.findById(req.params.id);
     

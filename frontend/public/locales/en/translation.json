@@ -211,6 +211,7 @@
     "companyUpdated": "Company updated successfully",
     "companyDeleted": "Company deleted successfully",
     "companyError": "Error processing company data",
+    "companyRequestSent": "Company request sent to administrator",
     "individualAdded": "Individual added successfully",
     "individualUpdated": "Individual updated successfully",
     "individualRenewed": "Individual renewed successfully",
@@ -314,7 +315,8 @@
       "cr": "CR Payment",
       "qiwa": "Qiwa Payment",
       "muqeem": "Muqeem Payment",
-      "efa": "EFA Payment"
+      "efa": "EFA Payment",
+      "saudi": "Saudi Payment"
     },
     "details": {
       "iqama": "Iqama Number",

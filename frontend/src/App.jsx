@@ -24,6 +24,7 @@ const ExpiredIds = lazy(() => import('./pages/ExpiredIds'));
 const ExpiringSoonIds = lazy(() => import('./pages/ExpiringSoonIds'));
 const IncomeExpense = lazy(() => import('./pages/IncomeExpense'));
 const AdminNotifications = lazy(() => import('./pages/AdminNotifications'));
+const NasserAdminNotifications = lazy(() => import('./pages/NasserAdminNotifications'));
 const NasserIncomeExpense = lazy(() => import('./pages/NasserIncomeExpense'));
 const BulkMigration = lazy(() => import('./pages/BulkMigration'));
 const PendingPayments = lazy(() => import('./pages/PendingPayments'));
@@ -129,9 +130,17 @@ function App() {
                 } />
 
                 <Route path="/admin-notifications" element={
-                  <ProtectedRoute adminOnly={true}>
+                  <ProtectedRoute>
                     <AppLayout>
                       <AdminNotifications />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/nasser-admin-notifications" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <NasserAdminNotifications />
                     </AppLayout>
                   </ProtectedRoute>
                 } />

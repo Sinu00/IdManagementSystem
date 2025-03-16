@@ -235,7 +235,11 @@ function CompanyList() {
             if (!user?.isAdmin) {
               // For regular users, create a notification
               await notifyCompanyAdminApi.create({
-                ...formData,
+                name: formData.name,
+                crNumber: formData.crNumber,
+                sponserId: formData.sponserId,
+                gosiNumber: formData.gosiNumber,
+                molNumber: formData.molNumber,
                 mainPerson: mainPersonId,
                 requestType: 'ADD',
                 amount: formData.crAmount || 0,

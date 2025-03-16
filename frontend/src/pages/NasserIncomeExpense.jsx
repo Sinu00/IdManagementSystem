@@ -254,17 +254,23 @@ function NasserIncomeExpense() {
   };
 
   const handleDelete = async () => {
+    if (!itemToDelete) return;
+
     try {
+      setLoading(true);
       if (itemToDelete.type === 'income') {
         await nasserApi.delete(itemToDelete._id, 'income');
       } else {
         await nasserApi.delete(itemToDelete._id, 'expense');
       }
       setDeleteConfirmOpen(false);
+      setItemToDelete(null);
       fetchData();
     } catch (error) {
       console.error('Error deleting record:', error);
       setError(error.response?.data?.message || 'Failed to delete record');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -293,7 +299,7 @@ function NasserIncomeExpense() {
         await nasserApi.create({
           ...formData,
           name: 'General Purpose',
-          mainPerson: '67d09798726e5a47c4caf071', // Nasser's mainPerson ID
+          mainPerson: '67b22c3748dc9b1348b1d636', // Nasser's mainPerson ID
           expenseType: formData.expenseType,
           specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType
         });
@@ -724,7 +730,7 @@ function NasserIncomeExpense() {
               onAdd={() => handleOpenDialog('income')}
               onExport={() => handleExportClick('income')}
               onEdit={handleEdit}
-              onDelete={handleDeleteClick}
+              onDelete={(item) => handleDeleteClick(item, 'income')}
               page={page}
               onPageChange={handleChangePage}
               rowsPerPage={rowsPerPage}
@@ -749,7 +755,7 @@ function NasserIncomeExpense() {
               onAdd={() => handleOpenDialog('expense')}
               onExport={() => handleExportClick('expense')}
               onEdit={handleEdit}
-              onDelete={handleDeleteClick}
+              onDelete={(item) => handleDeleteClick(item, 'expense')}
               page={expensePage}
               onPageChange={handleExpensePageChange}
               rowsPerPage={expenseRowsPerPage}

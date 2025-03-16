@@ -272,6 +272,9 @@ function IndividualList() {
       let message;
       
       if (!user.isAdmin) {
+        // Get company to set mainPerson
+        const company = await companyApi.getById(companyId);
+        
         // For regular users, create a notification
         const notificationData = {
           name: selectedIndividual?.name || formData.name,
@@ -280,6 +283,7 @@ function IndividualList() {
           iqamaNumber: selectedIndividual?.iqamaNumber || formData.iqamaNumber,
           expiryDate: formData.expiryDate,
           company: companyId,
+          mainPerson: company.data.mainPerson, // Add mainPerson from company
           requestType: dialogMode === 'add' ? 'ADD' : 'RENEW',
           originalIndividual: selectedIndividual?._id,
           amount: Number(formData.amount) || 0,
@@ -395,6 +399,9 @@ function IndividualList() {
   const handlePaymentSubmit = async (amount) => {
     try {
       if (!user.isAdmin) {
+        // Get company to set mainPerson
+        const company = await companyApi.getById(companyId);
+        
         // For regular users, create a payment notification
         const notificationData = {
           name: selectedIndividual.name,
@@ -403,9 +410,11 @@ function IndividualList() {
           iqamaNumber: selectedIndividual.iqamaNumber,
           expiryDate: selectedIndividual.expiryDate,
           company: companyId,
+          mainPerson: company.data.mainPerson, // Add mainPerson from company
           amount: amount,
           requestType: 'PAYMENT',
-          originalIndividual: selectedIndividual._id
+          originalIndividual: selectedIndividual._id,
+          referredBy: selectedIndividual.referredBy || user.username // Add referredBy
         };
         
         await notifyAdminApi.create(notificationData);

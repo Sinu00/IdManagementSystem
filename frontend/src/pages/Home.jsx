@@ -56,6 +56,7 @@ function Home() {
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [nasserNotificationCount, setNasserNotificationCount] = useState(0);
   const navigate = useNavigate();
   const theme = useTheme();
   const { user, logout } = useAuth();
@@ -80,6 +81,12 @@ function Home() {
             notifyAdminApi.getAll(),
             notifyCompanyAdminApi.getAll()
           ]));
+          
+          // Fetch Nasser notifications separately
+          promises.push(Promise.all([
+            notifyAdminApi.getAllNasser(),
+            notifyCompanyAdminApi.getAllNasser()
+          ]));
         }
 
         const responses = await Promise.all(promises);
@@ -102,6 +109,17 @@ function Home() {
             Array.isArray(notificationsRes[1].data) ? notificationsRes[1].data.length : 0
           );
           setNotificationCount(totalNotifications);
+
+          // Calculate Nasser notifications count
+          if (rest.length > 1) {
+            const nasserNotificationsRes = rest[1];
+            const nasserNotificationsCount = (
+              Array.isArray(nasserNotificationsRes[0].data) ? nasserNotificationsRes[0].data.length : 0
+            ) + (
+              Array.isArray(nasserNotificationsRes[1].data) ? nasserNotificationsRes[1].data.length : 0
+            );
+            setNasserNotificationCount(nasserNotificationsCount);
+          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -764,6 +782,46 @@ function Home() {
                     </Badge>
                   </IconButton>
                 </Tooltip>
+                
+                {user?.username == "Suhail" && (
+                <Tooltip title="Nasser Notifications">
+                  <IconButton
+                    onClick={() => navigate('/nasser-admin-notifications')}
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'info.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'info.dark',
+                      }
+                    }}
+                  >
+                    <Badge 
+                      badgeContent={loading ? (
+                        <Skeleton 
+                          variant="circular" 
+                          width={16} 
+                          height={16} 
+                          sx={{ bgcolor: 'info.main' }} 
+                        />
+                      ) : nasserNotificationCount}
+                      color="error"
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          right: -3,
+                          top: 3,
+                          border: '2px solid #fff',
+                          padding: '0 4px',
+                        }
+                      }}
+                    >
+                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
+                        <NotificationsIcon />
+                      </Avatar>
+                    </Badge>
+                  </IconButton>
+                </Tooltip>
+                )}
               </>
             )}
             {user?.isAdmin && (
