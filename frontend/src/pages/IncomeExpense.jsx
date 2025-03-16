@@ -303,13 +303,13 @@ function IncomeExpense() {
           iqamaNumber: 'N/A'
         });
       } else {
-        // For expenses, we'll create with the other mainPerson ID
+        // For expenses, we'll create with the main company mainPerson ID
         const expenseData = {
           name: 'General Purpose',
           amount: formData.amount,
           expenseType: formData.expenseType,
           specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
-          mainPerson: '67b22c3748dc9b1348b1d635' // Other mainPerson ID
+          mainPerson: '67d09798726e5a47c4caf072' // Main company mainPerson ID
         };
         
         // Only include company if it's not empty
