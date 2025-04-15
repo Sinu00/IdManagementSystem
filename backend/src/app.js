@@ -20,30 +20,20 @@ app.use(cors({
   origin: ['https://namoraidmanagementsystem.vercel.app', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials'
+  ],
   exposedHeaders: ['Authorization'],
   maxAge: 86400 // 24 hours
 }));
 app.use(express.json());
-
-// Add these lines before your routes
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    'https://namoraidmanagementsystem.vercel.app',
-    'http://localhost:5173'
-  ];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  next();
-});
 
 // Routes with /api prefix
 app.use('/api/auth', authRoutes);
