@@ -387,109 +387,25 @@
     }
   },
   "incomeExpense": {
-    "title": "النظرة المالية العامة",
-    "subtitle": "تتبع الدخل والمصروفات",
+    "title": "الدخل والمصروفات",
     "stats": {
       "totalIncome": "إجمالي الدخل",
       "totalExpense": "إجمالي المصروفات",
-      "netBalance": "الرصيد الصافي",
+      "totalBalance": "الرصيد الإجمالي",
+      "allTimeBalance": "الرصيد الكلي",
+      "netBalance": "صافي الرصيد",
+      "currentMonth": "الشهر الحالي",
       "thisMonth": "هذا الشهر",
       "lastMonth": "الشهر الماضي",
       "noChange": "لا تغيير عن الشهر الماضي",
-      "percentageChange": "{{value}}% عن الشهر الماضي",
-      "currentMonth": "الشهر الحالي"
-    },
-    "income": {
-      "title": "تفاصيل الدخل",
-      "noRecords": "لا توجد سجلات دخل",
-      "addFirst": "أضف أول معاملة دخل",
-      "table": {
-        "date": "التاريخ",
-        "name": "الاسم",
-        "iqama": "الإقامة",
-        "amount": "المبلغ",
-        "actions": "الإجراءات",
-        "referredBy": "تمت الإحالة بواسطة"
-      }
-    },
-    "expense": {
-      "title": "تفاصيل المصروفات",
-      "noRecords": "لا توجد سجلات مصروفات",
-      "addFirst": "أضف أول معاملة مصروفات",
-      "table": {
-        "date": "التاريخ",
-        "company": "الشركة",
-        "paidFor": "دفع لـ",
-        "amount": "المبلغ",
-        "actions": "الإجراءات"
-      },
-      "types": {
-        "cr": "مبلغ السجل التجاري",
-        "qiwa": "مبلغ قوى",
-        "muqeem": "مبلغ مقيم",
-        "saudi": "مبلغ سعودي",
-        "efa": "مبلغ منصة أفراد",
-        "other": "أخرى"
-      }
+      "percentageChange": "{{value}}% عن الشهر الماضي"
     },
     "buttons": {
       "manageUsers": "إدارة المستخدمين",
-      "iqamaPrice": "سعر الإقامة: {{price}} ريال",
+      "setIqamaPrice": "تعيين سعر الإقامة",
       "add": "إضافة",
       "export": "تصدير",
-      "refresh": "تحديث",
-      "setIqamaPrice": "تعيين سعر الإقامة"
-    },
-    "filters": {
-      "searchName": "البحث بالاسم",
-      "fromDate": "من تاريخ",
-      "toDate": "إلى تاريخ",
-      "referredBy": "تمت الإحالة بواسطة",
-      "expenseType": "نوع المصروف",
-      "allTypes": "جميع الأنواع"
-    },
-    "dialog": {
-      "add": {
-        "income": "إضافة دخل جديد",
-        "expense": "إضافة مصروف جديد"
-      },
-      "edit": {
-        "income": "تعديل الدخل",
-        "expense": "تعديل المصروف"
-      },
-      "delete": {
-        "title": "تأكيد الحذف",
-        "message": "هل أنت متأكد من حذف هذا {{type}}؟"
-      },
-      "export": {
-        "title": "تصدير تقرير {{type}}",
-        "dateRange": "نطاق التاريخ",
-        "specificDate": "تاريخ محدد",
-        "selectDate": "اختر التاريخ",
-        "startDate": "تاريخ البداية",
-        "endDate": "تاريخ النهاية",
-        "referredBy": "تمت الإحالة بواسطة",
-        "allReferrers": "الكل"
-      },
-      "fields": {
-        "name": "الاسم",
-        "iqamaNumber": "رقم الإقامة",
-        "amount": "المبلغ",
-        "paidFor": "دفع لـ",
-        "specifyOther": "حدد آخر"
-      }
-    },
-    "tooltips": {
-      "refresh": "تحديث",
-      "companyDetails": "تفاصيل الشركة",
-      "filter": "إظهار الفلاتر"
-    },
-    "noIncomeRecords": "لا توجد سجلات إيرادات",
-    "addFirstIncomeTransaction": "انقر على زر الإضافة لتسجيل أول معاملة إيرادات",
-    "noExpenseRecords": "لا توجد سجلات مصروفات",
-    "addFirstExpenseTransaction": "انقر على زر الإضافة لتسجيل أول معاملة مصروفات",
-    "table": {
-      "other": "أخرى"
+      "refresh": "تحديث"
     }
   },
   "userManagement": {

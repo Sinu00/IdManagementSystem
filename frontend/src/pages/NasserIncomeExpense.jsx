@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -92,6 +92,7 @@ function NasserIncomeExpense() {
   const [totalExpense, setTotalExpense] = useState(0);
   const [lastMonthIncome, setLastMonthIncome] = useState(0);
   const [lastMonthExpense, setLastMonthExpense] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('income'); // 'income' or 'expense'
   const [formData, setFormData] = useState({
@@ -157,6 +158,34 @@ function NasserIncomeExpense() {
     fetchCompanies();
   }, []);
 
+  // Add debounce function
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  // Create debounced filter handlers
+  const debouncedFetchFilteredData = useCallback(
+    debounce((filters) => {
+      fetchFilteredData(filters);
+    }, 500),
+    []
+  );
+
+  const debouncedFetchFilteredExpenseData = useCallback(
+    debounce((filters) => {
+      fetchFilteredExpenseData(filters);
+    }, 500),
+    []
+  );
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -165,18 +194,24 @@ function NasserIncomeExpense() {
         endDate: incomeFilters.dateRange.end.toISOString()
       };
 
+      // Get total balance
+      const totalBalanceResponse = await nasserApi.getTotalBalance();
+      setTotalBalance(totalBalanceResponse.data);
+
       // Get income data
       const incomeResponse = incomeFilters.referredBy !== 'all'
         ? await nasserApi.getFilteredIncome({
             ...dateFilter,
-            referredBy: incomeFilters.referredBy
+            referredBy: incomeFilters.referredBy,
+            nameSearch: incomeFilters.nameSearch || null
           })
         : await nasserApi.getIncomeByDateRange(dateFilter.startDate, dateFilter.endDate);
 
       // Get expense data
       const expenseResponse = await nasserApi.getFilteredExpense({
         ...dateFilter,
-        expenseType: expenseFilters.expenseType !== 'all' ? expenseFilters.expenseType : undefined
+        expenseType: expenseFilters.expenseType !== 'all' ? expenseFilters.expenseType : undefined,
+        nameSearch: expenseFilters.nameSearch || null
       });
 
       // Update state with response data
@@ -643,17 +678,79 @@ function NasserIncomeExpense() {
 
   const handleFilterChange = (type, field, value) => {
     if (type === 'income') {
-      setIncomeFilters(prev => 
-        field === 'dateRange' 
-          ? { ...prev, dateRange: value }
-          : { ...prev, [field]: value }
-      );
+      setIncomeFilters(prev => {
+        const newFilters = { ...prev, [field]: value };
+        
+        // Use debounced function for name search, immediate for others
+        if (field === 'nameSearch') {
+          debouncedFetchFilteredData(newFilters);
+        } else {
+          fetchFilteredData(newFilters);
+        }
+        
+        return newFilters;
+      });
     } else {
-      setExpenseFilters(prev => 
-        field === 'dateRange' 
-          ? { ...prev, dateRange: value }
-          : { ...prev, [field]: value }
-      );
+      setExpenseFilters(prev => {
+        const newFilters = { ...prev, [field]: value };
+        
+        // Use debounced function for name search, immediate for others
+        if (field === 'nameSearch') {
+          debouncedFetchFilteredExpenseData(newFilters);
+        } else {
+          fetchFilteredExpenseData(newFilters);
+        }
+        
+        return newFilters;
+      });
+    }
+  };
+
+  const fetchFilteredData = async (filters) => {
+    try {
+      setLoading(true);
+      const response = await nasserApi.getFilteredIncome({
+        startDate: filters.dateRange.start.toISOString(),
+        endDate: filters.dateRange.end.toISOString(),
+        referredBy: filters.referredBy === 'all' ? null : filters.referredBy,
+        nameSearch: filters.nameSearch || null
+      });
+      
+      setIncomes(response.data || []);
+      
+      // Calculate totals for the filtered data
+      const filteredTotal = (response.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      setTotalIncome(filteredTotal);
+      
+    } catch (error) {
+      console.error('Error fetching filtered data:', error);
+      setError('Failed to load filtered data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFilteredExpenseData = async (filters) => {
+    try {
+      setLoading(true);
+      const response = await nasserApi.getFilteredExpense({
+        startDate: filters.dateRange.start.toISOString(),
+        endDate: filters.dateRange.end.toISOString(),
+        expenseType: filters.expenseType === 'all' ? null : filters.expenseType,
+        nameSearch: filters.nameSearch || null
+      });
+      
+      setExpenses(response.data || []);
+      
+      // Calculate totals for the filtered data
+      const filteredTotal = (response.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      setTotalExpense(filteredTotal);
+      
+    } catch (error) {
+      console.error('Error fetching filtered expense data:', error);
+      setError('Failed to load filtered expense data');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -689,23 +786,32 @@ function NasserIncomeExpense() {
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
+      <Box sx={{ mt: 4, mb: 4 }}>
         {/* Header */}
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
-          <IconButton onClick={() => navigate(-1)} size="small">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h5" component="h1">
-            {t('incomeExpense.title')}
-          </Typography>
-          <Box sx={{ flexGrow: 1 }} />
+        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <IconButton onClick={() => navigate(-1)}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box>
+              <Typography variant="h4">
+                {t('incomeExpense.title')}
+              </Typography>
+              <Typography 
+                variant="subtitle1" 
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+              >
+                {format(incomeFilters.dateRange.start, 'MMMM yyyy')}
+              </Typography>
+            </Box>
+          </Stack>
           <Button
-            startIcon={<WalletIcon />}
+            variant="contained"
             onClick={() => setIsIqamaPriceDialogOpen(true)}
-            variant="outlined"
-            size="small"
+            startIcon={<MonetizationIcon />}
           >
-            {t('incomeExpense.buttons.setIqamaPrice', { price: iqamaPrice })}
+            {t('incomeExpense.buttons.setIqamaPrice')}
           </Button>
         </Stack>
 
@@ -716,6 +822,7 @@ function NasserIncomeExpense() {
           lastMonthIncome={lastMonthIncome}
           lastMonthExpense={lastMonthExpense}
           calculatePercentageChange={calculatePercentageChange}
+          totalBalance={totalBalance}
         />
 
         <Grid container spacing={3} sx={{ mt: 3 }}>

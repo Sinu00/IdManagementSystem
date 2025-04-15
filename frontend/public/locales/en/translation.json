@@ -386,17 +386,25 @@
     }
   },
   "incomeExpense": {
-    "title": "Financial Overview",
-    "subtitle": "Track your income and expenses",
+    "title": "Income & Expense",
     "stats": {
       "totalIncome": "Total Income",
       "totalExpense": "Total Expense",
+      "totalBalance": "Total Balance",
+      "allTimeBalance": "All Time Balance",
       "netBalance": "Net Balance",
+      "currentMonth": "Current Month",
       "thisMonth": "This Month",
       "lastMonth": "Last Month",
       "noChange": "No change from last month",
-      "percentageChange": "{{value}}% from last month",
-      "currentMonth": "Current month"
+      "percentageChange": "{{value}}% from last month"
+    },
+    "buttons": {
+      "manageUsers": "Manage Users",
+      "setIqamaPrice": "Set IQAMA Price ({{price}})",
+      "add": "Add",
+      "export": "Export",
+      "refresh": "Refresh"
     },
     "income": {
       "title": "Income Details",
@@ -430,14 +438,6 @@
         "efa": "EFA Amount",
         "other": "Other"
       }
-    },
-    "buttons": {
-      "manageUsers": "Manage Users",
-      "iqamaPrice": "IQAMA Price: SAR {{price}}",
-      "add": "Add",
-      "export": "Export",
-      "refresh": "Refresh",
-      "setIqamaPrice": "Set Iqama Price"
     },
     "filters": {
       "searchName": "Search by name",

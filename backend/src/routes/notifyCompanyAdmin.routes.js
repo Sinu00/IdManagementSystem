@@ -31,7 +31,7 @@ router.post('/', protect, async (req, res) => {
 router.get('/', protect, adminProtect, async (req, res) => {
   try {
     const notifications = await NotifyCompanyAdmin.find({
-      mainPerson: { $ne: "67b22c3748dc9b1348b1d636" }  // Exclude Nasser's notifications
+      mainPerson: { $ne: "67d09798726e5a47c4caf071" }  // Exclude Nasser's notifications
     })
       .populate('mainPerson', 'name email contactNumber')
       .populate('addedBy', 'username')
@@ -47,7 +47,7 @@ router.get('/', protect, adminProtect, async (req, res) => {
 router.get('/nasser', protect, adminProtect, async (req, res) => {
   try {
     const notifications = await NotifyCompanyAdmin.find({
-      mainPerson: "67b22c3748dc9b1348b1d636"  // Only Nasser's notifications
+      mainPerson: "67d09798726e5a47c4caf071"  // Only Nasser's notifications
     })
       .populate('mainPerson', 'name email contactNumber')
       .populate('addedBy', 'username')

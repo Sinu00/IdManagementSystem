@@ -1,6 +1,7 @@
 import express from 'express';
 import { protect } from '../middleware/auth.middleware.js';
 import Income from '../models/income.model.js';
+import Expense from '../models/expense.model.js';
 import User from '../models/user.model.js';
 import mongoose from 'mongoose';
 
@@ -16,6 +17,34 @@ const addMainPersonFilter = (query) => {
     mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID }
   };
 };
+
+// Get total balance (all time)
+router.get('/total-balance', protect, async (req, res) => {
+  try {
+    // Get total income
+    const totalIncome = await Income.aggregate([
+      { $match: { mainPerson: { $ne: new mongoose.Types.ObjectId(EXCLUDED_MAIN_PERSON_ID) } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    // Get total expense
+    const totalExpense = await Expense.aggregate([
+      { $match: { mainPerson: { $ne: new mongoose.Types.ObjectId(EXCLUDED_MAIN_PERSON_ID) } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    const balance = {
+      totalIncome: totalIncome[0]?.total || 0,
+      totalExpense: totalExpense[0]?.total || 0,
+      netBalance: (totalIncome[0]?.total || 0) - (totalExpense[0]?.total || 0)
+    };
+
+    res.json(balance);
+  } catch (error) {
+    console.error('Error calculating total balance:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Get incomes by date range
 router.get('/filter/date', protect, async (req, res) => {
@@ -140,25 +169,43 @@ router.delete('/:id', protect, async (req, res) => {
 router.post('/filter', protect, async (req, res) => {
   try {
     const { startDate, endDate, referredBy } = req.body;
+    
+    // Convert dates to proper format
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+    
+    
     let query = {
       $and: [
         { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
         {
-          createdAt: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          }
+          $or: [
+            {
+              createdAt: {
+                $gte: startDateObj,
+                $lte: endDateObj
+              }
+            },
+            {
+              dateAndTime: {
+                $gte: startDateObj,
+                $lte: endDateObj
+              }
+            }
+          ]
         }
       ]
     };
 
-    if (referredBy) {
+    if (referredBy && referredBy !== 'all') {
       query.$and.push({ referredBy: referredBy });
     }
+
 
     const incomes = await Income.find(query)
       .sort({ createdAt: -1 })
       .populate('mainPerson', 'name');
+    
     res.json(incomes);
   } catch (error) {
     console.error('Error in filter:', error);

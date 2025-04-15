@@ -11,6 +11,20 @@ const api = axios.create({
   credentials: 'include'
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
@@ -29,29 +43,50 @@ api.interceptors.request.use(
 // Add response interceptor for better error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    console.error('API Error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      method: error.config?.method,
-      data: error.response?.data,
-      error: error.message
-    });
+  async (error) => {
+    const originalRequest = error.config;
     
-    // Only redirect to login if there's no token or if it's expired
-    if (error.response?.status === 401) {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        window.location.href = '/login';
+    // If the error is not 401 or it's already a retry, reject immediately
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    if (isRefreshing) {
+      // If token refresh is in progress, queue this request
+      try {
+        const token = await new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        });
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      } catch (err) {
+        return Promise.reject(err);
       }
     }
-    
-    // Add better error messages for CORS issues
-    if (error.message === 'Network Error') {
-      console.error('CORS or Network Error:', error);
-      // You might want to show a user-friendly error message
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      // Try to refresh the token
+      const response = await api.post('/api/auth/refresh-token');
+      const { token } = response.data;
+      
+      localStorage.setItem('token', token);
+      api.defaults.headers.common.Authorization = `Bearer ${token}`;
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      
+      processQueue(null, token);
+      
+      return api(originalRequest);
+    } catch (refreshError) {
+      processQueue(refreshError, null);
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
     }
-    return Promise.reject(error);
   }
 );
 
@@ -131,7 +166,8 @@ export const incomeApi = {
     api.get(`/api/income/filter/date?startDate=${startDate}&endDate=${endDate}`),
   getFilteredIncome: (filters) => 
     api.post('/api/income/filter', filters),
-  getReferredByList: () => api.get('/api/income/referred-by')
+  getReferredByList: () => api.get('/api/income/referred-by'),
+  getTotalBalance: () => api.get('/api/income/total-balance')
 };
 
 export const expenseApi = {
@@ -174,7 +210,8 @@ export const nasserApi = {
   create: (data) => api.post('/api/nasser/record', { ...data, type: data.iqamaNumber ? 'income' : 'expense' }),
   update: (id, data) => api.put(`/api/nasser/record/${id}`, { ...data, type: data.iqamaNumber ? 'income' : 'expense' }),
   delete: (id, type) => api.delete(`/api/nasser/record/${id}?type=${type}`),
-  getById: (id, type) => api.get(`/api/nasser/record/${id}?type=${type}`)
+  getById: (id, type) => api.get(`/api/nasser/record/${id}?type=${type}`),
+  getTotalBalance: () => api.get('/api/nasser/total-balance')
 };
 
 export default api;

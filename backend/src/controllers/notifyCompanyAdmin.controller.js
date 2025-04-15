@@ -24,7 +24,7 @@ export const createNotification = async (req, res) => {
 export const getAllNotifications = async (req, res) => {
   try {
     const notifications = await NotifyCompanyAdmin.find({
-      mainPerson: { $ne: "67b22c3748dc9b1348b1d636" }  // Exclude Nasser's notifications
+      mainPerson: { $ne: "67d09798726e5a47c4caf071" }  // Exclude Nasser's notifications
     })
       .populate('mainPerson')
       .populate('addedBy', 'username')
@@ -43,7 +43,7 @@ export const getAllNotifications = async (req, res) => {
 export const getAllNasserNotifications = async (req, res) => {
   try {
     const notifications = await NotifyCompanyAdmin.find({
-      mainPerson: "67b22c3748dc9b1348b1d636"  // Only Nasser's notifications
+      mainPerson: "67d09798726e5a47c4caf071"  // Only Nasser's notifications
     })
       .populate('mainPerson')
       .populate('addedBy', 'username')

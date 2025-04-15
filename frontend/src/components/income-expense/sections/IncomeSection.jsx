@@ -74,7 +74,6 @@ const IncomeSection = ({
         height: '100%'
       }}
     >
-
       <TableHeader
         type="income"
         showFilters={showFilters}
@@ -85,164 +84,169 @@ const IncomeSection = ({
         loading={loading}
       />
 
+      <FilterSection 
+        type="income" 
+        visible={showFilters}
+        filters={filters}
+        onFilterChange={onFilterChange}
+        referredByList={referredByList}
+      />
+
       {loading ? (
         <Box sx={{ py: 2 }}>
           <Skeleton height={50} />
           <Skeleton height={50} />
           <Skeleton height={50} />
         </Box>
-      ) : incomes.length > 0 ? (
+      ) : (
         <>
-          <FilterSection 
-            type="income" 
-            visible={showFilters}
-            filters={filters}
-            onFilterChange={onFilterChange}
-            referredByList={referredByList}
-          />
-                        <Divider sx={{ mb: 3 }} />
-          {/* Stats Section */}
-          <Grid container spacing={4} sx={{ mb: 3 }}>
-            <Grid item xs={6}>
-              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
-                <Typography variant="h6" fontWeight="bold">SAR {(totalIncome || 0).toFixed(2)}</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6}>
-              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
-                <Typography variant="h6" fontWeight="bold">SAR {(lastMonthIncome || 0).toFixed(2)}</Typography>
-              </Box>
-            </Grid>
-          </Grid>
-          <Divider sx={{ mb: 3 }} />
+          {incomes.length > 0 ? (
+            <>
+              <Divider sx={{ mb: 3 }} />
+              {/* Stats Section */}
+              <Grid container spacing={4} sx={{ mb: 3 }}>
+                <Grid item xs={6}>
+                  <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                    <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
+                    <Typography variant="h6" fontWeight="bold">SAR {(totalIncome || 0).toFixed(2)}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                    <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
+                    <Typography variant="h6" fontWeight="bold">SAR {(lastMonthIncome || 0).toFixed(2)}</Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+              <Divider sx={{ mb: 3 }} />
 
-          <TableContainer>
-            <Table size="small" aria-label="income table">
-              <TableHead>
-                <TableRow>
-                  <TableCell 
-                    onClick={() => onSort('dateAndTime')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '10%',
-                      whiteSpace: 'pre-line',
-                      textAlign: 'left'
-                    }}
-                  >
-                    {t('incomeExpense.income.table.date')} {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => onSort('name')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '35%'
-                    }}
-                  >
-                    {t('incomeExpense.income.table.name')} {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell sx={{ width: '25%' }}>
-                    {t('incomeExpense.income.table.iqama')}
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => onSort('amount')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '25%'
-                    }}
-                  >
-                    {t('incomeExpense.income.table.amount')} {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      width: '15%',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {t('incomeExpense.income.table.actions')}
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {incomes
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((income) => (
-                    <TableRow
-                      key={income._id}
-                      sx={{
-                        '&:last-child td, &:last-child th': { border: 0 },
-                        '&:hover': { bgcolor: 'action.hover' }
-                      }}
-                    >
+              <TableContainer>
+                <Table size="small" aria-label="income table">
+                  <TableHead>
+                    <TableRow>
                       <TableCell 
+                        onClick={() => onSort('dateAndTime')}
                         sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
                           width: '10%',
-                          p: 1
+                          whiteSpace: 'pre-line',
+                          textAlign: 'left'
                         }}
                       >
-                        <Typography
-                          sx={{
-                            whiteSpace: 'pre-line',
-                            textAlign: 'left',
-                            display: 'block',
-                            lineHeight: 1.2
-                          }}
-                        >
-                          {formatDate(income.createdAt)}
-                        </Typography>
+                        {t('incomeExpense.income.table.date')} {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{income.name}</Typography>
-                        {income.referredBy && (
-                          <Typography variant="caption" color="text.secondary">
-                            {t('incomeExpense.income.table.referredBy')} {income.referredBy}
-                          </Typography>
-                        )}
+                      <TableCell 
+                        onClick={() => onSort('name')}
+                        sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
+                          width: '35%'
+                        }}
+                      >
+                        {t('incomeExpense.income.table.name')} {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
-                      <TableCell>{income.iqamaNumber}</TableCell>
-                      <TableCell sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                        {(income.amount || 0).toFixed(2)}
+                      <TableCell sx={{ width: '25%' }}>
+                        {t('incomeExpense.income.table.iqama')}
                       </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(income)}
-                          sx={{ color: 'primary.main', mr: 1 }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(income)}
-                          sx={{ color: 'error.main' }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                      <TableCell 
+                        onClick={() => onSort('amount')}
+                        sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
+                          width: '25%'
+                        }}
+                      >
+                        {t('incomeExpense.income.table.amount')} {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </TableCell>
+                      <TableCell 
+                        sx={{ 
+                          width: '15%',
+                          textAlign: 'center'
+                        }}
+                      >
+                        {t('incomeExpense.income.table.actions')}
                       </TableCell>
                     </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            component="div"
-            count={incomes.length}
-            page={page}
-            onPageChange={onPageChange}
-            rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[10]}
-            sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider'
-            }}
-          />
+                  </TableHead>
+                  <TableBody>
+                    {incomes
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((income) => (
+                        <TableRow
+                          key={income._id}
+                          sx={{
+                            '&:last-child td, &:last-child th': { border: 0 },
+                            '&:hover': { bgcolor: 'action.hover' }
+                          }}
+                        >
+                          <TableCell 
+                            sx={{ 
+                              width: '10%',
+                              p: 1
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                whiteSpace: 'pre-line',
+                                textAlign: 'left',
+                                display: 'block',
+                                lineHeight: 1.2
+                              }}
+                            >
+                              {formatDate(income.createdAt)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">{income.name}</Typography>
+                            {income.referredBy && (
+                              <Typography variant="caption" color="text.secondary">
+                                {t('incomeExpense.income.table.referredBy')} {income.referredBy}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>{income.iqamaNumber}</TableCell>
+                          <TableCell sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                            {(income.amount || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(income)}
+                              sx={{ color: 'primary.main', mr: 1 }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(income)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={incomes.length}
+                page={page}
+                onPageChange={onPageChange}
+                rowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[10]}
+                sx={{
+                  borderTop: '1px solid',
+                  borderColor: 'divider'
+                }}
+              />
+            </>
+          ) : (
+            <EmptyState type="income" />
+          )}
         </>
-      ) : (
-        <EmptyState type="income" />
       )}
     </Paper>
   );

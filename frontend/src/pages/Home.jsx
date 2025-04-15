@@ -48,6 +48,7 @@ import { CompanyCardSkeletonList } from '../components/skeletons/CompanyCardSkel
 import axios from 'axios';
 import { startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { nasserApi } from '../services/api';
+import printIdPdf from '../utils/pdf/PrintIdPdf';
 
 function Home() {
   const { t } = useTranslation();
@@ -60,6 +61,9 @@ function Home() {
   const navigate = useNavigate();
   const theme = useTheme();
   const { user, logout } = useAuth();
+  const [selectedMainPerson, setSelectedMainPerson] = useState(null);
+  const [printLoading, setPrintLoading] = useState(false);
+  const [printError, setPrintError] = useState(null);
 
   useEffect(() => {
     console.log('Current user object:', user);
@@ -152,6 +156,37 @@ function Home() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handlePrint = async (mainPerson) => {
+    try {
+      setPrintLoading(true);
+      setPrintError(null);
+
+      // Get all companies for the selected main person
+      const companiesResponse = await companyApi.getByMainPerson(mainPerson._id);
+      const companies = companiesResponse.data;
+
+      // For each company, get its individuals
+      for (const company of companies) {
+        const individualsResponse = await individualApi.getByCompany(company._id);
+        const individuals = individualsResponse.data;
+
+        if (individuals.length > 0) {
+          // Generate filename with company name
+          const filename = `${company.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-ids.pdf`;
+          
+          // Generate PDF for this company and its individuals
+          printIdPdf(company, individuals, { filename });
+        }
+      }
+
+      setPrintLoading(false);
+    } catch (error) {
+      console.error('Error generating PDFs:', error);
+      setPrintError('Failed to generate PDFs. Please try again.');
+      setPrintLoading(false);
+    }
   };
 
   if (error) return <Alert severity="error">{error}</Alert>;
@@ -611,11 +646,11 @@ function Home() {
         sx={{ 
           width: '100%',
           mt: 'auto',
-          py: 3,
-          px: 2,
+          py: { xs: 1.5, sm: 3 },
+          px: { xs: 1, sm: 2 },
           bgcolor: 'background.paper',
-          borderTopLeftRadius: 30,
-          borderTopRightRadius: 30,
+          borderTopLeftRadius: { xs: 20, sm: 30 },
+          borderTopRightRadius: { xs: 20, sm: 30 },
           boxShadow: '0px -4px 20px rgba(0, 0, 0, 0.08)',
           position: 'fixed',
           bottom: 0,
@@ -627,22 +662,37 @@ function Home() {
         <Container maxWidth="lg">
           <Stack 
             direction="row" 
-            spacing={3}
+            spacing={{ xs: 1, sm: 3 }}
             alignItems="center"
             justifyContent="center"
+            sx={{
+              overflowX: 'auto',
+              pb: { xs: 0.5, sm: 0 },
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              },
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none'
+            }}
           >
             <ProfileMenu 
               username={user?.username} 
               onLogout={handleLogout}
             />
 
-            <Tooltip title={t('home.printPdf')}>
+            <Tooltip title={printLoading ? 'Generating PDFs...' : t('home.printPdf')}>
               <IconButton
-                onClick={() => window.print()}
+                onClick={() => {
+                  const allowedMainPersons = mainPersons.filter(person => isMainPersonAllowed(person));
+                  allowedMainPersons.forEach(person => handlePrint(person));
+                }}
+                disabled={printLoading}
                 size="small"
                 sx={{ 
                   bgcolor: 'secondary.main',
                   color: 'white',
+                  width: { xs: 36, sm: 40 },
+                  height: { xs: 36, sm: 40 },
                   '&:hover': {
                     bgcolor: 'secondary.dark',
                   }
@@ -650,13 +700,17 @@ function Home() {
               >
                 <Avatar 
                   sx={{ 
-                    width: 32, 
-                    height: 32,
+                    width: { xs: 28, sm: 32 }, 
+                    height: { xs: 28, sm: 32 },
                     bgcolor: 'inherit',
                     color: 'inherit'
                   }}
                 >
-                  <PdfIcon />
+                  {printLoading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <PdfIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
+                  )}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -669,6 +723,8 @@ function Home() {
                   sx={{ 
                     bgcolor: 'success.main',
                     color: 'white',
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 },
                     '&:hover': {
                       bgcolor: 'success.dark',
                     }
@@ -676,13 +732,13 @@ function Home() {
                 >
                   <Avatar 
                     sx={{ 
-                      width: 32, 
-                      height: 32,
+                      width: { xs: 28, sm: 32 }, 
+                      height: { xs: 28, sm: 32 },
                       bgcolor: 'inherit',
                       color: 'inherit'
                     }}
                   >
-                    <WalletIcon />
+                    <WalletIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
                   </Avatar>
                 </IconButton>
               </Tooltip>
@@ -696,6 +752,8 @@ function Home() {
                   sx={{ 
                     bgcolor: 'info.main',
                     color: 'white',
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 },
                     '&:hover': {
                       bgcolor: 'info.dark',
                     }
@@ -703,13 +761,13 @@ function Home() {
                 >
                   <Avatar 
                     sx={{ 
-                      width: 32, 
-                      height: 32,
+                      width: { xs: 28, sm: 32 }, 
+                      height: { xs: 28, sm: 32 },
                       bgcolor: 'inherit',
                       color: 'inherit'
                     }}
                   >
-                    <MoneyIcon />
+                    <MoneyIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
                   </Avatar>
                 </IconButton>
               </Tooltip>
@@ -723,6 +781,8 @@ function Home() {
                   sx={{ 
                     bgcolor: 'success.main',
                     color: 'white',
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 },
                     '&:hover': {
                       bgcolor: 'success.dark',
                     }
@@ -730,19 +790,20 @@ function Home() {
                 >
                   <Avatar 
                     sx={{ 
-                      width: 32, 
-                      height: 32,
+                      width: { xs: 28, sm: 32 }, 
+                      height: { xs: 28, sm: 32 },
                       bgcolor: 'inherit',
                       color: 'inherit'
                     }}
                   >
-                    <BusinessIcon />
+                    <BusinessIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
                   </Avatar>
                 </IconButton>
               </Tooltip>
             )}
 
             <LanguageSwitcher />
+
             {user?.username == "Suhail" && (
               <>
                 <Tooltip title={t('home.adminNotifications')}>
@@ -752,6 +813,8 @@ function Home() {
                     sx={{ 
                       bgcolor: 'warning.main',
                       color: 'white',
+                      width: { xs: 36, sm: 40 },
+                      height: { xs: 36, sm: 40 },
                       '&:hover': {
                         bgcolor: 'warning.dark',
                       }
@@ -773,17 +836,24 @@ function Home() {
                           top: 3,
                           border: '2px solid #fff',
                           padding: '0 4px',
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' }
                         }
                       }}
                     >
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
-                        <NotificationsIcon />
+                      <Avatar 
+                        sx={{ 
+                          width: { xs: 28, sm: 32 }, 
+                          height: { xs: 28, sm: 32 },
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}
+                      >
+                        <NotificationsIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
                       </Avatar>
                     </Badge>
                   </IconButton>
                 </Tooltip>
-                
-                {user?.username == "Suhail" && (
+
                 <Tooltip title="Nasser Notifications">
                   <IconButton
                     onClick={() => navigate('/nasser-admin-notifications')}
@@ -791,6 +861,8 @@ function Home() {
                     sx={{ 
                       bgcolor: 'info.main',
                       color: 'white',
+                      width: { xs: 36, sm: 40 },
+                      height: { xs: 36, sm: 40 },
                       '&:hover': {
                         bgcolor: 'info.dark',
                       }
@@ -812,43 +884,74 @@ function Home() {
                           top: 3,
                           border: '2px solid #fff',
                           padding: '0 4px',
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' }
                         }
                       }}
                     >
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
-                        <NotificationsIcon />
+                      <Avatar 
+                        sx={{ 
+                          width: { xs: 28, sm: 32 }, 
+                          height: { xs: 28, sm: 32 },
+                          bgcolor: 'inherit',
+                          color: 'inherit'
+                        }}
+                      >
+                        <NotificationsIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
                       </Avatar>
                     </Badge>
                   </IconButton>
                 </Tooltip>
-                )}
               </>
             )}
-            {user?.isAdmin && (
-              <>
 
-                <Tooltip title={t('home.pendingPayments')}>
-                  <IconButton
-                    onClick={() => navigate('/pending-payments')}
-                    size="small"
+            {user?.isAdmin && (
+              <Tooltip title={t('home.pendingPayments')}>
+                <IconButton
+                  onClick={() => navigate('/pending-payments')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: 'error.main',
+                    color: 'white',
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 },
+                    '&:hover': {
+                      bgcolor: 'error.dark',
+                    }
+                  }}
+                >
+                  <Avatar 
                     sx={{ 
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      '&:hover': {
-                        bgcolor: 'error.dark',
-                      }
+                      width: { xs: 28, sm: 32 }, 
+                      height: { xs: 28, sm: 32 },
+                      bgcolor: 'inherit',
+                      color: 'inherit'
                     }}
                   >
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'inherit', color: 'inherit' }}>
-                      <MonetizationIcon />
-                    </Avatar>
-                  </IconButton>
-                </Tooltip>
-              </>
+                    <MonetizationIcon sx={{ fontSize: { xs: 18, sm: 24 } }} />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
             )}
           </Stack>
         </Container>
       </Box>
+
+      {/* Add error snackbar if needed */}
+      {printError && (
+        <Alert 
+          severity="error" 
+          onClose={() => setPrintError(null)}
+          sx={{ 
+            position: 'fixed', 
+            bottom: 80, 
+            left: '50%', 
+            transform: 'translateX(-50%)',
+            zIndex: 9999
+          }}
+        >
+          {printError}
+        </Alert>
+      )}
     </Box>
   );
 }

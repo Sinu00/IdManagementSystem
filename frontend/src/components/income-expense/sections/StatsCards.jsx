@@ -3,7 +3,8 @@ import { Grid, Card, CardContent, Typography, Avatar, Box } from '@mui/material'
 import {
   TrendingUp as IncomeIcon,
   TrendingDown as ExpenseIcon,
-  MoneyOff as MoneyIcon
+  MoneyOff as MoneyIcon,
+  AccountBalance as BalanceIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
@@ -12,14 +13,61 @@ const StatsCards = ({
   totalExpense,
   lastMonthIncome,
   lastMonthExpense,
-  calculatePercentageChange
+  calculatePercentageChange,
+  totalBalance
 }) => {
   const { t } = useTranslation();
 
   return (
     <Grid container spacing={3} mb={4}>
+      {/* Total Balance Card */}
+      <Grid item xs={12} md={3}>
+        <Card 
+          sx={{ 
+            height: '100%',
+            borderRadius: 4,
+            background: 'linear-gradient(135deg, #6B46C1 0%, #553C9A 100%)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              right: -20,
+              top: -20,
+              width: 150,
+              height: 150,
+              borderRadius: '50%',
+              bgcolor: 'rgba(255,255,255,0.1)'
+            }}
+          />
+          <CardContent sx={{ position: 'relative', p: 3 }}>
+            <Avatar 
+              sx={{ 
+                bgcolor: 'rgba(255,255,255,0.2)',
+                mb: 2,
+                width: 48,
+                height: 48
+              }}
+            >
+              <BalanceIcon />
+            </Avatar>
+            <Typography variant="h6" color="white" gutterBottom>
+              {t('incomeExpense.stats.totalBalance')}
+            </Typography>
+            <Typography variant="h3" fontWeight="bold" color="white">
+              SR {totalBalance?.netBalance || 0}
+            </Typography>
+            <Typography variant="body2" color="rgba(255,255,255,0.7)" sx={{ mt: 1 }}>
+              {t('incomeExpense.stats.allTimeBalance')}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
       {/* Income Card */}
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} md={3}>
         <Card 
           sx={{ 
             height: '100%',
@@ -71,7 +119,7 @@ const StatsCards = ({
       </Grid>
 
       {/* Expense Card */}
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} md={3}>
         <Card 
           sx={{ 
             height: '100%',
@@ -123,7 +171,7 @@ const StatsCards = ({
       </Grid>
 
       {/* Net Balance Card */}
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} md={3}>
         <Card 
           sx={{ 
             height: '100%',

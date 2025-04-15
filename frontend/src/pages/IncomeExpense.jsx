@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -81,13 +81,13 @@ function IncomeExpense() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const theme = useTheme();
   const [incomes, setIncomes] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [lastMonthIncome, setLastMonthIncome] = useState(0);
   const [lastMonthExpense, setLastMonthExpense] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('income'); // 'income' or 'expense'
   const [formData, setFormData] = useState({
@@ -163,38 +163,33 @@ function IncomeExpense() {
       const lastMonthStart = startOfMonth(subMonths(currentDate, 1));
       const lastMonthEnd = endOfMonth(subMonths(currentDate, 1));
 
-      // Current month data
-      const [incomeRes, expenseRes] = await Promise.all([
-        incomeApi.getByDateRange(startDate.toISOString(), endDate.toISOString()),
-        expenseApi.getByDateRange(startDate.toISOString(), endDate.toISOString())
-      ]);
+      // Get total balance
+      const balanceRes = await incomeApi.getTotalBalance();
+      setTotalBalance(balanceRes.data);
 
-      // Last month data
+      // Get last month data for comparison
       const [lastMonthIncomeRes, lastMonthExpenseRes] = await Promise.all([
         incomeApi.getByDateRange(lastMonthStart.toISOString(), lastMonthEnd.toISOString()),
         expenseApi.getByDateRange(lastMonthStart.toISOString(), lastMonthEnd.toISOString())
       ]);
 
-      setIncomes(incomeRes.data || []);
-      setExpenses(expenseRes.data || []);
-      
-      const currentMonthIncomeTotal = (incomeRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
-      const currentMonthExpenseTotal = (expenseRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
       const lastMonthIncomeTotal = (lastMonthIncomeRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
       const lastMonthExpenseTotal = (lastMonthExpenseRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
 
-      setTotalIncome(currentMonthIncomeTotal);
-      setTotalExpense(currentMonthExpenseTotal);
       setLastMonthIncome(lastMonthIncomeTotal);
       setLastMonthExpense(lastMonthExpenseTotal);
+
+      // Initial data load with current filters
+      await fetchFilteredData(incomeFilters);
+
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to load data. Please try again later.');
-      // Set default values in case of error
       setTotalIncome(0);
       setTotalExpense(0);
       setLastMonthIncome(0);
       setLastMonthExpense(0);
+      setTotalBalance(null);
     } finally {
       setLoading(false);
     }
@@ -335,6 +330,7 @@ function IncomeExpense() {
 
   const applyFilters = (data, type) => {
     const filters = type === 'income' ? incomeFilters : expenseFilters;
+    
     return data.filter(item => {
       const dateMatch = new Date(item.createdAt) >= startOfDay(filters.dateRange.start) &&
                        new Date(item.createdAt) <= endOfDay(filters.dateRange.end);
@@ -473,19 +469,109 @@ function IncomeExpense() {
     setPage(newPage);
   };
 
+  // Add debounce function
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  // Create debounced filter handlers
+  const debouncedFetchFilteredData = useCallback(
+    debounce((filters) => {
+      fetchFilteredData(filters);
+    }, 500),
+    []
+  );
+
+  const debouncedFetchFilteredExpenseData = useCallback(
+    debounce((filters) => {
+      fetchFilteredExpenseData(filters);
+    }, 500),
+    []
+  );
+
   const handleFilterChange = (type, field, value) => {
     if (type === 'income') {
-      setIncomeFilters(prev => 
-        field === 'dateRange' 
-          ? { ...prev, dateRange: value }
-          : { ...prev, [field]: value }
-      );
+      setIncomeFilters(prev => {
+        const newFilters = { ...prev, [field]: value };
+        
+        // Use debounced function for name search, immediate for others
+        if (field === 'nameSearch') {
+          debouncedFetchFilteredData(newFilters);
+        } else {
+          fetchFilteredData(newFilters);
+        }
+        
+        return newFilters;
+      });
     } else {
-      setExpenseFilters(prev => 
-        field === 'dateRange' 
-          ? { ...prev, dateRange: value }
-          : { ...prev, [field]: value }
-      );
+      setExpenseFilters(prev => {
+        const newFilters = { ...prev, [field]: value };
+        
+        // Use debounced function for name search, immediate for others
+        if (field === 'nameSearch') {
+          debouncedFetchFilteredExpenseData(newFilters);
+        } else {
+          fetchFilteredExpenseData(newFilters);
+        }
+        
+        return newFilters;
+      });
+    }
+  };
+
+  const fetchFilteredData = async (filters) => {
+    try {
+      setLoading(true);
+      const response = await incomeApi.getFilteredIncome({
+        startDate: filters.dateRange.start.toISOString(),
+        endDate: filters.dateRange.end.toISOString(),
+        referredBy: filters.referredBy === 'all' ? null : filters.referredBy,
+        nameSearch: filters.nameSearch || null
+      });
+      
+      setIncomes(response.data || []);
+      
+      // Calculate totals for the filtered data
+      const filteredTotal = (response.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      setTotalIncome(filteredTotal);
+      
+    } catch (error) {
+      console.error('Error fetching filtered data:', error);
+      setError('Failed to load filtered data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFilteredExpenseData = async (filters) => {
+    try {
+      setLoading(true);
+      const response = await expenseApi.getFilteredExpense({
+        startDate: filters.dateRange.start.toISOString(),
+        endDate: filters.dateRange.end.toISOString(),
+        expenseType: filters.expenseType === 'all' ? null : filters.expenseType,
+        nameSearch: filters.nameSearch || null
+      });
+      
+      setExpenses(response.data || []);
+      
+      // Calculate totals for the filtered data
+      const filteredTotal = (response.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      setTotalExpense(filteredTotal);
+      
+    } catch (error) {
+      console.error('Error fetching filtered expense data:', error);
+      setError('Failed to load filtered expense data');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -517,18 +603,27 @@ function IncomeExpense() {
           <IconButton onClick={() => navigate(-1)} size="small">
             <ArrowBackIcon />
           </IconButton>
-          <Typography 
-            variant="h5" 
-            component="h1"
-          sx={{ 
-              fontWeight: 700,
-              fontSize: '1.7rem',
-              letterSpacing: '0.5px'
-            }}
-          >
-                {t('incomeExpense.title')}
-              </Typography>
-              <Box sx={{ flexGrow: 1 }} />
+          <Box>
+            <Typography 
+              variant="h5" 
+              component="h1"
+              sx={{ 
+                fontWeight: 700,
+                fontSize: '1.7rem',
+                letterSpacing: '0.5px'
+              }}
+            >
+              {t('incomeExpense.title')}
+            </Typography>
+            <Typography 
+              variant="subtitle1" 
+              color="text.secondary"
+              sx={{ mt: 0.5 }}
+            >
+              {format(incomeFilters.dateRange.start, 'MMMM yyyy')}
+            </Typography>
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
           {user?.username == "Suhail" && (
             <Button
               startIcon={<PeopleIcon />}
@@ -548,7 +643,7 @@ function IncomeExpense() {
           >
             {t('incomeExpense.buttons.setIqamaPrice', { price: iqamaPrice })}
           </Button>
-                </Stack>
+        </Stack>
 
         {/* Stats Cards */}
         <StatsCards
@@ -557,6 +652,7 @@ function IncomeExpense() {
           lastMonthIncome={lastMonthIncome}
           lastMonthExpense={lastMonthExpense}
           calculatePercentageChange={calculatePercentageChange}
+          totalBalance={totalBalance}
         />
 
         <Grid container spacing={3} sx={{ mt: 3 }}>
@@ -566,18 +662,18 @@ function IncomeExpense() {
               loading={loading}
               incomes={sortedIncomes}
               showFilters={showIncomeFilters}
-                    filters={incomeFilters}
-                    onFilterChange={handleFilterChange}
-                    referredByList={referredByList}
+              filters={incomeFilters}
+              onFilterChange={handleFilterChange}
+              referredByList={referredByList}
               onToggleFilters={() => setShowIncomeFilters(!showIncomeFilters)}
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('income')}
               onExport={() => handleExportClick('income')}
               onEdit={(item) => handleEdit(item, 'income')}
               onDelete={(item) => handleDeleteClick({ ...item, type: 'income' })}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
               sortField={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
@@ -592,17 +688,17 @@ function IncomeExpense() {
               loading={loading}
               expenses={sortedExpenses}
               showFilters={showExpenseFilters}
-                    filters={expenseFilters}
-                    onFilterChange={handleFilterChange}
+              filters={expenseFilters}
+              onFilterChange={handleFilterChange}
               onToggleFilters={() => setShowExpenseFilters(!showExpenseFilters)}
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('expense')}
               onExport={() => handleExportClick('expense')}
               onEdit={(item) => handleEdit(item, 'expense')}
               onDelete={(item) => handleDeleteClick({ ...item, type: 'expense' })}
-                    page={expensePage}
+              page={expensePage}
               onPageChange={handleExpensePageChange}
-                    rowsPerPage={expenseRowsPerPage}
+              rowsPerPage={expenseRowsPerPage}
               sortField={expenseSortField}
               sortOrder={expenseSortOrder}
               onSort={handleExpenseSort}
@@ -629,7 +725,7 @@ function IncomeExpense() {
         />
 
         <DeleteConfirmDialog
-        open={deleteConfirmOpen}
+          open={deleteConfirmOpen}
           type={itemToDelete?.type}
           onClose={() => {
             setDeleteConfirmOpen(false);
@@ -656,13 +752,13 @@ function IncomeExpense() {
           onExport={generatePDF}
         />
 
-      <IqamaPriceDialog
-        open={isIqamaPriceDialogOpen}
-        currentPrice={iqamaPrice}
+        <IqamaPriceDialog
+          open={isIqamaPriceDialogOpen}
+          currentPrice={iqamaPrice}
           onClose={() => setIsIqamaPriceDialogOpen(false)}
           onSave={handleIqamaPriceChange}
-      />
-    </Box>
+        />
+      </Box>
     </Container>
   );
 }

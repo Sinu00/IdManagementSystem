@@ -3,6 +3,7 @@ import { protect } from '../middleware/auth.middleware.js';
 import Income from '../models/income.model.js';
 import Expense from '../models/expense.model.js';
 import User from '../models/user.model.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -279,6 +280,34 @@ router.get('/record/:id', protect, async (req, res) => {
     res.json(record);
   } catch (error) {
     console.error('Error fetching record:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get Nasser's total balance (all time)
+router.get('/total-balance', protect, async (req, res) => {
+  try {
+    // Get total income
+    const totalIncome = await Income.aggregate([
+      { $match: { mainPerson: new mongoose.Types.ObjectId(NASSER_MAIN_PERSON_ID) } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    // Get total expense
+    const totalExpense = await Expense.aggregate([
+      { $match: { mainPerson: new mongoose.Types.ObjectId(NASSER_MAIN_PERSON_ID) } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    const balance = {
+      totalIncome: totalIncome[0]?.total || 0,
+      totalExpense: totalExpense[0]?.total || 0,
+      netBalance: (totalIncome[0]?.total || 0) - (totalExpense[0]?.total || 0)
+    };
+
+    res.json(balance);
+  } catch (error) {
+    console.error('Error calculating Nasser total balance:', error);
     res.status(500).json({ message: error.message });
   }
 });

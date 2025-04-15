@@ -93,7 +93,7 @@ const ExpenseSection = ({
           <Skeleton height={50} />
           <Skeleton height={50} />
         </Box>
-      ) : expenses.length > 0 ? (
+      ) : (
         <>
           <FilterSection 
             type="expense" 
@@ -101,166 +101,165 @@ const ExpenseSection = ({
             filters={filters}
             onFilterChange={onFilterChange}
           />
-                        <Divider sx={{ mb: 3 }} />
-          {/* Stats Section */}
-          <Grid container spacing={4} sx={{ mb: 3 }}>
-            <Grid item xs={6}>
-              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
-                <Typography variant="h6" fontWeight="bold">SAR {(totalExpense || 0).toFixed(2)}</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6}>
-              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-                <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
-                <Typography variant="h6" fontWeight="bold">SAR {(lastMonthExpense || 0).toFixed(2)}</Typography>
-              </Box>
-            </Grid>
-          </Grid>
-          <Divider sx={{ mb: 3 }} />
+          {expenses.length > 0 ? (
+            <>
+              <Divider sx={{ mb: 3 }} />
+              {/* Stats Section */}
+              <Grid container spacing={4} sx={{ mb: 3 }}>
+                <Grid item xs={6}>
+                  <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                    <Typography variant="body2" color="error.main">{t('incomeExpense.stats.thisMonth')}</Typography>
+                    <Typography variant="h6" fontWeight="bold">SAR {(totalExpense || 0).toFixed(2)}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+                    <Typography variant="body2" color="error.main">{t('incomeExpense.stats.lastMonth')}</Typography>
+                    <Typography variant="h6" fontWeight="bold">SAR {(lastMonthExpense || 0).toFixed(2)}</Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+              <Divider sx={{ mb: 3 }} />
 
-          <TableContainer>
-            <Table size="small" aria-label="expense table">
-              <TableHead>
-                <TableRow>
-                  <TableCell 
-                    onClick={() => onSort('dateAndTime')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '10%',
-                      whiteSpace: 'pre-line',
-                      textAlign: 'left'
-                    }}
-                  >
-                    {t('incomeExpense.expense.table.date')} {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => onSort('company.name')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '25%'
-                    }}
-                  >
-                    {t('incomeExpense.expense.table.company')} {sortField === 'company.name' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => onSort('expenseType')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '20%'
-                    }}
-                  >
-                    {t('incomeExpense.expense.table.paidFor')} {sortField === 'expenseType' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell 
-                    onClick={() => onSort('amount')}
-                    sx={{ 
-                      cursor: 'pointer', 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      width: '20%'
-                    }}
-                  >
-                    {t('incomeExpense.expense.table.amount')} {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      width: '15%',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {t('incomeExpense.expense.table.actions')}
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {expenses
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((expense) => (
-                    <TableRow key={expense._id}>
+              <TableContainer>
+                <Table size="small" aria-label="expense table">
+                  <TableHead>
+                    <TableRow>
                       <TableCell 
+                        onClick={() => onSort('dateAndTime')}
                         sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
                           width: '10%',
-                          p: 1
+                          whiteSpace: 'pre-line',
+                          textAlign: 'left'
                         }}
                       >
-                        <Typography
-                          sx={{
-                            whiteSpace: 'pre-line',
-                            textAlign: 'left',
-                            display: 'block',
-                            lineHeight: 1.2
-                          }}
-                        >
-                          {formatDate(expense.createdAt)}
-                        </Typography>
+                        {t('incomeExpense.expense.table.date')} {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
-                      <TableCell>
-                        {expense.company ? (
-                          <Tooltip
-                            title={
-                              <Box sx={{ whiteSpace: 'pre-line' }}>
-                                {t('company.cr')} {expense.company?.crNumber || '-'}
-                                {'\n'}
-                                {t('company.sponsor')} {expense.company?.sponserId || '-'}
-                                {'\n'}
-                                {t('company.gosi')} {expense.company?.gosiNumber || '-'}
-                                {'\n'}
-                                {t('company.mol')} {expense.company?.molNumber || '-'}
-                              </Box>
-                            }
-                            arrow
-                          >
-                            <Typography sx={{ cursor: 'pointer' }}>{expense.company.name}</Typography>
-                          </Tooltip>
-                        ) : (
-                          <Typography>{t('common.namora')}</Typography>
-                        )}
+                      <TableCell 
+                        onClick={() => onSort('company.name')}
+                        sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
+                          width: '25%'
+                        }}
+                      >
+                        {t('incomeExpense.expense.table.company')} {sortField === 'company.name' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
-                      <TableCell>
-                        {expense.specification || (expense.expenseType ? t(`incomeExpense.expense.types.${expense.expenseType}`) : t('incomeExpense.table.other'))}
+                      <TableCell 
+                        onClick={() => onSort('expenseType')}
+                        sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
+                          width: '20%'
+                        }}
+                      >
+                        {t('incomeExpense.expense.table.paidFor')} {sortField === 'expenseType' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
-                      <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                        {(expense.amount || 0).toFixed(2)}
+                      <TableCell 
+                        onClick={() => onSort('amount')}
+                        sx={{ 
+                          cursor: 'pointer', 
+                          '&:hover': { bgcolor: 'action.hover' },
+                          width: '20%'
+                        }}
+                      >
+                        {t('incomeExpense.expense.table.amount')} {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(expense)}
-                          sx={{ color: 'primary.main', mr: 1 }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(expense)}
-                          sx={{ color: 'error.main' }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                      <TableCell 
+                        sx={{ 
+                          width: '15%',
+                          textAlign: 'center'
+                        }}
+                      >
+                        {t('incomeExpense.expense.table.actions')}
                       </TableCell>
                     </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            component="div"
-            count={expenses.length}
-            page={page}
-            onPageChange={onPageChange}
-            rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[10]}
-            sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider'
-            }}
-          />
+                  </TableHead>
+                  <TableBody>
+                    {expenses
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((expense) => (
+                        <TableRow
+                          key={expense._id}
+                          sx={{
+                            '&:last-child td, &:last-child th': { border: 0 },
+                            '&:hover': { bgcolor: 'action.hover' }
+                          }}
+                        >
+                          <TableCell 
+                            sx={{ 
+                              width: '10%',
+                              p: 1
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                whiteSpace: 'pre-line',
+                                textAlign: 'left',
+                                display: 'block',
+                                lineHeight: 1.2
+                              }}
+                            >
+                              {formatDate(expense.createdAt)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {expense.company ? (
+                              <Typography variant="body2">{expense.company.name}</Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">-</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {expense.expenseType === 'other' ? (
+                              expense.specification || t('incomeExpense.expense.types.other')
+                            ) : (
+                              t(`incomeExpense.expense.types.${expense.expenseType}`)
+                            )}
+                          </TableCell>
+                          <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                            {(expense.amount || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(expense)}
+                              sx={{ color: 'primary.main', mr: 1 }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(expense)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={expenses.length}
+                page={page}
+                onPageChange={onPageChange}
+                rowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[10]}
+                sx={{
+                  borderTop: '1px solid',
+                  borderColor: 'divider'
+                }}
+              />
+            </>
+          ) : (
+            <EmptyState type="expense" />
+          )}
         </>
-      ) : (
-        <EmptyState type="expense" />
       )}
     </Paper>
   );
