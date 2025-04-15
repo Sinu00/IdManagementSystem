@@ -32,6 +32,9 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Add CORS headers
+    config.headers['Access-Control-Allow-Credentials'] = true;
+    config.headers['Access-Control-Allow-Origin'] = '*';
     return config;
   },
   (error) => {
@@ -46,13 +49,24 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Skip token refresh for auth-related endpoints
+    if (originalRequest.url?.includes('/auth/') || originalRequest.url?.includes('/login')) {
+      return Promise.reject(error);
+    }
+    
     // If the error is not 401 or it's already a retry, reject immediately
     if (error.response?.status !== 401 || originalRequest._retry) {
+      // If token is invalid, redirect to login
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+      }
       return Promise.reject(error);
     }
 
     if (isRefreshing) {
-      // If token refresh is in progress, queue this request
       try {
         const token = await new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -60,6 +74,10 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (err) {
+        localStorage.removeItem('token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(err);
       }
     }
@@ -68,21 +86,25 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // Try to refresh the token
       const response = await api.post('/api/auth/refresh-token');
       const { token } = response.data;
       
+      if (!token) {
+        throw new Error('No token received');
+      }
+
       localStorage.setItem('token', token);
       api.defaults.headers.common.Authorization = `Bearer ${token}`;
       originalRequest.headers.Authorization = `Bearer ${token}`;
       
       processQueue(null, token);
-      
       return api(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
@@ -92,7 +114,8 @@ api.interceptors.response.use(
 
 export const authApi = {
   login: (credentials) => {
-    console.log('Login URL:', `${API_URL}/api/auth/login`);
+    // Remove any existing tokens before login
+    localStorage.removeItem('token');
     return api.post('/api/auth/login', credentials);
   },
 };
