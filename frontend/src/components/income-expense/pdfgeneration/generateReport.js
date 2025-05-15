@@ -175,7 +175,7 @@ export const generateReport = async (type, data, options) => {
     const total = addSummarySection(doc, data);
 
     const tableRows = data.map(item => ({
-      date: format(new Date(item.createdAt), 'dd MMMM yyyy'),
+      date: format(new Date(item.transactionDate), 'dd MMMM yyyy'),
       name: item.name,
       iqama: item.iqamaNumber || '-',
       referredBy: item.referredBy || '-',

@@ -37,6 +37,11 @@ const incomeSchema = new mongoose.Schema(
     isCustomIncome: {
       type: Boolean,
       default: false
+    },
+    transactionDate: {
+      type: Date,
+      default: Date.now,
+      required: true
     }
   },
   { timestamps: true }

@@ -54,26 +54,16 @@ router.get('/filter/date', protect, async (req, res) => {
       $and: [
         { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
         {
-          $or: [
-            {
-              createdAt: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-              }
-            },
-            {
-              dateAndTime: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-              }
-            }
-          ]
+          transactionDate: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
         }
       ]
     };
 
     const incomes = await Income.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ transactionDate: -1 })
       .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {
@@ -88,7 +78,7 @@ router.get('/', protect, async (req, res) => {
     const incomes = await Income.find({ 
       mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } 
     })
-    .sort({ createdAt: -1 })
+    .sort({ transactionDate: -1 })
     .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {
@@ -168,31 +158,20 @@ router.delete('/:id', protect, async (req, res) => {
 // Get filtered income
 router.post('/filter', protect, async (req, res) => {
   try {
-    const { startDate, endDate, referredBy } = req.body;
+    const { startDate, endDate, referredBy, nameSearch } = req.body;
     
     // Convert dates to proper format
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
     
-    
     let query = {
       $and: [
         { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
         {
-          $or: [
-            {
-              createdAt: {
-                $gte: startDateObj,
-                $lte: endDateObj
-              }
-            },
-            {
-              dateAndTime: {
-                $gte: startDateObj,
-                $lte: endDateObj
-              }
-            }
-          ]
+          transactionDate: {
+            $gte: startDateObj,
+            $lte: endDateObj
+          }
         }
       ]
     };
@@ -201,11 +180,15 @@ router.post('/filter', protect, async (req, res) => {
       query.$and.push({ referredBy: referredBy });
     }
 
+    if (nameSearch) {
+      query.$and.push({
+        name: { $regex: nameSearch, $options: 'i' }
+      });
+    }
 
     const incomes = await Income.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ transactionDate: -1 })
       .populate('mainPerson', 'name');
-    
     res.json(incomes);
   } catch (error) {
     console.error('Error in filter:', error);

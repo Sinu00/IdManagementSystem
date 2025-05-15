@@ -45,26 +45,16 @@ router.get('/income/filter/date', protect, async (req, res) => {
       $and: [
         { mainPerson: NASSER_MAIN_PERSON_ID },
         {
-          $or: [
-            {
-              createdAt: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-              }
-            },
-            {
-              dateAndTime: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-              }
-            }
-          ]
+          transactionDate: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
         }
       ]
     };
 
     const incomes = await Income.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ transactionDate: -1 })
       .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {
@@ -81,7 +71,7 @@ router.post('/income/filter', protect, async (req, res) => {
       $and: [
         { mainPerson: NASSER_MAIN_PERSON_ID },
         {
-          createdAt: {
+          transactionDate: {
             $gte: new Date(startDate),
             $lte: new Date(endDate)
           }
@@ -94,7 +84,7 @@ router.post('/income/filter', protect, async (req, res) => {
     }
 
     const incomes = await Income.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ transactionDate: -1 })
       .populate('mainPerson', 'name');
     res.json(incomes);
   } catch (error) {

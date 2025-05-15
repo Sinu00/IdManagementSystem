@@ -15,6 +15,9 @@ import {
   InputAdornment
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const defaultFormData = {
   name: '',
@@ -24,7 +27,8 @@ const defaultFormData = {
   referredBy: '',
   company: '',
   expenseType: 'other',
-  specification: ''
+  specification: '',
+  transactionDate: new Date()
 };
 
 const AddEditDialog = ({ 
@@ -39,14 +43,7 @@ const AddEditDialog = ({
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    amount: '',
-    iqamaNumber: '',
-    referredBy: '',
-    company: '',
-    expenseType: 'other',
-    specification: ''
+    ...defaultFormData
   });
 
   useEffect(() => {
@@ -59,19 +56,11 @@ const AddEditDialog = ({
         referredBy: data.referredBy || '',
         company: data.company || '',
         expenseType: data.expenseType || 'other',
-        specification: data.specification || ''
+        specification: data.specification || '',
+        transactionDate: data.transactionDate ? new Date(data.transactionDate) : new Date()
       });
     } else {
-      setFormData({
-        name: '',
-        description: '',
-        amount: '',
-        iqamaNumber: '',
-        referredBy: '',
-        company: '',
-        expenseType: 'other',
-        specification: ''
-      });
+      setFormData(defaultFormData);
     }
   }, [data]);
 
@@ -80,9 +69,16 @@ const AddEditDialog = ({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleDateChange = (newDate) => {
+    setFormData(prev => ({ ...prev, transactionDate: newDate }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      transactionDate: formData.transactionDate.toISOString()
+    });
   };
 
   return (
@@ -97,6 +93,31 @@ const AddEditDialog = ({
               {error}
             </Alert>
           )}
+
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DateTimePicker
+              label={t('form.transactionDate')}
+              value={formData.transactionDate}
+              onChange={handleDateChange}
+              renderInput={(params) => (
+                <TextField 
+                  {...params} 
+                  fullWidth 
+                  margin="normal"
+                  required
+                  helperText={t('form.transactionDateHelperText')}
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      cursor: 'pointer'
+                    }
+                  }}
+                />
+              )}
+              sx={{
+                width: '100%'
+              }}
+            />
+          </LocalizationProvider>
           
           {type === 'income' && (
             <>

@@ -9,7 +9,7 @@ router.get('/filter/date', protect, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const expenses = await Expense.find({
-      createdAt: {
+      transactionDate: {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       },
@@ -17,7 +17,7 @@ router.get('/filter/date', protect, async (req, res) => {
     })
     .populate('company', 'name crNumber sponserId gosiNumber molNumber')
     .populate('mainPerson', 'name')
-    .sort({ createdAt: -1 });
+    .sort({ transactionDate: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,7 +32,7 @@ router.get('/', protect, async (req, res) => {
     })
       .populate('company', 'name crNumber sponserId gosiNumber molNumber')
       .populate('mainPerson', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ transactionDate: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -113,13 +113,13 @@ router.delete('/:id', protect, async (req, res) => {
 // Get filtered expenses
 router.post('/filter', protect, async (req, res) => {
   try {
-    const { startDate, endDate, company, expenseType } = req.body;
+    const { startDate, endDate, company, expenseType, nameSearch } = req.body;
     const query = {
       mainPerson: { $ne: '67d09798726e5a47c4caf071' }
     };
 
     if (startDate && endDate) {
-      query.createdAt = {
+      query.transactionDate = {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       };
@@ -133,10 +133,14 @@ router.post('/filter', protect, async (req, res) => {
       query.expenseType = expenseType;
     }
 
+    if (nameSearch) {
+      query.name = { $regex: nameSearch, $options: 'i' };
+    }
+
     const expenses = await Expense.find(query)
       .populate('company', 'name')
       .populate('mainPerson', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ transactionDate: -1 });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });

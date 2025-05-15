@@ -32,9 +32,10 @@ const expenseSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
-    createdAt: {
+    transactionDate: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      required: true
     }
   },
   { timestamps: true }

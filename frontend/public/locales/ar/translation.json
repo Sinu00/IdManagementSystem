@@ -388,6 +388,25 @@
   },
   "incomeExpense": {
     "title": "الدخل والمصروفات",
+    "income": {
+      "table": {
+        "date": "تاريخ المعاملة",
+        "name": "الاسم",
+        "iqama": "الإقامة",
+        "amount": "المبلغ",
+        "actions": "الإجراءات",
+        "referredBy": "تمت الإحالة بواسطة"
+      }
+    },
+    "expense": {
+      "table": {
+        "date": "تاريخ المعاملة",
+        "company": "الشركة",
+        "paidFor": "دفع لـ",
+        "amount": "المبلغ",
+        "actions": "الإجراءات"
+      }
+    },
     "stats": {
       "totalIncome": "إجمالي الدخل",
       "totalExpense": "إجمالي المصروفات",
@@ -472,7 +491,9 @@
     "descriptionHelperText": "أضف أي تفاصيل إضافية عن هذا الدخل",
     "amount": "المبلغ",
     "iqamaNumber": "رقم الإقامة",
-    "iqamaNumberHelperText": "أدخل رقم الإقامة (اختياري للدخل المخصص)"
+    "iqamaNumberHelperText": "أدخل رقم الإقامة (اختياري للدخل المخصص)",
+    "transactionDate": "تاريخ المعاملة",
+    "transactionDateHelperText": "حدد تاريخ ووقت المعاملة"
   },
   "dialog": {
     "add": "إضافة",

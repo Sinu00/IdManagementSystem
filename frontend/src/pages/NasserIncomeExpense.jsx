@@ -102,7 +102,8 @@ function NasserIncomeExpense() {
     referredBy: '',
     company: '', // for expense
     expenseType: 'other', // for expense
-    specification: '' // for other expense type
+    specification: '', // for other expense type
+    transactionDate: new Date()
   });
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState('createdAt');
@@ -257,7 +258,8 @@ function NasserIncomeExpense() {
       referredBy: '',
       company: '',
       expenseType: 'other',
-      specification: ''
+      specification: '',
+      transactionDate: new Date()
     });
     setDialogOpen(true);
   };
@@ -278,7 +280,8 @@ function NasserIncomeExpense() {
       referredBy: item.referredBy || '',
       company: item.company || '',
       expenseType: item.expenseType || 'other',
-      specification: item.expenseType || ''
+      specification: item.expenseType || '',
+      transactionDate: new Date(item.transactionDate)
     });
     setDialogOpen(true);
   };
@@ -315,16 +318,23 @@ function NasserIncomeExpense() {
       
       // If it's an income entry
       if (dialogType === 'income') {
-        // Custom income
-        await nasserApi.create({
+        const incomeData = {
           name: formData.name,
           description: formData.description,
           amount: formData.amount,
           referredBy: formData.description, // Use description as referredBy for custom income
           mainPerson: '67d09798726e5a47c4caf071', // Nasser's mainPerson ID
           isCustomIncome: true,
-          iqamaNumber: 'N/A'
-        });
+          iqamaNumber: 'N/A',
+          transactionDate: formData.transactionDate,
+          type: 'income'
+        };
+
+        if (editData) {
+          await nasserApi.update(editData._id, incomeData);
+        } else {
+          await nasserApi.create(incomeData);
+        }
       } else {
         // For expenses, we'll create with Nasser's mainPerson ID
         const expenseData = {
@@ -332,7 +342,9 @@ function NasserIncomeExpense() {
           amount: formData.amount,
           expenseType: formData.expenseType,
           specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
-          mainPerson: '67d09798726e5a47c4caf071' // Nasser's mainPerson ID
+          mainPerson: '67d09798726e5a47c4caf071', // Nasser's mainPerson ID
+          transactionDate: formData.transactionDate,
+          type: 'expense'
         };
         
         // Only include company if it's not empty
@@ -340,14 +352,18 @@ function NasserIncomeExpense() {
           expenseData.company = formData.company;
         }
 
-        await nasserApi.create(expenseData);
+        if (editData) {
+          await nasserApi.update(editData._id, expenseData);
+        } else {
+          await nasserApi.create(expenseData);
+        }
       }
 
       handleCloseDialog();
       fetchData();
     } catch (error) {
-      console.error('Error creating record:', error);
-      setError(error.response?.data?.message || 'Failed to create record');
+      console.error('Error saving record:', error);
+      setError(error.response?.data?.message || 'Failed to save record');
     }
   };
 
@@ -359,8 +375,8 @@ function NasserIncomeExpense() {
   const applyFilters = (data, type) => {
     const filters = type === 'income' ? incomeFilters : expenseFilters;
     return data.filter(item => {
-      const dateMatch = new Date(item.createdAt) >= startOfDay(filters.dateRange.start) &&
-                       new Date(item.createdAt) <= endOfDay(filters.dateRange.end);
+      const dateMatch = new Date(item.transactionDate) >= startOfDay(filters.dateRange.start) &&
+                       new Date(item.transactionDate) <= endOfDay(filters.dateRange.end);
       
       const nameMatch = item.name.toLowerCase().includes(filters.nameSearch.toLowerCase());
       
@@ -379,8 +395,9 @@ function NasserIncomeExpense() {
     return [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'createdAt':
-          comparison = new Date(a.createdAt) - new Date(b.createdAt);
+        case 'dateAndTime':
+        case 'transactionDate':
+          comparison = new Date(a.transactionDate) - new Date(b.transactionDate);
           break;
         case 'amount':
           comparison = a.amount - b.amount;
@@ -403,8 +420,8 @@ function NasserIncomeExpense() {
       let comparison = 0;
       switch (expenseSortField) {
         case 'dateAndTime':
-        case 'createdAt':
-          comparison = new Date(a.createdAt) - new Date(b.createdAt);
+        case 'transactionDate':
+          comparison = new Date(a.transactionDate) - new Date(b.transactionDate);
           break;
         case 'amount':
           comparison = a.amount - b.amount;
@@ -554,7 +571,7 @@ function NasserIncomeExpense() {
             ];
 
         const tableRows = data.map(item => ({
-          date: format(new Date(item.createdAt), 'dd MMMM yyyy'),
+          date: format(new Date(item.transactionDate), 'dd MMMM yyyy'),
           name: item.name,
           iqama: item.iqamaNumber || '-',
           referredBy: item.referredBy || '-',

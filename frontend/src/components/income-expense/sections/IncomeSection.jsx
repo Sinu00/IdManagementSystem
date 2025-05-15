@@ -50,7 +50,7 @@ const IncomeSection = ({
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
-      return `${format(date, 'MMM')} ${date.getDate()}\n${date.getFullYear()}`;
+      return format(date, 'MMM dd, yyyy HH:mm');
     } catch (error) {
       console.error('Date formatting error:', error);
       return 'Invalid Date';
@@ -125,16 +125,16 @@ const IncomeSection = ({
                   <TableHead>
                     <TableRow>
                       <TableCell 
-                        onClick={() => onSort('dateAndTime')}
+                        onClick={() => onSort('transactionDate')}
                         sx={{ 
                           cursor: 'pointer', 
                           '&:hover': { bgcolor: 'action.hover' },
-                          width: '10%',
-                          whiteSpace: 'pre-line',
+                          width: '15%',
+                          whiteSpace: 'nowrap',
                           textAlign: 'left'
                         }}
                       >
-                        {t('incomeExpense.income.table.date')} {sortField === 'dateAndTime' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        {t('incomeExpense.income.table.date')} {sortField === 'transactionDate' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </TableCell>
                       <TableCell 
                         onClick={() => onSort('name')}
@@ -182,19 +182,19 @@ const IncomeSection = ({
                         >
                           <TableCell 
                             sx={{ 
-                              width: '10%',
+                              width: '15%',
                               p: 1
                             }}
                           >
                             <Typography
                               sx={{
-                                whiteSpace: 'pre-line',
+                                whiteSpace: 'nowrap',
                                 textAlign: 'left',
                                 display: 'block',
                                 lineHeight: 1.2
                               }}
                             >
-                              {formatDate(income.createdAt)}
+                              {formatDate(income.transactionDate)}
                             </Typography>
                           </TableCell>
                           <TableCell>

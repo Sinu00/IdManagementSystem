@@ -325,7 +325,8 @@ router.post('/', protect, async (req, res) => {
         iqamaNumber: individual.iqamaNumber,
         amount: initialPayment,
         referredBy: individual.referredBy, // Use the individual's referredBy
-        mainPerson: company.mainPerson // Use company's mainPerson
+        mainPerson: company.mainPerson, // Use company's mainPerson
+        transactionDate: new Date() // Add transaction date
       });
     }
 
@@ -432,7 +433,8 @@ router.put('/:id', protect, async (req, res) => {
           iqamaNumber: individual.iqamaNumber,
           amount: renewalPayment,
           referredBy: individual.referredBy, // Use the original referredBy
-          mainPerson: company.mainPerson
+          mainPerson: company.mainPerson,
+          transactionDate: new Date() // Add transaction date
         });
 
         req.body.paymentHistory = [{

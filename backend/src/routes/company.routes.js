@@ -283,7 +283,8 @@ router.post('/:id/payment', protect, async (req, res) => {
           company: company._id,
           mainPerson: company.mainPerson,
           expenseType: paymentType,
-          specification: isRenewal ? 'Renewal CR Payment' : `Regular ${paymentType.toUpperCase()} Payment`
+          specification: isRenewal ? 'Renewal CR Payment' : `Regular ${paymentType.toUpperCase()} Payment`,
+          transactionDate: new Date()
         });
         await expense.save();
       }

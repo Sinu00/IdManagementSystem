@@ -98,7 +98,8 @@ function IncomeExpense() {
     referredBy: '',
     company: '', // for expense
     expenseType: 'other', // for expense
-    specification: '' // for other expense type
+    specification: '', // for other expense type
+    transactionDate: ''
   });
   const [error, setError] = useState('');
   const [sortField, setSortField] = useState('createdAt');
@@ -205,7 +206,8 @@ function IncomeExpense() {
       referredBy: '',
       company: '',
       expenseType: 'other',
-      specification: ''
+      specification: '',
+      transactionDate: ''
     });
     setDialogOpen(true);
   };
@@ -227,7 +229,8 @@ function IncomeExpense() {
       referredBy: item.referredBy || '',
       company: item.company || '',
       expenseType: item.expenseType || 'other',
-      specification: item.expenseType || ''
+      specification: item.expenseType || '',
+      transactionDate: item.transactionDate
     });
     setDialogOpen(true);
   };
@@ -287,16 +290,22 @@ function IncomeExpense() {
       
       // If it's an income entry
       if (dialogType === 'income') {
-        // Custom income
-        await incomeApi.create({
+        const incomeData = {
           name: formData.name,
           description: formData.description,
           amount: formData.amount,
           referredBy: formData.description, // Use description as referredBy for custom income
           mainPerson: '67d09798726e5a47c4caf072', // Main company mainPerson ID
           isCustomIncome: true,
-          iqamaNumber: 'N/A'
-        });
+          iqamaNumber: 'N/A',
+          transactionDate: formData.transactionDate
+        };
+
+        if (editData) {
+          await incomeApi.update(editData._id, incomeData);
+        } else {
+          await incomeApi.create(incomeData);
+        }
       } else {
         // For expenses, we'll create with the main company mainPerson ID
         const expenseData = {
@@ -304,7 +313,8 @@ function IncomeExpense() {
           amount: formData.amount,
           expenseType: formData.expenseType,
           specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
-          mainPerson: '67d09798726e5a47c4caf072' // Main company mainPerson ID
+          mainPerson: '67d09798726e5a47c4caf072', // Main company mainPerson ID
+          transactionDate: formData.transactionDate
         };
         
         // Only include company if it's not empty
@@ -312,14 +322,18 @@ function IncomeExpense() {
           expenseData.company = formData.company;
         }
 
-        await expenseApi.create(expenseData);
+        if (editData) {
+          await expenseApi.update(editData._id, expenseData);
+        } else {
+          await expenseApi.create(expenseData);
+        }
       }
 
       handleCloseDialog();
       fetchData();
     } catch (error) {
-      console.error('Error creating record:', error);
-      setError(error.response?.data?.message || 'Failed to create record');
+      console.error('Error saving record:', error);
+      setError(error.response?.data?.message || 'Failed to save record');
     }
   };
 
@@ -332,8 +346,8 @@ function IncomeExpense() {
     const filters = type === 'income' ? incomeFilters : expenseFilters;
     
     return data.filter(item => {
-      const dateMatch = new Date(item.createdAt) >= startOfDay(filters.dateRange.start) &&
-                       new Date(item.createdAt) <= endOfDay(filters.dateRange.end);
+      const dateMatch = new Date(item.transactionDate) >= startOfDay(filters.dateRange.start) &&
+                       new Date(item.transactionDate) <= endOfDay(filters.dateRange.end);
       
       const nameMatch = item.name.toLowerCase().includes(filters.nameSearch.toLowerCase());
       
@@ -352,8 +366,9 @@ function IncomeExpense() {
     return [...filtered].sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'createdAt':
-          comparison = new Date(a.createdAt) - new Date(b.createdAt);
+        case 'dateAndTime':
+        case 'transactionDate':
+          comparison = new Date(a.transactionDate) - new Date(b.transactionDate);
           break;
         case 'amount':
           comparison = a.amount - b.amount;
@@ -371,8 +386,8 @@ function IncomeExpense() {
       let comparison = 0;
       switch (expenseSortField) {
         case 'dateAndTime':
-        case 'createdAt':
-          comparison = new Date(a.createdAt) - new Date(b.createdAt);
+        case 'transactionDate':
+          comparison = new Date(a.transactionDate) - new Date(b.transactionDate);
           break;
         case 'amount':
           comparison = a.amount - b.amount;
@@ -604,17 +619,17 @@ function IncomeExpense() {
             <ArrowBackIcon />
           </IconButton>
           <Box>
-            <Typography 
-              variant="h5" 
-              component="h1"
-              sx={{ 
-                fontWeight: 700,
-                fontSize: '1.7rem',
-                letterSpacing: '0.5px'
-              }}
-            >
-              {t('incomeExpense.title')}
-            </Typography>
+          <Typography 
+            variant="h5" 
+            component="h1"
+          sx={{ 
+              fontWeight: 700,
+              fontSize: '1.7rem',
+              letterSpacing: '0.5px'
+            }}
+          >
+                {t('incomeExpense.title')}
+              </Typography>
             <Typography 
               variant="subtitle1" 
               color="text.secondary"
@@ -623,7 +638,7 @@ function IncomeExpense() {
               {format(incomeFilters.dateRange.start, 'MMMM yyyy')}
             </Typography>
           </Box>
-          <Box sx={{ flexGrow: 1 }} />
+              <Box sx={{ flexGrow: 1 }} />
           {user?.username == "Suhail" && (
             <Button
               startIcon={<PeopleIcon />}
@@ -643,7 +658,7 @@ function IncomeExpense() {
           >
             {t('incomeExpense.buttons.setIqamaPrice', { price: iqamaPrice })}
           </Button>
-        </Stack>
+                </Stack>
 
         {/* Stats Cards */}
         <StatsCards
@@ -662,18 +677,18 @@ function IncomeExpense() {
               loading={loading}
               incomes={sortedIncomes}
               showFilters={showIncomeFilters}
-              filters={incomeFilters}
-              onFilterChange={handleFilterChange}
-              referredByList={referredByList}
+                    filters={incomeFilters}
+                    onFilterChange={handleFilterChange}
+                    referredByList={referredByList}
               onToggleFilters={() => setShowIncomeFilters(!showIncomeFilters)}
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('income')}
               onExport={() => handleExportClick('income')}
               onEdit={(item) => handleEdit(item, 'income')}
               onDelete={(item) => handleDeleteClick({ ...item, type: 'income' })}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
               sortField={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
@@ -688,17 +703,17 @@ function IncomeExpense() {
               loading={loading}
               expenses={sortedExpenses}
               showFilters={showExpenseFilters}
-              filters={expenseFilters}
-              onFilterChange={handleFilterChange}
+                    filters={expenseFilters}
+                    onFilterChange={handleFilterChange}
               onToggleFilters={() => setShowExpenseFilters(!showExpenseFilters)}
               onRefresh={fetchData}
               onAdd={() => handleOpenDialog('expense')}
               onExport={() => handleExportClick('expense')}
               onEdit={(item) => handleEdit(item, 'expense')}
               onDelete={(item) => handleDeleteClick({ ...item, type: 'expense' })}
-              page={expensePage}
+                    page={expensePage}
               onPageChange={handleExpensePageChange}
-              rowsPerPage={expenseRowsPerPage}
+                    rowsPerPage={expenseRowsPerPage}
               sortField={expenseSortField}
               sortOrder={expenseSortOrder}
               onSort={handleExpenseSort}
@@ -725,7 +740,7 @@ function IncomeExpense() {
         />
 
         <DeleteConfirmDialog
-          open={deleteConfirmOpen}
+        open={deleteConfirmOpen}
           type={itemToDelete?.type}
           onClose={() => {
             setDeleteConfirmOpen(false);
@@ -752,13 +767,13 @@ function IncomeExpense() {
           onExport={generatePDF}
         />
 
-        <IqamaPriceDialog
-          open={isIqamaPriceDialogOpen}
-          currentPrice={iqamaPrice}
+      <IqamaPriceDialog
+        open={isIqamaPriceDialogOpen}
+        currentPrice={iqamaPrice}
           onClose={() => setIsIqamaPriceDialogOpen(false)}
           onSave={handleIqamaPriceChange}
-        />
-      </Box>
+      />
+    </Box>
     </Container>
   );
 }

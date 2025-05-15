@@ -411,7 +411,7 @@
       "noRecords": "No income records",
       "addFirst": "Add your first income transaction",
       "table": {
-        "date": "Date",
+        "date": "Transaction Date",
         "name": "Name",
         "iqama": "Iqama",
         "amount": "Amount",
@@ -424,7 +424,7 @@
       "noRecords": "No expense records",
       "addFirst": "Add your first expense transaction",
       "table": {
-        "date": "Date",
+        "date": "Transaction Date",
         "company": "Company",
         "paidFor": "Paid For",
         "amount": "Amount",
@@ -563,7 +563,9 @@
     "descriptionHelperText": "Add any additional details about this income",
     "amount": "Amount",
     "iqamaNumber": "Iqama Number",
-    "iqamaNumberHelperText": "Enter iqama number (optional for custom income)"
+    "iqamaNumberHelperText": "Enter iqama number (optional for custom income)",
+    "transactionDate": "Transaction Date",
+    "transactionDateHelperText": "Select the date and time of the transaction"
   },
   "dialog": {
     "add": "Add",
