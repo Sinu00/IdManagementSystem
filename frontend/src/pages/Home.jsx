@@ -854,6 +854,10 @@ function Home() {
                   </IconButton>
                 </Tooltip>
 
+              </>
+            )}
+
+{user?.username == "nasser" && (
                 <Tooltip title="Nasser Notifications">
                   <IconButton
                     onClick={() => navigate('/nasser-admin-notifications')}
@@ -901,8 +905,7 @@ function Home() {
                     </Badge>
                   </IconButton>
                 </Tooltip>
-              </>
-            )}
+)}
 
             {user?.isAdmin && (
               <Tooltip title={t('home.pendingPayments')}>
