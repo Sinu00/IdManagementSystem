@@ -181,7 +181,10 @@ function IncomeExpense() {
       setLastMonthExpense(lastMonthExpenseTotal);
 
       // Initial data load with current filters
-      await fetchFilteredData(incomeFilters);
+      await Promise.all([
+        fetchFilteredData(incomeFilters),
+        fetchFilteredExpenseData(expenseFilters)
+      ]);
 
     } catch (error) {
       console.error('Error fetching data:', error);

@@ -87,6 +87,13 @@ const ExpenseSection = ({
         loading={loading}
       />
 
+      <FilterSection 
+        type="expense" 
+        visible={showFilters}
+        filters={filters}
+        onFilterChange={onFilterChange}
+      />
+
       {loading ? (
         <Box sx={{ py: 2 }}>
           <Skeleton height={50} />
@@ -95,12 +102,6 @@ const ExpenseSection = ({
         </Box>
       ) : (
         <>
-          <FilterSection 
-            type="expense" 
-            visible={showFilters}
-            filters={filters}
-            onFilterChange={onFilterChange}
-          />
           {expenses.length > 0 ? (
             <>
               <Divider sx={{ mb: 3 }} />
