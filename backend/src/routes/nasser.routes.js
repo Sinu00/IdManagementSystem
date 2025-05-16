@@ -46,9 +46,9 @@ router.get('/income/filter/date', protect, async (req, res) => {
         { mainPerson: NASSER_MAIN_PERSON_ID },
         {
           transactionDate: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          }
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+              }
         }
       ]
     };

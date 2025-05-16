@@ -190,60 +190,42 @@ function NasserIncomeExpense() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const dateFilter = {
-        startDate: incomeFilters.dateRange.start.toISOString(),
-        endDate: incomeFilters.dateRange.end.toISOString()
-      };
+      const currentDate = new Date();
+      const startDate = startOfMonth(currentDate);
+      const endDate = endOfMonth(currentDate);
+      const lastMonthStart = startOfMonth(subMonths(currentDate, 1));
+      const lastMonthEnd = endOfMonth(subMonths(currentDate, 1));
 
       // Get total balance
-      const totalBalanceResponse = await nasserApi.getTotalBalance();
-      setTotalBalance(totalBalanceResponse.data);
+      const balanceRes = await nasserApi.getTotalBalance();
+      setTotalBalance(balanceRes.data);
 
-      // Get income data
-      const incomeResponse = incomeFilters.referredBy !== 'all'
-        ? await nasserApi.getFilteredIncome({
-            ...dateFilter,
-            referredBy: incomeFilters.referredBy,
-            nameSearch: incomeFilters.nameSearch || null
-          })
-        : await nasserApi.getIncomeByDateRange(dateFilter.startDate, dateFilter.endDate);
+      // Get last month data for comparison
+      const [lastMonthIncomeRes, lastMonthExpenseRes] = await Promise.all([
+        nasserApi.getIncomeByDateRange(lastMonthStart.toISOString(), lastMonthEnd.toISOString()),
+        nasserApi.getExpenseByDateRange(lastMonthStart.toISOString(), lastMonthEnd.toISOString())
+      ]);
 
-      // Get expense data
-      const expenseResponse = await nasserApi.getFilteredExpense({
-        ...dateFilter,
-        expenseType: expenseFilters.expenseType !== 'all' ? expenseFilters.expenseType : undefined,
-        nameSearch: expenseFilters.nameSearch || null
-      });
+      const lastMonthIncomeTotal = (lastMonthIncomeRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
+      const lastMonthExpenseTotal = (lastMonthExpenseRes.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);
 
-      // Update state with response data
-      setIncomes(incomeResponse.data || []);
-      setExpenses(expenseResponse.data || []);
+      setLastMonthIncome(lastMonthIncomeTotal);
+      setLastMonthExpense(lastMonthExpenseTotal);
 
-      // Calculate totals
-      const totalInc = (incomeResponse.data || []).reduce((sum, item) => sum + item.amount, 0);
-      const totalExp = (expenseResponse.data || []).reduce((sum, item) => sum + item.amount, 0);
-      setTotalIncome(totalInc);
-      setTotalExpense(totalExp);
-
-      // Calculate last month's data
-      const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
-      const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
-      
-      const lastMonthIncomeResponse = await nasserApi.getIncomeByDateRange(
-        lastMonthStart.toISOString(),
-        lastMonthEnd.toISOString()
-      );
-      const lastMonthExpenseResponse = await nasserApi.getExpenseByDateRange(
-        lastMonthStart.toISOString(),
-        lastMonthEnd.toISOString()
-      );
-
-      setLastMonthIncome((lastMonthIncomeResponse.data || []).reduce((sum, item) => sum + item.amount, 0));
-      setLastMonthExpense((lastMonthExpenseResponse.data || []).reduce((sum, item) => sum + item.amount, 0));
+      // Initial data load with current filters
+      await Promise.all([
+        fetchFilteredData(incomeFilters),
+        fetchFilteredExpenseData(expenseFilters)
+      ]);
 
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to load data. Please try again later.');
+      setTotalIncome(0);
+      setTotalExpense(0);
+      setLastMonthIncome(0);
+      setLastMonthExpense(0);
+      setTotalBalance(null);
     } finally {
       setLoading(false);
     }
@@ -325,7 +307,7 @@ function NasserIncomeExpense() {
           referredBy: formData.description, // Use description as referredBy for custom income
           mainPerson: '67d09798726e5a47c4caf071', // Nasser's mainPerson ID
           isCustomIncome: true,
-          iqamaNumber: 'N/A',
+          iqamaNumber: formData.iqamaNumber || 'N/A',
           transactionDate: formData.transactionDate,
           type: 'income'
         };
@@ -374,6 +356,7 @@ function NasserIncomeExpense() {
 
   const applyFilters = (data, type) => {
     const filters = type === 'income' ? incomeFilters : expenseFilters;
+    
     return data.filter(item => {
       const dateMatch = new Date(item.transactionDate) >= startOfDay(filters.dateRange.start) &&
                        new Date(item.transactionDate) <= endOfDay(filters.dateRange.end);
@@ -808,12 +791,12 @@ function NasserIncomeExpense() {
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <IconButton onClick={() => navigate(-1)}>
-              <ArrowBackIcon />
-            </IconButton>
+            <ArrowBackIcon />
+          </IconButton>
             <Box>
               <Typography variant="h4">
-                {t('incomeExpense.title')}
-              </Typography>
+            {t('incomeExpense.title')}
+          </Typography>
               <Typography 
                 variant="subtitle1" 
                 color="text.secondary"

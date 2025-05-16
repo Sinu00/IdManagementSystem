@@ -232,7 +232,7 @@ function IncomeExpense() {
       referredBy: item.referredBy || '',
       company: item.company || '',
       expenseType: item.expenseType || 'other',
-      specification: item.expenseType || '',
+      specification: item.expenseType === 'other' ? (item.specification || '') : '',
       transactionDate: item.transactionDate
     });
     setDialogOpen(true);
@@ -300,7 +300,7 @@ function IncomeExpense() {
           referredBy: formData.description, // Use description as referredBy for custom income
           mainPerson: '67d09798726e5a47c4caf072', // Main company mainPerson ID
           isCustomIncome: true,
-          iqamaNumber: 'N/A',
+          iqamaNumber: formData.iqamaNumber || 'N/A',
           transactionDate: formData.transactionDate
         };
 
@@ -315,7 +315,7 @@ function IncomeExpense() {
           name: 'General Purpose',
           amount: formData.amount,
           expenseType: formData.expenseType,
-          specification: formData.expenseType === 'other' ? formData.specification : formData.expenseType,
+          specification: formData.expenseType === 'other' ? formData.specification : undefined,
           mainPerson: '67d09798726e5a47c4caf072', // Main company mainPerson ID
           transactionDate: formData.transactionDate
         };

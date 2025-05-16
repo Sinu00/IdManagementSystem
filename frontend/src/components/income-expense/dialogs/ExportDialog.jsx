@@ -83,14 +83,16 @@ const ExportDialog = ({
               </Grid>
             </Grid>
           ) : (
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label={t('incomeExpense.dialog.export.selectDate')}
-                value={exportSpecificDate}
-                onChange={onSpecificDateChange}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </LocalizationProvider>
+            <Box sx={{ mt: 2 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label={t('incomeExpense.dialog.export.selectDate')}
+                  value={exportSpecificDate}
+                  onChange={onSpecificDateChange}
+                  slotProps={{ textField: { fullWidth: true } }}
+                />
+              </LocalizationProvider>
+            </Box>
           )}
 
           {type === 'income' && (

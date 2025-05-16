@@ -84,7 +84,7 @@ const AddEditDialog = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {t(data ? 'dialog.edit' : 'dialog.add')} {t(`dialog.${type}`)}
+        {data ? t('dialog.edit') : t('dialog.add')} {t('dialog.'+type)}
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>

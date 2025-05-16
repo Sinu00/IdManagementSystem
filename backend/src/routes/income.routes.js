@@ -55,9 +55,9 @@ router.get('/filter/date', protect, async (req, res) => {
         { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
         {
           transactionDate: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate)
-          }
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+              }
         }
       ]
     };

@@ -86,8 +86,14 @@ const getTableConfig = (type) => {
     commonColumns[2]
   ];
 
+  const expenseColumns = [
+    ...commonColumns.slice(0, 2),
+    { header: 'Paid For', dataKey: 'paidFor' },
+    commonColumns[2]
+  ];
+
   return {
-    columns: type === 'income' ? incomeColumns : commonColumns,
+    columns: type === 'income' ? incomeColumns : expenseColumns,
     styles: {
       fontSize: 10,
       cellPadding: 4,
@@ -105,7 +111,8 @@ const getTableConfig = (type) => {
     columnStyles: {
       date: { halign: 'center' },
       amount: { halign: 'right', fontStyle: 'bold' },
-      iqama: { halign: 'center' }
+      iqama: { halign: 'center' },
+      paidFor: { halign: 'center' }
     },
     alternateRowStyles: {
       fillColor: [249, 250, 251]
@@ -179,7 +186,8 @@ export const generateReport = async (type, data, options) => {
       name: item.name,
       iqama: item.iqamaNumber || '-',
       referredBy: item.referredBy || '-',
-      amount: item.amount.toFixed(2)
+      amount: item.amount.toFixed(2),
+      paidFor: item.expenseType === 'other' ? item.specification : item.expenseType || '-'
     }));
 
     const tableConfig = getTableConfig(type);
