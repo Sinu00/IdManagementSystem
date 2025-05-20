@@ -151,7 +151,8 @@ router.post('/:id/approve', protect, adminProtect, async (req, res) => {
           amount: notification.amount,
           company: company._id,
           mainPerson: company.mainPerson,
-          expenseType: 'cr'
+          expenseType: 'cr',
+          transactionDate: new Date()
         });
         await expense.save({ session });
       }
@@ -205,7 +206,8 @@ router.post('/:id/approve', protect, adminProtect, async (req, res) => {
         expenseType: notification.paymentType,
         specification: notification.paymentType === 'cr' && company.paymentStatus === 'none_paid'
           ? 'Renewal CR Payment'
-          : `Regular ${notification.paymentType.toUpperCase()} Payment`
+          : `Regular ${notification.paymentType.toUpperCase()} Payment`,
+        transactionDate: new Date()
       });
       await expense.save({ session });
     }

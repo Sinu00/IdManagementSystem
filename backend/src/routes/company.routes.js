@@ -118,7 +118,8 @@ router.post('/', protect, async (req, res) => {
           amount: crAmount,
           company: company._id,
           mainPerson: company.mainPerson,
-          expenseType: 'cr'
+          expenseType: 'cr',
+          transactionDate: new Date()
         });
         await expense.save();
       }
@@ -161,7 +162,7 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(400).json({ message: 'Invalid company ID' });
     }
 
-    const { crNumber, mainPerson } = req.body;
+    const { crNumber, mainPerson, crAmount } = req.body;
 
     // Check if CR number already exists for this main person
     if (crNumber) {
@@ -183,14 +184,30 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Only admin can update company details' });
     }
 
+    // Get the current company to check if CR amount is changing
+    const currentCompany = await Company.findById(req.params.id);
+    if (!currentCompany) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Update the company
     const company = await Company.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     ).populate('mainPerson', 'name email contactNumber');
 
-    if (!company) {
-      return res.status(404).json({ message: 'Company not found' });
+    // If CR amount has changed, create an expense entry
+    if (crAmount !== undefined && crAmount !== currentCompany.crAmount) {
+      const expense = new Expense({
+        name: `CR Amount for ${company.name}`,
+        amount: crAmount,
+        company: company._id,
+        mainPerson: company.mainPerson,
+        expenseType: 'cr',
+        transactionDate: new Date()
+      });
+      await expense.save();
     }
 
     res.json(company);

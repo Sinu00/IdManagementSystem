@@ -61,7 +61,12 @@ router.get('/:id', protect, async (req, res) => {
 // Create new expense
 router.post('/', protect, async (req, res) => {
   try {
-    const expense = new Expense(req.body);
+    // Add transactionDate if not provided
+    const expenseData = {
+      ...req.body,
+      transactionDate: req.body.transactionDate || new Date()
+    };
+    const expense = new Expense(expenseData);
     const savedExpense = await expense.save();
     const populatedExpense = await Expense.findById(savedExpense._id)
       .populate('company', 'name')
