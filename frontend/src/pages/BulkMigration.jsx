@@ -229,8 +229,8 @@ const BulkMigration = () => {
           iqamaNumbers.add(individual.iqamaNumber);
 
           // Validate iqamaPrice
-          if (!individual.iqamaPrice || individual.iqamaPrice < 0) {
-            throw new Error(`Company ${companyIndex + 1}, Individual ${individualIndex + 1}: Invalid Iqama price`);
+          if (individual.iqamaPrice && (individual.iqamaPrice < 1000 || individual.iqamaPrice > 15000)) {
+            throw new Error(`Company ${companyIndex + 1}, Individual ${individualIndex + 1}: Iqama price must be between 1,000 and 15,000 SAR`);
           }
 
           // Validate amount is a number or empty
@@ -262,7 +262,7 @@ const BulkMigration = () => {
           ...individual,
           expiryDate: individual.expiryDate?.value || formatDate(individual.expiryDate)?.backend || null,
           amount: individual.amount === '' ? 0 : Number(individual.amount),
-          iqamaPrice: Number(individual.iqamaPrice) || 5000
+          customIqamaPrice: individual.iqamaPrice ? Number(individual.iqamaPrice) : null
         }))
       }));
 

@@ -471,7 +471,17 @@ router.post('/bulk-migrate', protect, async (req, res) => {
       // Process individuals if provided
       if (individuals && Array.isArray(individuals)) {
         for (const individualData of individuals) {
-          const { amount = 0, iqamaPrice = 5000 } = individualData;
+          const { amount = 0, customIqamaPrice } = individualData;
+          
+          // Get default price and determine final price
+          const defaultPrice = 5000; // Default price for bulk migration
+          const finalPrice = customIqamaPrice || defaultPrice;
+          const priceOverridden = Boolean(customIqamaPrice);
+          
+          // Validate price range for custom prices
+          if (priceOverridden && (finalPrice < 1000 || finalPrice > 15000)) {
+            throw new Error(`Individual ${individualData.name}: Custom price must be between 1,000 and 15,000 SAR`);
+          }
           
           // Create individual with payment information
           const individual = new Individual({
@@ -479,9 +489,11 @@ router.post('/bulk-migrate', protect, async (req, res) => {
             company: company._id,
             mainPerson: mainPersonId,
             totalPaidAmount: amount || 0,
-            iqamaPrice: iqamaPrice,
-            pendingAmount: iqamaPrice - (amount || 0),
-            isFullyPaid: (amount || 0) >= iqamaPrice,
+            iqamaPrice: finalPrice,
+            priceOverridden,
+            customPriceReason: individualData.customPriceReason || '',
+            pendingAmount: finalPrice - (amount || 0),
+            isFullyPaid: (amount || 0) >= finalPrice,
             paymentHistory: amount > 0 ? [{
               amount: amount,
               paidBy: req.user.username,

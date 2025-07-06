@@ -58,6 +58,15 @@ const individualSchema = new mongoose.Schema(
       required: true,
       default: 5000
     },
+    priceOverridden: {
+      type: Boolean,
+      default: false
+    },
+    customPriceReason: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     pendingAmount: {
       type: Number,
       default: function() {
@@ -107,7 +116,7 @@ individualSchema.virtual('status').get(function() {
 
   if (daysUntilExpiry < 0) return 'Expired';
   if (daysUntilExpiry <= 5) return 'Critical';
-  if (daysUntilExpiry <= 10) return 'Warning';
+  if (daysUntilExpiry <= 30) return 'Warning';
   return 'Active';
 });
 

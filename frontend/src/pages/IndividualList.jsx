@@ -287,7 +287,9 @@ function IndividualList() {
           requestType: dialogMode === 'add' ? 'ADD' : 'RENEW',
           originalIndividual: selectedIndividual?._id,
           amount: Number(formData.amount) || 0,
-          iqamaPrice: selectedIndividual?.iqamaPrice || 5000,
+          iqamaPrice: formData.customIqamaPrice ? Number(formData.customIqamaPrice) : (selectedIndividual?.iqamaPrice || 5000),
+          priceOverridden: Boolean(formData.customIqamaPrice),
+          customPriceReason: formData.customPriceReason || '',
           totalPaidAmount: selectedIndividual?.totalPaidAmount || 0,
           referredBy: user.username
         };
@@ -316,16 +318,20 @@ function IndividualList() {
           } else if (dialogMode === 'edit') {
             response = await individualApi.update(selectedIndividual._id, formData);
           } else {
-            // For renewal, send only the necessary fields
-            response = await individualApi.update(selectedIndividual._id, {
+            // For renewal, send only the necessary fields including custom pricing
+            const renewalData = {
               expiryDate: formData.expiryDate,
               amount: Number(formData.amount) || 0,
-              iqamaPrice: selectedIndividual.iqamaPrice || 5000,
-              totalPaidAmount: Number(formData.amount) || 0,
-              pendingAmount: (selectedIndividual.iqamaPrice || 5000) - (Number(formData.amount) || 0),
-              isFullyPaid: (Number(formData.amount) || 0) >= (selectedIndividual.iqamaPrice || 5000),
               isRenewal: true // Add this flag to indicate it's a renewal operation
-            });
+            };
+
+            // Add custom pricing if provided
+            if (formData.customIqamaPrice) {
+              renewalData.customIqamaPrice = Number(formData.customIqamaPrice);
+              renewalData.customPriceReason = formData.customPriceReason || '';
+            }
+
+            response = await individualApi.update(selectedIndividual._id, renewalData);
           }
           
           const updatedList = await individualApi.getByCompany(companyId);

@@ -171,9 +171,11 @@ export const approveNotification = async (req, res) => {
         // Handle new individual creation
         const { addedBy, __v, _id, createdAt, updatedAt, requestType, originalIndividual, ...individualData } = notification.toObject();
         
-        // Get the initial payment amount
+        // Get the initial payment amount and pricing information
         const initialPayment = Number(notification.amount) || 0;
         const iqamaPrice = Number(notification.iqamaPrice) || 5000;
+        const priceOverridden = notification.priceOverridden || false;
+        const customPriceReason = notification.customPriceReason || '';
         
         // Calculate payment status
         const pendingAmount = iqamaPrice - initialPayment;
@@ -181,6 +183,8 @@ export const approveNotification = async (req, res) => {
 
         // Set up individual data with correct payment details
         individualData.iqamaPrice = iqamaPrice;
+        individualData.priceOverridden = priceOverridden;
+        individualData.customPriceReason = customPriceReason;
         individualData.totalPaidAmount = initialPayment;
         individualData.pendingAmount = pendingAmount;
         individualData.isFullyPaid = isFullyPaid;
@@ -220,6 +224,8 @@ export const approveNotification = async (req, res) => {
         
         const renewalPayment = Number(notification.amount) || 0;
         const renewalIqamaPrice = Number(notification.iqamaPrice) || 5000;
+        const renewalPriceOverridden = notification.priceOverridden || false;
+        const renewalCustomPriceReason = notification.customPriceReason || '';
         const renewalPendingAmount = renewalIqamaPrice - renewalPayment;
         const renewalIsFullyPaid = renewalPayment === renewalIqamaPrice;
 
@@ -230,6 +236,8 @@ export const approveNotification = async (req, res) => {
             expiryDate: notification.expiryDate,
             totalPaidAmount: renewalPayment,
             iqamaPrice: renewalIqamaPrice,
+            priceOverridden: renewalPriceOverridden,
+            customPriceReason: renewalCustomPriceReason,
             pendingAmount: renewalPendingAmount,
             isFullyPaid: renewalIsFullyPaid,
             lastUpdateDate: new Date(),

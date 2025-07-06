@@ -52,6 +52,15 @@ const notifyAdminSchema = new mongoose.Schema(
       required: true,
       default: 5000
     },
+    priceOverridden: {
+      type: Boolean,
+      default: false
+    },
+    customPriceReason: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     pendingAmount: {
       type: Number,
       default: function() {

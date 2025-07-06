@@ -287,8 +287,18 @@ router.get('/', protect, async (req, res, next) => {
 router.post('/', protect, async (req, res) => {
   try {
     const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
-    const iqamaPrice = currentPrice?.price || 5000;
+    const defaultPrice = currentPrice?.price || 5000;
     const initialPayment = parseFloat(req.body.amount) || 0;
+    
+    // Determine final price - use custom price if provided, otherwise default
+    const customPrice = req.body.customIqamaPrice ? parseFloat(req.body.customIqamaPrice) : null;
+    const finalPrice = customPrice || defaultPrice;
+    const priceOverridden = Boolean(customPrice);
+    
+    // Validate price range for custom prices
+    if (priceOverridden && (finalPrice < 1000 || finalPrice > 15000)) {
+      return res.status(400).json({ message: 'Custom price must be between 1,000 and 15,000 SAR' });
+    }
     
     // Get company to set mainPerson
     const company = await Company.findById(req.body.company);
@@ -297,13 +307,15 @@ router.post('/', protect, async (req, res) => {
     }
     
     // Calculate payment status
-    const pendingAmount = iqamaPrice - initialPayment;
-    const isFullyPaid = initialPayment === iqamaPrice;
+    const pendingAmount = finalPrice - initialPayment;
+    const isFullyPaid = initialPayment === finalPrice;
     
     const individual = await Individual.create({
       ...req.body,
       mainPerson: company.mainPerson, // Set mainPerson from company
-      iqamaPrice,
+      iqamaPrice: finalPrice,
+      priceOverridden,
+      customPriceReason: req.body.customPriceReason || '',
       totalPaidAmount: initialPayment,
       pendingAmount,
       isFullyPaid,
@@ -414,15 +426,27 @@ router.put('/:id', protect, async (req, res) => {
     // Check if this is a renewal operation
     if (req.body.expiryDate && req.body.isRenewal) {
       const currentPrice = await IqamaPrice.findOne().sort({ effectiveDate: -1 });
-      const iqamaPrice = currentPrice?.price || 5000;
+      const defaultPrice = currentPrice?.price || 5000;
       const renewalPayment = parseFloat(req.body.totalPaidAmount) || 0;
       
+      // Determine final price for renewal - use custom price if provided, otherwise default
+      const customPrice = req.body.customIqamaPrice ? parseFloat(req.body.customIqamaPrice) : null;
+      const finalPrice = customPrice || defaultPrice;
+      const priceOverridden = Boolean(customPrice);
+      
+      // Validate price range for custom prices
+      if (priceOverridden && (finalPrice < 1000 || finalPrice > 15000)) {
+        return res.status(400).json({ message: 'Custom price must be between 1,000 and 15,000 SAR' });
+      }
+      
       // Calculate payment status for new period
-      const pendingAmount = iqamaPrice - renewalPayment;
-      const isFullyPaid = renewalPayment === iqamaPrice;
+      const pendingAmount = finalPrice - renewalPayment;
+      const isFullyPaid = renewalPayment === finalPrice;
       
       // Reset payment status for new period
-      req.body.iqamaPrice = iqamaPrice;
+      req.body.iqamaPrice = finalPrice;
+      req.body.priceOverridden = priceOverridden;
+      req.body.customPriceReason = req.body.customPriceReason || '';
       req.body.totalPaidAmount = renewalPayment;
       req.body.pendingAmount = pendingAmount;
       req.body.isFullyPaid = isFullyPaid;
@@ -447,14 +471,17 @@ router.put('/:id', protect, async (req, res) => {
     } else {
       // For regular updates, remove payment-related fields
       delete req.body.iqamaPrice;
+      delete req.body.priceOverridden;
+      delete req.body.customPriceReason;
       delete req.body.totalPaidAmount;
       delete req.body.pendingAmount;
       delete req.body.isFullyPaid;
       delete req.body.paymentHistory;
     }
 
-    // Remove isRenewal flag and ensure mainPerson is set
+    // Remove isRenewal flag and custom price fields for updates
     delete req.body.isRenewal;
+    delete req.body.customIqamaPrice;
     req.body.mainPerson = company.mainPerson;
 
     // Keep the original referredBy if not explicitly changed

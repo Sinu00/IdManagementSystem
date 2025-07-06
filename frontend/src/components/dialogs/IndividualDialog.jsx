@@ -35,6 +35,8 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     expiryDate: null,
     amount: '',
     referredBy: '',
+    customIqamaPrice: '',
+    customPriceReason: '',
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -42,6 +44,8 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   const [paymentError, setPaymentError] = useState('');
   const [currentIqamaPrice, setCurrentIqamaPrice] = useState(5000);
   const [validationErrors, setValidationErrors] = useState({});
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
+  const [customPriceError, setCustomPriceError] = useState('');
 
   const isRenewMode = mode === 'renew';
   const isAddMode = mode === 'add';
@@ -69,9 +73,24 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
     return '';
   };
 
+  const validateCustomPrice = (value) => {
+    const price = parseFloat(value);
+    if (isNaN(price) || price < 1000 || price > 15000) {
+      return 'Custom price must be between 1,000 and 15,000 SAR';
+    }
+    return '';
+  };
+
   const validateName = (value) => {
     if (!value) return t('individual.errors.nameRequired');
     return '';
+  };
+
+  const getCurrentPrice = () => {
+    if (useCustomPrice && formData.customIqamaPrice) {
+      return parseFloat(formData.customIqamaPrice) || currentIqamaPrice;
+    }
+    return currentIqamaPrice;
   };
 
   const handleChange = (e) => {
@@ -125,8 +144,9 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
 
   const handlePaymentChange = (e) => {
     const value = parseFloat(e.target.value);
-    if (value > currentIqamaPrice) {
-      setPaymentError(t('individual.errors.amountExceeded', { amount: currentIqamaPrice }));
+    const currentPrice = getCurrentPrice();
+    if (value > currentPrice) {
+      setPaymentError(t('individual.errors.amountExceeded', { amount: currentPrice }));
     } else if (value < 0) {
       setPaymentError(t('individual.errors.validAmount'));
     } else {
@@ -190,6 +210,12 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
           amount: isAddMode ? (parseFloat(formData.amount) || 0) : undefined
         };
 
+        // Add custom pricing data if using custom price
+        if (useCustomPrice && formData.customIqamaPrice) {
+          submitData.customIqamaPrice = parseFloat(formData.customIqamaPrice);
+          submitData.customPriceReason = formData.customPriceReason;
+        }
+
         // If there's a new referrer, add it to the options
         if (formData.referredBy && !referredByOptions.includes(formData.referredBy)) {
           referredByOptions.push(formData.referredBy);
@@ -199,8 +225,13 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         submitData = {
           expiryDate: formData.expiryDate,
           amount: parseFloat(formData.amount) || 0,
-          iqamaPrice: currentIqamaPrice
         };
+
+        // Add custom pricing data if using custom price
+        if (useCustomPrice && formData.customIqamaPrice) {
+          submitData.customIqamaPrice = parseFloat(formData.customIqamaPrice);
+          submitData.customPriceReason = formData.customPriceReason;
+        }
       }
 
       onSubmit(submitData);
@@ -240,6 +271,9 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
 
   useEffect(() => {
     if (individual && !isAddMode) {
+      const hasCustomPrice = individual.priceOverridden || false;
+      setUseCustomPrice(hasCustomPrice);
+      
       setFormData({
         name: individual.name || '',
         nationality: individual.nationality || '',
@@ -249,9 +283,12 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
         expiryDate: individual.expiryDate ? new Date(individual.expiryDate) : null,
         amount: individual.amount?.toString() || '',
         referredBy: individual.referredBy || '',
+        customIqamaPrice: hasCustomPrice ? individual.iqamaPrice?.toString() || '' : '',
+        customPriceReason: individual.customPriceReason || '',
       });
     } else {
       setFormData(initialFormData);
+      setUseCustomPrice(false);
     }
   }, [individual, isAddMode]);
 
@@ -376,15 +413,86 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                         onChange={handlePaymentChange}
                         required
                         error={!!paymentError}
-                        helperText={paymentError || t('individual.remainingAmount', { amount: currentIqamaPrice - (parseFloat(formData.amount) || 0) })}
+                        helperText={paymentError || t('individual.remainingAmount', { amount: getCurrentPrice() - (parseFloat(formData.amount) || 0) })}
                         inputProps={{
                           min: 0,
-                          max: currentIqamaPrice,
+                          max: getCurrentPrice(),
                           step: "0.01"
                         }}
                         placeholder={t('individual.placeholders.amount')}
                       />
                     </Grid>
+                  </>
+                )}
+
+                {/* Custom Pricing Section */}
+                {(isAddMode || isRenewMode) && (
+                  <>
+                    <Grid item xs={12}>
+                      <Box sx={{ mt: 1, mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          Default iqama Price: {currentIqamaPrice} SAR
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <input
+                            type="checkbox"
+                            id="useCustomPrice"
+                            checked={useCustomPrice}
+                            onChange={(e) => {
+                              setUseCustomPrice(e.target.checked);
+                              if (!e.target.checked) {
+                                setFormData(prev => ({ ...prev, customIqamaPrice: '', customPriceReason: '' }));
+                                setCustomPriceError('');
+                              }
+                            }}
+                          />
+                          <label htmlFor="useCustomPrice">
+                            <Typography variant="body2">
+                              Use custom iqama price
+                            </Typography>
+                          </label>
+                        </Box>
+                      </Box>
+                    </Grid>
+                    
+                    {useCustomPrice && (
+                      <>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Custom Iqama Price (SAR)"
+                            name="customIqamaPrice"
+                            type="number"
+                            value={formData.customIqamaPrice}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const error = value ? validateCustomPrice(value) : '';
+                              setCustomPriceError(error);
+                              setFormData(prev => ({ ...prev, customIqamaPrice: value }));
+                            }}
+                            error={!!customPriceError}
+                            helperText={customPriceError || 'Enter amount between 1,000 and 15,000 SAR'}
+                            inputProps={{
+                              min: 1000,
+                              max: 15000,
+                              step: "1"
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField
+                            fullWidth
+                            label="Reason for Custom Price"
+                            name="customPriceReason"
+                            value={formData.customPriceReason}
+                            onChange={(e) => setFormData(prev => ({ ...prev, customPriceReason: e.target.value }))}
+                            placeholder="Optional: Why is this price different?"
+                            multiline
+                            rows={2}
+                          />
+                        </Grid>
+                      </>
+                    )}
                   </>
                 )}
 
@@ -443,10 +551,10 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     onChange={handlePaymentChange}
                     required
                     error={!!paymentError}
-                    helperText={paymentError || t('individual.remainingAmount', { amount: currentIqamaPrice - (parseFloat(formData.amount) || 0) })}
+                    helperText={paymentError || t('individual.remainingAmount', { amount: getCurrentPrice() - (parseFloat(formData.amount) || 0) })}
                     inputProps={{
                       min: 0,
-                      max: currentIqamaPrice,
+                      max: getCurrentPrice(),
                       step: "0.01"
                     }}
                   />
