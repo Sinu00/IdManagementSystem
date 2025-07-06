@@ -146,7 +146,8 @@
       "expiryDate": "Select expiry date",
       "iqamaPrice": "Enter iqama price",
       "amount": "Enter amount",
-      "referredBy": "Select who referred"
+      "referredBy": "Select who referred",
+      "customPriceReason": "Optional: Why is this price different?"
     },
     "errors": {
       "required": "This field is required",
@@ -161,6 +162,16 @@
       "paymentRequired": "Payment amount is required",
       "validAmount": "Please enter a valid amount",
       "amountExceeded": "Amount cannot exceed {{amount}} SAR"
+    },
+    "customPricing": {
+      "defaultPrice": "Default Iqama Price: {{price}} SAR",
+      "useCustomPrice": "Use custom iqama price",
+      "customIqamaPrice": "Custom Iqama Price (SAR)",
+      "customPriceReason": "Reason for Custom Price",
+      "customPriceHelp": "Enter amount between 1,000 and 15,000 SAR",
+      "customPriceReasonPlaceholder": "Optional: Why is this price different?",
+      "customPriceError": "Custom price must be between 1,000 and 15,000 SAR",
+      "priceOverridden": "Custom Price Applied"
     }
   },
   "dialogs": {

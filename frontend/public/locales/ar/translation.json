@@ -146,7 +146,8 @@
       "expiryDate": "اختر تاريخ الانتهاء",
       "iqamaPrice": "أدخل سعر الإقامة",
       "amount": "أدخل المبلغ",
-      "referredBy": "اختر من قام بالإحالة"
+      "referredBy": "اختر من قام بالإحالة",
+      "customPriceReason": "اختياري: لماذا هذا السعر مختلف؟"
     },
     "errors": {
       "required": "هذا الحقل مطلوب",
@@ -161,6 +162,16 @@
       "paymentRequired": "مبلغ الدفع مطلوب",
       "validAmount": "الرجاء إدخال مبلغ صحيح",
       "amountExceeded": "لا يمكن أن يتجاوز المبلغ {{amount}} ريال"
+    },
+    "customPricing": {
+      "defaultPrice": "السعر الافتراضي: {{price}} ريال",
+      "useCustomPrice": "استخدام سعر مخصص",
+      "customIqamaPrice": "سعر الإقامة المخصص (ريال)",
+      "customPriceReason": "سبب السعر المخصص",
+      "customPriceHelp": "أدخل مبلغ بين 1,000 و 15,000 ريال",
+      "customPriceReasonPlaceholder": "اختياري: لماذا هذا السعر مختلف؟",
+      "customPriceError": "يجب أن يكون السعر المخصص بين 1,000 و 15,000 ريال",
+      "priceOverridden": "تم تطبيق سعر مخصص"
     }
   },
   "dialogs": {

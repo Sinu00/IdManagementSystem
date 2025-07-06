@@ -76,7 +76,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
   const validateCustomPrice = (value) => {
     const price = parseFloat(value);
     if (isNaN(price) || price < 1000 || price > 15000) {
-      return 'Custom price must be between 1,000 and 15,000 SAR';
+      return t('individual.customPricing.customPriceError');
     }
     return '';
   };
@@ -431,7 +431,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                     <Grid item xs={12}>
                       <Box sx={{ mt: 1, mb: 1 }}>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Default iqama Price: {currentIqamaPrice} SAR
+                          {t('individual.customPricing.defaultPrice', { price: currentIqamaPrice })}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <input
@@ -448,7 +448,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                           />
                           <label htmlFor="useCustomPrice">
                             <Typography variant="body2">
-                              Use custom iqama price
+                              {t('individual.customPricing.useCustomPrice')}
                             </Typography>
                           </label>
                         </Box>
@@ -460,7 +460,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                         <Grid item xs={12} sm={6}>
                           <TextField
                             fullWidth
-                            label="Custom Iqama Price (SAR)"
+                            label={t('individual.customPricing.customIqamaPrice')}
                             name="customIqamaPrice"
                             type="number"
                             value={formData.customIqamaPrice}
@@ -471,7 +471,7 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                               setFormData(prev => ({ ...prev, customIqamaPrice: value }));
                             }}
                             error={!!customPriceError}
-                            helperText={customPriceError || 'Enter amount between 1,000 and 15,000 SAR'}
+                            helperText={customPriceError || t('individual.customPricing.customPriceHelp')}
                             inputProps={{
                               min: 1000,
                               max: 15000,
@@ -482,11 +482,11 @@ function IndividualDialog({ open, onClose, individual, onSubmit, mode = 'add', e
                         <Grid item xs={12} sm={6}>
                           <TextField
                             fullWidth
-                            label="Reason for Custom Price"
+                            label={t('individual.customPricing.customPriceReason')}
                             name="customPriceReason"
                             value={formData.customPriceReason}
                             onChange={(e) => setFormData(prev => ({ ...prev, customPriceReason: e.target.value }))}
-                            placeholder="Optional: Why is this price different?"
+                            placeholder={t('individual.placeholders.customPriceReason')}
                             multiline
                             rows={2}
                           />
