@@ -8,6 +8,22 @@ const formatText = (text) => {
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 };
 
+// Helper to detect if text contains Arabic characters
+const containsArabic = (text) => {
+  if (!text) return false;
+  const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+  return arabicRegex.test(text);
+};
+
+// Helper to get safe company name for PDF
+const getSafeCompanyName = (company) => {
+  // If company name contains Arabic, use a safe fallback
+  if (containsArabic(company.name)) {
+    return `Company (Arabic name - CR: ${company.crNumber || 'N/A'})`;
+  }
+  return company.name || 'N/A';
+};
+
 /**
  * Generate a PDF document for individuals data with company information
  * Supports Arabic text for company name and other fields
@@ -46,15 +62,14 @@ export const generateIndividualsPDF = (company, individuals, settings = {}) => {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.setFontSize(18);
-    doc.text('ID Management System', margin, yPos + 10);
+    doc.text(`Company: ${getSafeCompanyName(company)}`, margin, yPos + 18);
     
     // Add company info
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
     doc.setFontSize(12);
     
-    // Use english company name with note about Arabic
-    doc.text(`Company: ${company.name || 'N/A'}${company.arabicName ? ' (Arabic name in system)' : ''}`, margin, yPos + 18);
+    // Use safe company name (handles Arabic text gracefully)
     
     // Add CR and other company identifiers
     doc.setFontSize(10);
@@ -63,7 +78,7 @@ export const generateIndividualsPDF = (company, individuals, settings = {}) => {
     // Add date
     doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy')}`, margin, yPos + 32);
     
-    return 45; // Return new Y position after header
+    return 60; // Return new Y position after header
   };
   
   // Prepare data for tables - removed passport number
