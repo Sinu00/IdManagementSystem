@@ -345,28 +345,11 @@ function IncomeExpense() {
     setSortOrder(currentOrder => currentOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const applyFilters = (data, type) => {
-    const filters = type === 'income' ? incomeFilters : expenseFilters;
-    
-    return data.filter(item => {
-      const dateMatch = new Date(item.transactionDate) >= startOfDay(filters.dateRange.start) &&
-                       new Date(item.transactionDate) <= endOfDay(filters.dateRange.end);
-      
-      const nameMatch = item.name.toLowerCase().includes(filters.nameSearch.toLowerCase());
-      
-      const referredByMatch = type === 'income' ? 
-        (filters.referredBy === 'all' || item.referredBy === filters.referredBy) : true;
-      
-      const expenseTypeMatch = type === 'expense' ?
-        (filters.expenseType === 'all' || item.expenseType === filters.expenseType) : true;
-      
-      return dateMatch && nameMatch && referredByMatch && expenseTypeMatch;
-    });
-  };
+  // Note: Filtering is done on the backend via fetchFilteredData and fetchFilteredExpenseData
+  // The incomes and expenses arrays are already filtered, so we only need to sort them here
 
   const sortedIncomes = useMemo(() => {
-    const filtered = applyFilters(incomes, 'income');
-    return [...filtered].sort((a, b) => {
+    return [...incomes].sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
         case 'dateAndTime':
@@ -381,11 +364,10 @@ function IncomeExpense() {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [incomes, sortField, sortOrder, incomeFilters]);
+  }, [incomes, sortField, sortOrder]);
 
   const sortedExpenses = useMemo(() => {
-    const filtered = applyFilters(expenses, 'expense');
-    return [...filtered].sort((a, b) => {
+    return [...expenses].sort((a, b) => {
       let comparison = 0;
       switch (expenseSortField) {
         case 'dateAndTime':
@@ -406,7 +388,7 @@ function IncomeExpense() {
       }
       return expenseSortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [expenses, expenseSortField, expenseSortOrder, expenseFilters]);
+  }, [expenses, expenseSortField, expenseSortOrder]);
 
   const formatDate = (dateString) => {
     try {

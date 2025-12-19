@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Paper,
   Table,
@@ -13,15 +13,19 @@ import {
   Skeleton,
   Box,
   Grid,
-  Divider
+  Divider,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 import TableHeader from '../components/TableHeader';
 import FilterSection from './FilterSection';
 import EmptyState from '../components/EmptyState';
+import { individualApi } from '../../../services/api';
 
 const IncomeSection = ({
   loading,
@@ -46,6 +50,9 @@ const IncomeSection = ({
   lastMonthIncome
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [loadingNavigation, setLoadingNavigation] = useState(false);
 
   const formatDate = (dateString) => {
     try {
@@ -60,6 +67,45 @@ const IncomeSection = ({
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
+  };
+
+  const handleIncomeClick = async (income, event) => {
+    // Prevent navigation if clicking on edit/delete buttons
+    if (event.target.closest('button')) {
+      return;
+    }
+
+    // Only handle auto-generated incomes with iqamaNumber
+    if (income.isCustomIncome || !income.iqamaNumber) {
+      return;
+    }
+
+    try {
+      setLoadingNavigation(true);
+      setError('');
+      
+      // Fetch individual by iqamaNumber
+      const response = await individualApi.getByIqamaNumber(income.iqamaNumber);
+      const individual = response.data;
+
+      if (!individual || !individual.company) {
+        setError('Individual or company not found for this income entry.');
+        return;
+      }
+
+      // Navigate to company's individuals page
+      const companyId = individual.company._id || individual.company;
+      navigate(`/company/${companyId}/individuals`);
+    } catch (error) {
+      console.error('Error fetching individual:', error);
+      setError(error.response?.data?.message || 'Failed to find individual. Please try again.');
+    } finally {
+      setLoadingNavigation(false);
+    }
+  };
+
+  const handleCloseError = () => {
+    setError('');
   };
 
   return (
@@ -197,8 +243,27 @@ const IncomeSection = ({
                               {formatDate(income.transactionDate)}
                             </Typography>
                           </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">{income.name}</Typography>
+                          <TableCell
+                            onClick={(e) => handleIncomeClick(income, e)}
+                            sx={{
+                              cursor: !income.isCustomIncome && income.iqamaNumber ? 'pointer' : 'default',
+                              '&:hover': !income.isCustomIncome && income.iqamaNumber ? {
+                                bgcolor: 'action.hover'
+                              } : {}
+                            }}
+                          >
+                            <Typography 
+                              variant="body2"
+                              sx={{
+                                color: !income.isCustomIncome && income.iqamaNumber ? 'primary.main' : 'inherit',
+                                textDecoration: !income.isCustomIncome && income.iqamaNumber ? 'none' : 'none',
+                                '&:hover': !income.isCustomIncome && income.iqamaNumber ? {
+                                  textDecoration: 'underline'
+                                } : {}
+                              }}
+                            >
+                              {income.name}
+                            </Typography>
                             {income.referredBy && (
                               <Typography variant="caption" color="text.secondary">
                                 {t('incomeExpense.income.table.referredBy')} {income.referredBy}
@@ -212,14 +277,20 @@ const IncomeSection = ({
                           <TableCell sx={{ textAlign: 'center' }}>
                             <IconButton
                               size="small"
-                              onClick={() => onEdit(income)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(income);
+                              }}
                               sx={{ color: 'primary.main', mr: 1 }}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => onDelete(income)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(income);
+                              }}
                               sx={{ color: 'error.main' }}
                             >
                               <DeleteIcon fontSize="small" />
@@ -248,6 +319,16 @@ const IncomeSection = ({
           )}
         </>
       )}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };
