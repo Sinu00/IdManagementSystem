@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Paper,
   Table,
@@ -17,10 +17,13 @@ import {
   Card,
   CardContent,
   Avatar,
-  Divider
+  Divider,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, TrendingDown as ExpenseIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 import TableHeader from '../components/TableHeader';
@@ -49,6 +52,8 @@ const ExpenseSection = ({
   lastMonthExpense
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const formatDate = (dateString) => {
     try {
@@ -63,6 +68,38 @@ const ExpenseSection = ({
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return ((current - previous) / previous) * 100;
+  };
+
+  const handleExpenseClick = (expense, event) => {
+    // Prevent navigation if clicking on edit/delete buttons
+    if (event.target.closest('button')) {
+      return;
+    }
+
+    // Only handle expenses with company reference
+    if (!expense.company) {
+      return;
+    }
+
+    try {
+      // Get company ID (handle both populated object and ID string)
+      const companyId = expense.company._id || expense.company;
+      
+      if (!companyId) {
+        setError('Company information not available for this expense entry.');
+        return;
+      }
+
+      // Navigate to company's individuals page
+      navigate(`/company/${companyId}/individuals`);
+    } catch (error) {
+      console.error('Error navigating to company page:', error);
+      setError('Failed to navigate to company page. Please try again.');
+    }
+  };
+
+  const handleCloseError = () => {
+    setError('');
   };
 
   return (
@@ -206,9 +243,28 @@ const ExpenseSection = ({
                               {formatDate(expense.transactionDate)}
                             </Typography>
                           </TableCell>
-                          <TableCell>
+                          <TableCell
+                            onClick={(e) => handleExpenseClick(expense, e)}
+                            sx={{
+                              cursor: expense.company ? 'pointer' : 'default',
+                              '&:hover': expense.company ? {
+                                bgcolor: 'action.hover'
+                              } : {}
+                            }}
+                          >
                             {expense.company ? (
-                              <Typography variant="body2">{expense.company.name}</Typography>
+                              <Typography 
+                                variant="body2"
+                                sx={{
+                                  color: 'primary.main',
+                                  textDecoration: 'none',
+                                  '&:hover': {
+                                    textDecoration: 'underline'
+                                  }
+                                }}
+                              >
+                                {expense.company.name}
+                              </Typography>
                             ) : (
                               <Typography variant="body2" color="text.secondary">-</Typography>
                             )}
@@ -226,14 +282,20 @@ const ExpenseSection = ({
                           <TableCell sx={{ textAlign: 'center' }}>
                             <IconButton
                               size="small"
-                              onClick={() => onEdit(expense)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(expense);
+                              }}
                               sx={{ color: 'primary.main', mr: 1 }}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => onDelete(expense)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(expense);
+                              }}
                               sx={{ color: 'error.main' }}
                             >
                               <DeleteIcon fontSize="small" />
@@ -262,6 +324,16 @@ const ExpenseSection = ({
           )}
         </>
       )}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };
