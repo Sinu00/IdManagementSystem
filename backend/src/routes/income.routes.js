@@ -158,7 +158,7 @@ router.delete('/:id', protect, async (req, res) => {
 // Get filtered income
 router.post('/filter', protect, async (req, res) => {
   try {
-    const { startDate, endDate, referredBy, nameSearch } = req.body;
+    const { startDate, endDate, referredBy, nameSearch, mainPerson } = req.body;
     
     // Convert dates to proper format
     const startDateObj = new Date(startDate);
@@ -166,7 +166,6 @@ router.post('/filter', protect, async (req, res) => {
     
     let query = {
       $and: [
-        { mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } },
         {
           transactionDate: {
             $gte: startDateObj,
@@ -175,6 +174,14 @@ router.post('/filter', protect, async (req, res) => {
         }
       ]
     };
+
+    // Handle mainPerson filter
+    if (mainPerson && mainPerson !== 'all') {
+      query.$and.push({ mainPerson: mainPerson });
+    } else {
+      // Keep existing behavior - exclude EXCLUDED_MAIN_PERSON_ID when "all" is selected
+      query.$and.push({ mainPerson: { $ne: EXCLUDED_MAIN_PERSON_ID } });
+    }
 
     if (referredBy && referredBy !== 'all') {
       query.$and.push({ referredBy: referredBy });

@@ -31,11 +31,14 @@ const ExportDialog = ({
   exportSpecificDate,
   selectedReferredBy,
   referredByList = [],
+  selectedMainPerson,
+  mainPersonList = [],
   onDateFilterTypeChange,
   onStartDateChange,
   onEndDateChange,
   onSpecificDateChange,
   onReferredByChange,
+  onMainPersonChange,
   onExport
 }) => {
   const { t } = useTranslation();
@@ -96,19 +99,34 @@ const ExportDialog = ({
           )}
 
           {type === 'income' && (
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>{t('incomeExpense.dialog.export.referredBy')}</InputLabel>
-              <Select
-                value={selectedReferredBy}
-                onChange={(e) => onReferredByChange(e.target.value)}
-                label={t('incomeExpense.dialog.export.referredBy')}
-              >
-                <MenuItem value="all">{t('incomeExpense.dialog.export.allReferrers')}</MenuItem>
-                {referredByList.map((referredBy) => (
-                  <MenuItem key={referredBy} value={referredBy}>{referredBy}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <>
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>{t('incomeExpense.dialog.export.referredBy')}</InputLabel>
+                <Select
+                  value={selectedReferredBy}
+                  onChange={(e) => onReferredByChange(e.target.value)}
+                  label={t('incomeExpense.dialog.export.referredBy')}
+                >
+                  <MenuItem value="all">{t('incomeExpense.dialog.export.allReferrers')}</MenuItem>
+                  {referredByList.map((referredBy) => (
+                    <MenuItem key={referredBy} value={referredBy}>{referredBy}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>{t('incomeExpense.dialog.export.mainPerson')}</InputLabel>
+                <Select
+                  value={selectedMainPerson || 'all'}
+                  onChange={(e) => onMainPersonChange(e.target.value)}
+                  label={t('incomeExpense.dialog.export.mainPerson')}
+                >
+                  <MenuItem value="all">{t('incomeExpense.dialog.export.allMainPersons')}</MenuItem>
+                  {mainPersonList.map((mp) => (
+                    <MenuItem key={mp._id} value={mp._id}>{mp.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </>
           )}
         </Box>
       </DialogContent>

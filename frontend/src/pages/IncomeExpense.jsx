@@ -56,7 +56,7 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { incomeApi, expenseApi, iqamaPriceApi, individualApi, companyApi } from '../services/api';
+import { incomeApi, expenseApi, iqamaPriceApi, individualApi, companyApi, mainPersonApi } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths, startOfDay, endOfDay } from 'date-fns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -117,6 +117,8 @@ function IncomeExpense() {
   const [exportSpecificDate, setExportSpecificDate] = useState(new Date());
   const [referredByList, setReferredByList] = useState([]);
   const [selectedReferredBy, setSelectedReferredBy] = useState('all');
+  const [mainPersonList, setMainPersonList] = useState([]);
+  const [selectedMainPerson, setSelectedMainPerson] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage] = useState(10);
   const [expensePage, setExpensePage] = useState(0);
@@ -410,6 +412,16 @@ function IncomeExpense() {
     }
   };
 
+  const fetchMainPersons = async () => {
+    try {
+      const response = await mainPersonApi.getAll();
+      setMainPersonList(response.data || []);
+    } catch (error) {
+      console.error('Error fetching main persons:', error);
+      setError('Error fetching main person options');
+    }
+  };
+
   const generatePDF = async () => {
     try {
       setError('');
@@ -427,7 +439,8 @@ function IncomeExpense() {
       if (exportType === 'income') {
         const response = await incomeApi.getFilteredIncome({
           ...dateFilter,
-          referredBy: selectedReferredBy === 'all' ? null : selectedReferredBy
+          referredBy: selectedReferredBy === 'all' ? null : selectedReferredBy,
+          mainPerson: selectedMainPerson === 'all' ? null : selectedMainPerson
         });
         data = response.data;
       } else {
@@ -457,6 +470,7 @@ function IncomeExpense() {
   useEffect(() => {
     if (exportDialogOpen && exportType === 'income') {
       fetchReferredByList();
+      fetchMainPersons();
     }
   }, [exportDialogOpen, exportType]);
 
@@ -743,12 +757,15 @@ function IncomeExpense() {
           exportSpecificDate={exportSpecificDate}
           selectedReferredBy={selectedReferredBy}
           referredByList={referredByList}
+          selectedMainPerson={selectedMainPerson}
+          mainPersonList={mainPersonList}
           onClose={() => setExportDialogOpen(false)}
           onDateFilterTypeChange={(value) => setDateFilterType(value)}
           onStartDateChange={setExportStartDate}
           onEndDateChange={setExportEndDate}
           onSpecificDateChange={setExportSpecificDate}
           onReferredByChange={(value) => setSelectedReferredBy(value)}
+          onMainPersonChange={(value) => setSelectedMainPerson(value)}
           onExport={generatePDF}
         />
 

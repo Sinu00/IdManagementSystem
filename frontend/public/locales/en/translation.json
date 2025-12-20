@@ -480,7 +480,9 @@
         "startDate": "Start Date",
         "endDate": "End Date",
         "referredBy": "Referred By",
-        "allReferrers": "All"
+        "allReferrers": "All",
+        "mainPerson": "Khafeel",
+        "allMainPersons": "All Khafeel"
       },
       "fields": {
         "name": "Name",

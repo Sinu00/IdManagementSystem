@@ -437,6 +437,20 @@
       "add": "إضافة",
       "export": "تصدير",
       "refresh": "تحديث"
+    },
+    "dialog": {
+      "export": {
+        "title": "تصدير تقرير {{type}}",
+        "dateRange": "نطاق التاريخ",
+        "specificDate": "تاريخ محدد",
+        "selectDate": "اختر التاريخ",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
+        "referredBy": "تمت الإحالة بواسطة",
+        "allReferrers": "الكل",
+        "mainPerson": "الكفيل",
+        "allMainPersons": "جميع الكفلاء"
+      }
     }
   },
   "userManagement": {
