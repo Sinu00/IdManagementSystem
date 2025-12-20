@@ -11,7 +11,7 @@
     "seed-finance": "node src/scripts/seedIncomeExpense.js"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "20.x"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
