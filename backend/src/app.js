@@ -35,6 +35,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  if (req.path.includes('companies') && req.path.includes('main-person')) {
+    console.log('🌐 APP LEVEL - Request to companies/main-person:', req.method, req.path, req.params);
+  }
+  next();
+});
+
 // Routes with /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/main-persons', mainPersonRoutes);

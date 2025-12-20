@@ -380,7 +380,7 @@ router.get('/main-person/:mainPersonId', protect, async (req, res) => {
     const companies = await Company.find({ mainPerson: mainPersonId })
       .populate('mainPerson', 'name email contactNumber');
 
-    // Calculate card counts for each company
+    // Calculate card counts and collect iqama numbers for each company
     const companiesWithCounts = await Promise.all(companies.map(async (company) => {
       const individuals = await mongoose.model('Individual').find({ company: company._id });
       
@@ -390,6 +390,9 @@ router.get('/main-person/:mainPersonId', protect, async (req, res) => {
         greenCards: 0,
         totalIndividuals: individuals.length
       };
+
+      // Collect iqama numbers for search functionality
+      const iqamaNumbers = [];
 
       individuals.forEach(individual => {
         const daysUntilExpiry = Math.ceil((new Date(individual.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -401,11 +404,17 @@ router.get('/main-person/:mainPersonId', protect, async (req, res) => {
         } else {
           counts.greenCards++;
         }
+
+        // Collect iqama number if it exists
+        if (individual.iqamaNumber) {
+          iqamaNumbers.push(individual.iqamaNumber.toLowerCase());
+        }
       });
 
       return {
         ...company.toObject(),
-        ...counts
+        ...counts,
+        iqamaNumbers // Array of iqama numbers (lowercase) for search functionality
       };
     }));
 

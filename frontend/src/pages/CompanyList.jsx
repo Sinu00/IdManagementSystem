@@ -132,10 +132,11 @@ function CompanyList() {
       .filter(company => {
         if (!search) return true;
         
-        const searchTerm = search.toLowerCase();
+        const searchTerm = search.toLowerCase().trim();
         const companyName = company.name.toLowerCase();
         
-        return (
+        // Check standard company fields
+        const matchesCompanyFields = (
           companyName.includes(searchTerm) ||
           company.crNumber?.toLowerCase().includes(searchTerm) ||
           company.sponserId?.toLowerCase().includes(searchTerm) ||
@@ -143,6 +144,14 @@ function CompanyList() {
           company.molNumber?.toLowerCase().includes(searchTerm) ||
           company.makthabNumber?.toLowerCase().includes(searchTerm)
         );
+
+        // Check iqama numbers from backend response
+        const iqamaNumbers = company.iqamaNumbers || [];
+        const matchesIqama = iqamaNumbers.some(iqama => 
+          iqama.includes(searchTerm)
+        );
+
+        return matchesCompanyFields || matchesIqama;
       })
       .sort((a, b) => {
         switch (sort) {
