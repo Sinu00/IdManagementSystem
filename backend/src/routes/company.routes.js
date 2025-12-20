@@ -382,7 +382,7 @@ router.get('/main-person/:mainPersonId', protect, async (req, res) => {
 
     // Calculate card counts and collect iqama numbers for each company
     const companiesWithCounts = await Promise.all(companies.map(async (company) => {
-      const individuals = await mongoose.model('Individual').find({ company: company._id });
+      const individuals = await Individual.find({ company: company._id });
       
       const counts = {
         redCards: 0,
