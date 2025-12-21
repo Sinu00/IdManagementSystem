@@ -128,6 +128,22 @@ const ExportDialog = ({
               </FormControl>
             </>
           )}
+
+          {type === 'expense' && (
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>{t('incomeExpense.dialog.export.mainPerson')}</InputLabel>
+              <Select
+                value={selectedMainPerson || 'all'}
+                onChange={(e) => onMainPersonChange(e.target.value)}
+                label={t('incomeExpense.dialog.export.mainPerson')}
+              >
+                <MenuItem value="all">{t('incomeExpense.dialog.export.allMainPersons')}</MenuItem>
+                {mainPersonList.map((mp) => (
+                  <MenuItem key={mp._id} value={mp._id}>{mp.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Box>
       </DialogContent>
       <DialogActions>

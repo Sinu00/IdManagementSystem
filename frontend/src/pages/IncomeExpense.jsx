@@ -444,7 +444,10 @@ function IncomeExpense() {
         });
         data = response.data;
       } else {
-        const response = await expenseApi.getFilteredExpense(dateFilter);
+        const response = await expenseApi.getFilteredExpense({
+          ...dateFilter,
+          mainPerson: selectedMainPerson === 'all' ? null : selectedMainPerson
+        });
         data = response.data;
       }
 
@@ -468,8 +471,10 @@ function IncomeExpense() {
   };
 
   useEffect(() => {
-    if (exportDialogOpen && exportType === 'income') {
-      fetchReferredByList();
+    if (exportDialogOpen) {
+      if (exportType === 'income') {
+        fetchReferredByList();
+      }
       fetchMainPersons();
     }
   }, [exportDialogOpen, exportType]);
@@ -574,8 +579,9 @@ function IncomeExpense() {
         expenseType: filters.expenseType === 'all' ? null : filters.expenseType,
         nameSearch: filters.nameSearch || null
       });
-      
+      console.log(response.data);
       setExpenses(response.data || []);
+
       
       // Calculate totals for the filtered data
       const filteredTotal = (response.data || []).reduce((sum, item) => sum + (item.amount || 0), 0);

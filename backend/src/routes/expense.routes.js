@@ -118,28 +118,61 @@ router.delete('/:id', protect, async (req, res) => {
 // Get filtered expenses
 router.post('/filter', protect, async (req, res) => {
   try {
-    const { startDate, endDate, company, expenseType, nameSearch } = req.body;
-    const query = {
-      mainPerson: { $ne: '67d09798726e5a47c4caf071' }
-    };
+    const { startDate, endDate, company, expenseType, nameSearch, mainPerson } = req.body;
+    const EXCLUDED_MAIN_PERSON_ID = '67d09798726e5a47c4caf071'; // Nasser
+    
+    let query = {};
+
+    // Handle mainPerson filter
+    if (mainPerson && mainPerson !== 'all') {
+      // Filter by specific mainPerson AND exclude manual expenses (expenseType = 'other')
+      query.$and = [
+        { mainPerson: mainPerson },
+        { expenseType: { $ne: 'other' } }  // Exclude manual expenses
+      ];
+    } else {
+      // "all" selected - exclude Nasser mainPerson only (show all expenseTypes including 'other')
+      query.mainPerson = { $ne: EXCLUDED_MAIN_PERSON_ID };
+    }
 
     if (startDate && endDate) {
-      query.transactionDate = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      };
+      if (query.$and) {
+        query.$and.push({
+          transactionDate: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          }
+        });
+      } else {
+        query.transactionDate = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        };
+      }
     }
 
     if (company && company !== 'all') {
-      query.company = company;
+      if (query.$and) {
+        query.$and.push({ company: company });
+      } else {
+        query.company = company;
+      }
     }
 
     if (expenseType && expenseType !== 'all') {
-      query.expenseType = expenseType;
+      if (query.$and) {
+        query.$and.push({ expenseType: expenseType });
+      } else {
+        query.expenseType = expenseType;
+      }
     }
 
     if (nameSearch) {
-      query.name = { $regex: nameSearch, $options: 'i' };
+      if (query.$and) {
+        query.$and.push({ name: { $regex: nameSearch, $options: 'i' } });
+      } else {
+        query.name = { $regex: nameSearch, $options: 'i' };
+      }
     }
 
     const expenses = await Expense.find(query)
