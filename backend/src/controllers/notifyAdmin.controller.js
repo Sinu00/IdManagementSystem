@@ -121,8 +121,18 @@ export const deleteNotification = async (req, res) => {
   }
 };
 
-// Approve notification (move to Individual model)
+// Approve notification (materialise a staged request into the live record)
+//
+// A single approval touches three collections: it writes/updates the Individual,
+// writes the Income ledger row for any money that moved, and removes the staging
+// request. Those have to land together — a partial apply would leave either an
+// Iqama record with no matching income, or a request that was already applied but
+// is still sitting in the queue and can be approved a second time. All of it runs
+// in one MongoDB session transaction and aborts as a unit.
 export const approveNotification = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const notification = await NotifyAdmin.findById(req.params.id)
       .populate('originalIndividual')
@@ -131,9 +141,11 @@ export const approveNotification = async (req, res) => {
         populate: {
           path: 'mainPerson'
         }
-      });
-    
+      })
+      .session(session);
+
     if (!notification) {
+      await session.abortTransaction();
       return res.status(StatusCodes.NOT_FOUND).json({ message: 'Notification not found' });
     }
 
@@ -144,7 +156,7 @@ export const approveNotification = async (req, res) => {
 
     // Helper function to get company with mainPerson
     const getCompanyWithMainPerson = async (companyId) => {
-      const company = await Company.findById(companyId).populate('mainPerson');
+      const company = await Company.findById(companyId).populate('mainPerson').session(session);
       if (!company || !company.mainPerson) {
         throw new Error('Company or main person not found');
       }
@@ -154,7 +166,8 @@ export const approveNotification = async (req, res) => {
     // Helper function to create income record
     const createIncomeRecord = async (data) => {
       const company = await getCompanyWithMainPerson(data.companyId);
-      await Income.create({
+      // Array form is required to pass a session through Model.create in Mongoose.
+      await Income.create([{
         name: data.name,
         iqamaNumber: data.iqamaNumber,
         amount: data.amount,
@@ -163,20 +176,20 @@ export const approveNotification = async (req, res) => {
         dateAndTime: new Date(),
         notes: data.notes,
         mainPerson: company.mainPerson._id
-      });
+      }], { session });
     };
 
     switch (notification.requestType) {
-      case 'ADD':
+      case 'ADD': {
         // Handle new individual creation
         const { addedBy, __v, _id, createdAt, updatedAt, requestType, originalIndividual, ...individualData } = notification.toObject();
-        
+
         // Get the initial payment amount and pricing information
         const initialPayment = Number(notification.amount) || 0;
         const iqamaPrice = Number(notification.iqamaPrice) || 5000;
         const priceOverridden = notification.priceOverridden || false;
         const customPriceReason = notification.customPriceReason || '';
-        
+
         // Calculate payment status
         const pendingAmount = iqamaPrice - initialPayment;
         const isFullyPaid = initialPayment === iqamaPrice;
@@ -191,7 +204,7 @@ export const approveNotification = async (req, res) => {
         individualData.lastUpdateDate = new Date();
         individualData.lastUpdatedBy = req.user.username;
         individualData.referredBy = notification.referredBy;
-        
+
         // Add payment history if there's an initial payment
         individualData.paymentHistory = initialPayment > 0 ? [{
           amount: initialPayment,
@@ -199,9 +212,9 @@ export const approveNotification = async (req, res) => {
           paidAt: new Date(),
           remainingAmount: pendingAmount
         }] : [];
-        
+
         const newIndividual = new Individual(individualData);
-        updatedIndividual = await newIndividual.save();
+        updatedIndividual = await newIndividual.save({ session });
 
         // Create income record if there's an initial payment
         if (initialPayment > 0) {
@@ -216,12 +229,13 @@ export const approveNotification = async (req, res) => {
           });
         }
         break;
+      }
 
-      case 'RENEW':
+      case 'RENEW': {
         if (!notification.originalIndividual) {
           throw new Error('Original individual not found for renewal');
         }
-        
+
         const renewalPayment = Number(notification.amount) || 0;
         const renewalIqamaPrice = Number(notification.iqamaPrice) || 5000;
         const renewalPriceOverridden = notification.priceOverridden || false;
@@ -251,7 +265,7 @@ export const approveNotification = async (req, res) => {
               }] : []
             }
           },
-          { new: true, runValidators: true }
+          { new: true, runValidators: true, session }
         );
 
         // Create income record for renewal payment
@@ -267,8 +281,9 @@ export const approveNotification = async (req, res) => {
           });
         }
         break;
+      }
 
-      case 'PAYMENT':
+      case 'PAYMENT': {
         if (!notification.originalIndividual) {
           throw new Error('Original individual not found for payment');
         }
@@ -277,7 +292,7 @@ export const approveNotification = async (req, res) => {
         const newTotalPaid = notification.originalIndividual.totalPaidAmount + paymentAmount;
         const newPendingAmount = notification.originalIndividual.iqamaPrice - newTotalPaid;
         const paymentIsFullyPaid = newTotalPaid === notification.originalIndividual.iqamaPrice;
-        
+
         updatedIndividual = await Individual.findByIdAndUpdate(
           notification.originalIndividual._id,
           {
@@ -295,7 +310,7 @@ export const approveNotification = async (req, res) => {
             lastUpdateDate: new Date(),
             lastUpdatedBy: req.user.username
           },
-          { new: true, runValidators: true }
+          { new: true, runValidators: true, session }
         );
 
         // Create income record for payment
@@ -311,22 +326,34 @@ export const approveNotification = async (req, res) => {
           });
         }
         break;
+      }
 
       default:
         throw new Error('Invalid request type');
     }
-    
-    // Delete the notification after processing
-    await NotifyAdmin.findByIdAndDelete(req.params.id);
-    
-    res.status(StatusCodes.OK).json({ 
+
+    // Remove the staged request only once the record and its ledger row are written.
+    await NotifyAdmin.findByIdAndDelete(req.params.id, { session });
+
+    await session.commitTransaction();
+
+    res.status(StatusCodes.OK).json({
       message: `${notification.requestType} request approved successfully`,
       individual: updatedIndividual
     });
   } catch (error) {
+    // Nothing is applied: the record, its income row and the staged request all
+    // roll back together, so the request stays in the queue and can be retried.
+    // Guarded, because a failure after commitTransaction (e.g. serialising the
+    // response) would otherwise throw again on an already-committed session.
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error('Error approving notification:', error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || 'Failed to approve notification'
     });
+  } finally {
+    session.endSession();
   }
-}; 
+};
